@@ -1,0 +1,87 @@
+{
+  "name": "raremetal.js",
+  "version": "0.1.0",
+  "description": "Calculate burden tests and meta-analysis of burden test results using score statistics and covariance matrices",
+  "engines": {
+    "node": "~8.9.4"
+  },
+  "main": "dist/raremetal.js",
+  "bin": {
+    "raremetal.js": "src/app/cli.js"
+  },
+  "scripts": {
+    "test": "gulp",
+    "lint": "gulp lint",
+    "test-browser": "gulp test-browser",
+    "watch": "gulp watch",
+    "build": "gulp build && npm run docs && npm run pandoc",
+    "quick-build": "gulp quick-build",
+    "docs": "jsdoc src/app -R README.md -d docs/",
+    "pandoc": "pandoc -V geometry:margin=1in -o docs/method/locuszoom-credible-sets.pdf src/docs/locuszoom-credible-sets.md",
+    "coverage": "gulp coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/statgen/raremetal.js.git"
+  },
+  "keywords": [
+    "genetics",
+    "gwas"
+  ],
+  "author": "Ryan Welch <welchr@umich.edu>",
+  "contributors": [
+    "Andrew Boughton <abought@umich.edu>",
+    "Corbin Quick <corbinq@gmail.com>",
+    "Hyun Min Kang <hmkang@umich.edu>",
+    "Goncalo Abecasis <goncalo@umich.edu>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/statgen/raremetal.js/issues"
+  },
+  "homepage": "https://github.com/statgen/raremetal.js",
+  "devDependencies": {
+    "babel-core": "6.26.0",
+    "babel-loader": "7.1.2",
+    "babel-polyfill": "6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-register": "6.26.0",
+    "chai": "4.1.2",
+    "cli-table": "^0.3.1",
+    "del": "3.0.0",
+    "glob": "7.1.2",
+    "gulp": "^3.9.1",
+    "gulp-eslint": "4.0.0",
+    "gulp-filter": "5.0.1",
+    "gulp-istanbul": "1.1.2",
+    "gulp-livereload": "3.8.1",
+    "gulp-load-plugins": "1.5.0",
+    "gulp-mocha": "4.3.1",
+    "gulp-plumber": "1.1.0",
+    "gulp-rename": "1.2.2",
+    "gulp-sourcemaps": "2.6.1",
+    "gulp-uglify": "3.0.0",
+    "gulp-uglify-es": "^1.0.0",
+    "isparta": "4.0.0",
+    "jsdoc": "^3.5.5",
+    "mocha": "4.0.1",
+    "sinon": "4.1.2",
+    "sinon-chai": "2.14.0",
+    "webpack": "3.8.1",
+    "webpack-stream": "4.0.0"
+  },
+  "babelBoilerplateOptions": {
+    "entryFileName": "browser.js",
+    "mainVarName": "RareMetal"
+  },
+  "dependencies": {
+    "argparse": "^1.0.10",
+    "cli-table2": "^0.2.0",
+    "jStat": "^1.7.1",
+    "js-yaml": "^3.10.0",
+    "node-fetch": "^2.1.1",
+    "numeric": "^1.2.6",
+    "request": "^2.83.0",
+    "request-promise": "^4.2.2"
+  }
+}
