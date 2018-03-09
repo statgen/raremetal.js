@@ -7,7 +7,7 @@
  */
 
 const {ArgumentParser} = require("argparse");
-const {readMaskFileSync, extractScoreStatsSync, extractCovariance} = require("./fio.js");
+const {readMaskFileSync, extractScoreStats, extractCovariance} = require("./fio.js");
 const {REGEX_EPACTS} = require("./constants.js");
 const {testBurden} = require("./stats.js");
 const fs = require("fs");
@@ -87,7 +87,7 @@ async function single(args) {
     let end = groupVars[groupVars.length - 1].match(REGEX_EPACTS)[2];
     let region = `${chrom}:${start}-${end}`;
 
-    let scores = extractScoreStatsSync(args.score, region, groupVars);
+    let scores = await extractScoreStats(args.score, region, groupVars);
     let cov = await extractCovariance(args.cov, region, groupVars, scores);
 
     if (args.test === 'burden') {
@@ -149,7 +149,7 @@ async function meta(args) {
     let finalScores = null;
     let finalCov = null;
     for (let [study, files] of Object.entries(spec.studies)) {
-      let scores = extractScoreStatsSync(files.scores, region, groupVars);
+      let scores = await extractScoreStatsSync(files.scores, region, groupVars);
       let cov = await extractCovariance(files.cov, region, groupVars, scores);
 
       store[study] = {

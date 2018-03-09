@@ -13,7 +13,7 @@ const num = require("numeric");
 const {printScoreTable, printCovarianceMatrix} = require("./pprint.js");
 const zlib = require("zlib");
 
-const COVARIANCE_FORMAT = {
+const STATS_FORMAT = {
   "RAREMETAL": 0,
   "RVTEST": 1
 };
@@ -90,12 +90,40 @@ function readMaskFileSync(fpath) {
 }
 
 /**
- * Extract score statistics from a file
+ * Extract score statistics from a file (either rvtest or raremetal format)
  * @param {string} fpath - The path to the bgzipped score statistics file (one variant per line)
  * @param {string} region - Region containing the variants. Should be formatted in the typical "1:1-4000".
  * @param {string[]} variants - A list of variants to specifically extract, in this order
  */
-function extractScoreStatsSync(fpath, region, variants) {
+async function extractScoreStats(fpath, region, variants) {
+  // Figure out format.
+  const fileFormat = await detectFormat(fpath);
+
+  let colChrom, colPos, colRef, colAlt, colU, colV, colAltFreq, colEffectAllele;
+  if (fileFormat === STATS_FORMAT.RAREMETAL) {
+    colChrom = 0;
+    colPos = 1;
+    colRef = 2;
+    colAlt = 3;
+    colAltFreq = 5;
+    colU = 13;
+    colV = 14;
+    colEffectAllele = 3;
+  }
+  else if (fileFormat === STATS_FORMAT.RVTEST) {
+    colChrom = 0;
+    colPos = 1;
+    colRef = 2;
+    colAlt = 3;
+    colAltFreq = 5;
+    colU = 12;
+    colV = 13;
+    colEffectAllele = 3;
+  }
+  else {
+    throw new Error("Unrecognized covariance matrix file format");
+  }
+
   // Read in data in region from tabix
   const lines = execSync(`tabix -h ${fpath} ${region}`, {encoding: "utf8"});
 
@@ -119,12 +147,12 @@ function extractScoreStatsSync(fpath, region, variants) {
     }
     else {
       let ar = e.split("\t");
-      let variant = `${ar[0]}:${ar[1]}_${ar[2]}/${ar[3]}`;
-      let position = parseInt(ar[1]);
-      let u = parseFloat(ar[12]);
-      let sqrt_v = parseFloat(ar[13]);
-      let alt_freq = parseFloat(ar[5]);
-      let ea = ar[3];
+      let variant = `${ar[colChrom]}:${ar[colPos]}_${ar[colRef]}/${ar[colAlt]}`;
+      let position = parseInt(ar[colPos]);
+      let u = parseFloat(ar[colU]);
+      let sqrt_v = parseFloat(ar[colV]);
+      let alt_freq = parseFloat(ar[colAltFreq]);
+      let ea = ar[colEffectAllele];
 
       /*
        * The variant's effect direction in the score stat file is coded towards
@@ -133,7 +161,7 @@ function extractScoreStatsSync(fpath, region, variants) {
        */
       if (alt_freq > 0.5) {
         // Effect allele is now the reference allele, not the alt allele.
-        ea = ar[2];
+        ea = ar[colRef];
 
         // Flip the score stat direction.
         u = -u;
@@ -169,11 +197,11 @@ function getNumberOfVariantsFromCovarianceFile(covar_file, region) {
 }
 
 /**
- * Determine whether the covariance matrix file is in rvtest or raremetal format
- * @param fpath Path to covariance matrix
- * @return COVARIANCE_FORMAT.RAREMETAL or COVARIANCE_FORMAT.RVTEST
+ * Determine whether the file is in rvtest or raremetal format
+ * @param fpath Path to file (can be covariance or score stats)
+ * @return STATS_FORMAT.RAREMETAL or STATS_FORMAT.RVTEST
  */
-async function detectCovarianceFormat(fpath) {
+async function detectFormat(fpath) {
   let stream = fs.createReadStream(fpath);
   let gzstream = stream.pipe(zlib.createGunzip());
   let format = null;
@@ -183,15 +211,15 @@ async function detectCovarianceFormat(fpath) {
       let head = gzstream.read(100);
       let programName = head.toString().split("\n")[0].split("=")[1];
       if (programName === "Rvtests") {
-        format = COVARIANCE_FORMAT.RVTEST;
+        format = STATS_FORMAT.RVTEST;
         resolve(format);
       }
       else if (programName === "RareMetalWorker") {
-        format = COVARIANCE_FORMAT.RAREMETAL;
+        format = STATS_FORMAT.RAREMETAL;
         resolve(format);
       }
       else {
-        throw new Error("Could not determine format of covariance matrix file");
+        reject("Could not determine format of covariance matrix file");
       }
     });
   });
@@ -209,6 +237,22 @@ async function detectCovarianceFormat(fpath) {
  * @returns {GenotypeCovarianceMatrix} A genotype covariance matrix.
  */
 async function extractCovariance(fpath, region, variants, scoreStats) {
+  const fileFormat = await detectFormat(fpath);
+  let colCov, colPos;
+  let colChrom = 0; // doesn't change
+
+  if (fileFormat === STATS_FORMAT.RAREMETAL) {
+    colCov = 3;
+    colPos = 2;
+  }
+  else if (fileFormat === STATS_FORMAT.RVTEST) {
+    colCov = 5;
+    colPos = 4;
+  }
+  else {
+    throw new Error("Unrecognized covariance matrix file format");
+  }
+
   const given_variants = variants != null;
 
   if (given_variants) {
@@ -254,7 +298,7 @@ async function extractCovariance(fpath, region, variants, scoreStats) {
   let stored_value = false;
   rl.on("line", (e) => {
     let ar = e.trim().split("\t");
-    let rowPositions = ar[4].split(",").map(x => parseInt(x));
+    let rowPositions = ar[colPos].split(",").map(x => parseInt(x));
 
     if (!given_variants) {
       // Only parse all of the positions in the row if we weren't given variants
@@ -270,7 +314,7 @@ async function extractCovariance(fpath, region, variants, scoreStats) {
 
     // Binary traits will have extra information including the covariance
     // of the trait with covariates, and genotypes with covariates
-    let [cov_geno, cov_geno_covar, cov_covar] = ar[5].split(":");
+    let [cov_geno, cov_geno_covar, cov_covar] = ar[colCov].split(":");
 
     // At least cov_geno must be defined
     if (typeof cov_geno === 'undefined') {
@@ -448,12 +492,12 @@ function main() {
 
 async function aio_main() {
   console.log("Trying rvtest file: ");
-  let fmt = await detectCovarianceFormat("/net/snowwhite/home/welchr/projects/covarmatrices/studies/bridges/results/rvtest.qts.RAND.chrom22.MetaCov.assoc.gz");
+  let fmt = await detectFormat("/net/snowwhite/home/welchr/projects/covarmatrices/studies/bridges/results/rvtest.qts.RAND.chrom22.MetaCov.assoc.gz");
   console.log(fmt);
   console.log("")
 
   console.log("Trying raremetal file: ");
-  fmt = await detectCovarianceFormat("/net/snowwhite/home/welchr/projects/covarmatrices/studies/bridges/results/raremetal.qts.RAND.chrom22.RAND.singlevar.cov.txt.gz");
+  fmt = await detectFormat("/net/snowwhite/home/welchr/projects/covarmatrices/studies/bridges/results/raremetal.qts.RAND.chrom22.RAND.singlevar.cov.txt.gz");
   console.log(fmt);
   console.log("");
 }
@@ -489,5 +533,5 @@ if (typeof require !== 'undefined' && require.main === module) {
   })
 }
 
-module.exports = {readMaskFileSync, extractScoreStatsSync, extractCovariance, detectCovarianceFormat};
+module.exports = {readMaskFileSync, extractScoreStats, extractCovariance, detectFormat};
 
