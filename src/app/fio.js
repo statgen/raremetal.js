@@ -11,6 +11,12 @@ const {REGEX_EPACTS} = require("./constants.js");
 const {ScoreStatTable, GenotypeCovarianceMatrix} = require("./stats.js");
 const num = require("numeric");
 const {printScoreTable, printCovarianceMatrix} = require("./pprint.js");
+const zlib = require("zlib");
+
+const COVARIANCE_FORMAT = {
+  "RAREMETAL": 0,
+  "RVTEST": 1
+};
 
 function _variantSort(a, b) {
   let pos_a = a.match(REGEX_EPACTS)[2];
@@ -160,6 +166,35 @@ function getNumberOfVariantsFromCovarianceFile(covar_file, region) {
     pos_array.forEach(x => positions.add(x));
   }
   return positions.size;
+}
+
+/**
+ * Determine whether the covariance matrix file is in rvtest or raremetal format
+ * @param fpath Path to covariance matrix
+ * @return COVARIANCE_FORMAT.RAREMETAL or COVARIANCE_FORMAT.RVTEST
+ */
+async function detectCovarianceFormat(fpath) {
+  let stream = fs.createReadStream(fpath);
+  let gzstream = stream.pipe(zlib.createGunzip());
+  let format = null;
+
+  return new Promise((resolve,reject) => {
+    gzstream.on("readable",() => {
+      let head = gzstream.read(100);
+      let programName = head.toString().split("\n")[0].split("=")[1];
+      if (programName === "Rvtests") {
+        format = COVARIANCE_FORMAT.RVTEST;
+        resolve(format);
+      }
+      else if (programName === "RareMetalWorker") {
+        format = COVARIANCE_FORMAT.RAREMETAL;
+        resolve(format);
+      }
+      else {
+        throw new Error("Could not determine format of covariance matrix file");
+      }
+    });
+  });
 }
 
 /**
@@ -412,8 +447,15 @@ function main() {
 }
 
 async function aio_main() {
-  let test = await extractCovariance("../../scratch/test.cov.gz", "5:1-25", null, 1);
-  printCovarianceMatrix(test);
+  console.log("Trying rvtest file: ");
+  let fmt = await detectCovarianceFormat("/net/snowwhite/home/welchr/projects/covarmatrices/studies/bridges/results/rvtest.qts.RAND.chrom22.MetaCov.assoc.gz");
+  console.log(fmt);
+  console.log("")
+
+  console.log("Trying raremetal file: ");
+  fmt = await detectCovarianceFormat("/net/snowwhite/home/welchr/projects/covarmatrices/studies/bridges/results/raremetal.qts.RAND.chrom22.RAND.singlevar.cov.txt.gz");
+  console.log(fmt);
+  console.log("");
 }
 
 function test_load() {
@@ -440,10 +482,12 @@ function test_load() {
 }
 
 if (typeof require !== 'undefined' && require.main === module) {
-  aio_main().then(() => {
-    console.log("DONE")
-  });
+  aio_main().then((x) => {
+    console.log(x)
+  }).catch((x) => {
+    throw new Error(x);
+  })
 }
 
-module.exports = {readMaskFileSync, extractScoreStatsSync, extractCovariance};
+module.exports = {readMaskFileSync, extractScoreStatsSync, extractCovariance, detectCovarianceFormat};
 
