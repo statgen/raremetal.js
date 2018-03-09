@@ -232,7 +232,7 @@ async function detectFormat(fpath) {
  * @param {string} fpath Path to covariance matrix file
  * @param {string} region Region string, e.g. 1:1-40000
  * @param {string[]} variants Array of variants to extract in this order. Variants should be EPACTS format, e.g. 1:4_A/G.
- * @param {number} sampleSize The sample size of the genotypes used to calculate this covariance matrix.
+ * @param {ScoreStatTable} scoreStats Object containing score statistics and other required information
  *   This is needed because rvtest and raremetalworker both normalize the covariance matrix by the sample size.
  * @returns {GenotypeCovarianceMatrix} A genotype covariance matrix.
  */
