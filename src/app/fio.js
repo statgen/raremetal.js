@@ -114,12 +114,27 @@ function extractScoreStatsSync(fpath, region, variants) {
     else {
       let ar = e.split("\t");
       let variant = `${ar[0]}:${ar[1]}_${ar[2]}/${ar[3]}`;
+      let position = parseInt(ar[1]);
       let u = parseFloat(ar[12]);
       let sqrt_v = parseFloat(ar[13]);
       let alt_freq = parseFloat(ar[5]);
+      let ea = ar[3];
+
+      /*
+       * The variant's effect direction in the score stat file is coded towards
+       * the alternate allele. However, we want the effect coded towards the minor allele,
+       * since most rare variant tests assume you are counting the rare/minor allele.
+       */
+      if (alt_freq > 0.5) {
+        // Effect allele is now the reference allele, not the alt allele.
+        ea = ar[2];
+
+        // Flip the score stat direction.
+        u = -u;
+      }
 
       if (!given_variants || variants.includes(variant)) {
-        scoreTable.appendScore(variant, u, sqrt_v, alt_freq);
+        scoreTable.appendScore(variant, position, u, sqrt_v, alt_freq);
       }
     }
   }
@@ -158,7 +173,7 @@ function getNumberOfVariantsFromCovarianceFile(covar_file, region) {
  *   This is needed because rvtest and raremetalworker both normalize the covariance matrix by the sample size.
  * @returns {GenotypeCovarianceMatrix} A genotype covariance matrix.
  */
-async function extractCovariance(fpath, region, variants, sampleSize) {
+async function extractCovariance(fpath, region, variants, scoreStats) {
   const given_variants = variants != null;
 
   if (given_variants) {
@@ -204,13 +219,13 @@ async function extractCovariance(fpath, region, variants, sampleSize) {
   let stored_value = false;
   rl.on("line", (e) => {
     let ar = e.trim().split("\t");
-    let tmp_pos = ar[4].split(",").map(x => parseInt(x));
+    let rowPositions = ar[4].split(",").map(x => parseInt(x));
 
     if (!given_variants) {
       // Only parse all of the positions in the row if we weren't given variants
       // by the user. Otherwise, we only care about the positions of those specific variants,
       // which were added above.
-      for (let p of tmp_pos) {
+      for (let p of rowPositions) {
         if (!positions.has(p)) {
           positions.set(p, next);
           next += 1;
@@ -230,7 +245,7 @@ async function extractCovariance(fpath, region, variants, sampleSize) {
       cov_geno = cov_geno.split(",").map(x => parseFloat(x));
     }
 
-    if (!positions.has(tmp_pos[0])) {
+    if (!positions.has(rowPositions[0])) {
       // The first variant in the list of positions is the one for which the rest
       // of the positions are paired, e.g. (P1,P2), (P1,P3), (P1,P4), etc.
       // So if this one isn't one we care about, just move on.
@@ -239,11 +254,27 @@ async function extractCovariance(fpath, region, variants, sampleSize) {
     }
 
     // Read genotype covariance into matrix
-    let i = positions.get(tmp_pos[0]);
+    let i = positions.get(rowPositions[0]);
+    let i_alt_freq = scoreStats.getAltFreqForPosition(rowPositions[0]);
     for (let g = 0; g < cov_geno.length; g++) {
-      if (positions.has(tmp_pos[g])) {
-        let j = positions.get(tmp_pos[g]);
+      let rowPos = rowPositions[g];
+      if (positions.has(rowPos)) {
+        let j = positions.get(rowPos);
         let v = parseFloat(cov_geno[g]);
+        let j_alt_freq = scoreStats.getAltFreqForPosition(rowPos);
+
+        /**
+         * The score stats file codes variant genotypes towards the alt allele. If the alt allele frequency
+         * is > 0.5, that means we're not counting towards the minor (rare) allele, and we need to flip it around.
+         * We don't flip when i == j because that element represents the variance of the variant itself, which is
+         * invariant to which allele we code towards (but covariance is not.)
+         */
+        if (i !== j) {
+          if ((i_alt_freq > 0.5) || (j_alt_freq > 0.5)) {
+            v = -v;
+          }
+        }
+
         covmat[i][j] = v;
         covmat[j][i] = v;
         stored_value = true;
@@ -258,7 +289,7 @@ async function extractCovariance(fpath, region, variants, sampleSize) {
       // For some reason rvtest/RAREMETAL divide by the sample size.
       if (stored_value) {
         // We successfully read at least 1 value into the covariance matrix
-        covmat = num.mul(sampleSize, covmat);
+        covmat = num.mul(scoreStats.sampleSize, covmat);
         let covobj = new GenotypeCovarianceMatrix(covmat, variants, positions);
         resolve(covobj);
       } else {

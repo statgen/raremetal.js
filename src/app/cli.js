@@ -88,7 +88,7 @@ async function single(args) {
     let region = `${chrom}:${start}-${end}`;
 
     let scores = extractScoreStatsSync(args.score, region, groupVars);
-    let cov = await extractCovariance(args.cov, region, groupVars, scores.sampleSize);
+    let cov = await extractCovariance(args.cov, region, groupVars, scores);
 
     if (args.test === 'burden') {
       let [z, p] = testBurden(scores.u, cov.matrix, null);
@@ -150,7 +150,7 @@ async function meta(args) {
     let finalCov = null;
     for (let [study, files] of Object.entries(spec.studies)) {
       let scores = extractScoreStatsSync(files.scores, region, groupVars);
-      let cov = await extractCovariance(files.cov, region, groupVars, scores.sampleSize);
+      let cov = await extractCovariance(files.cov, region, groupVars, scores);
 
       store[study] = {
         scores: scores,

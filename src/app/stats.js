@@ -16,20 +16,76 @@ function arraysEqual(a1,a2) {
   return true;
 }
 
+/**
+ * Class for storing score statistics
+ *
+ * Assumptions:
+ *   * This class assumes you are only storing statistics on a per-chromosome basis, and not genome wide.
+ *   * Score statistic direction is towards the minor allele
+ */
 class ScoreStatTable {
   constructor() {
     this.variants = [];
+    this.positions = [];
+    this.variantMap = new Map();
+    this.positionMap = new Map();
     this.u = [];
     this.v = [];
     this.altFreq = [];
     this.sampleSize = 0;
   }
 
-  appendScore(variant, u, v, altFreq) {
+  appendScore(variant, position, u, v, altFreq) {
     this.variants.push(variant);
+    this.positions.push(position);
+
+    this.variantMap.set(variant,this.variants.length-1);
+    this.positionMap.set(position,this.positions.length-1);
+
     this.u.push(u);
     this.v.push(v);
     this.altFreq.push(altFreq);
+  }
+
+  /**
+   * Return the alternate allele frequency for a variant
+   * @param variant
+   * @return {number} Alt allele frequency
+   */
+  getAltFreqForVariant(variant) {
+    let freq = this.altFreq[this.variantMap.get(variant)];
+    if (freq == null) {
+      throw new Error("Variant did not exist when looking up alt allele freq: " + variant);
+    }
+
+    return freq;
+  }
+
+  /**
+   * Return the alternate allele frequency for a variant
+   * @param position Variant position
+   * @return {number} Alt allele frequency
+   */
+  getAltFreqForPosition(position) {
+    let freq = this.altFreq[this.positionMap.get(position)];
+    if (freq == null) {
+      throw new Error("Position did not exist when looking up alt allele freq: " + position);
+    }
+
+    return freq;
+  }
+
+  /**
+   * Retrieve the variant at a given position.
+   * @param position Variant position
+   */
+  getVariantAtPosition(position) {
+    let variant = this.variants(this.positionMap.get(position));
+    if (variant == null) {
+      throw new Error("Variant did not exist at position: " + position);
+    }
+
+    return variant;
   }
 
   /**
