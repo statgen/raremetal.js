@@ -244,7 +244,6 @@ function testBurden(u, v, w) {
   // The -Math.abs(z) is because jStat.normal.cdf returns the lower tail probability from the normal dist
   // The * 2 is for a two-sided p-value.
   let p = jStat.normal.cdf(-Math.abs(z), 0, 1) * 2;
-  debugger;
   return [z, p];
 }
 
