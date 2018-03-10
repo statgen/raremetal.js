@@ -347,9 +347,11 @@ async function extractCovariance(fpath, region, variants, scoreStats) {
          * is > 0.5, that means we're not counting towards the minor (rare) allele, and we need to flip it around.
          * We don't flip when i == j because that element represents the variance of the variant itself, which is
          * invariant to which allele we code towards (but covariance is not.)
+         * We also don't flip when both the i variant and j variant need to be flipped (the ^ is XOR) because it would
+         * just cancel out.
          */
         if (i !== j) {
-          if ((i_alt_freq > 0.5) || (j_alt_freq > 0.5)) {
+          if ((i_alt_freq > 0.5) ^ (j_alt_freq > 0.5)) {
             v = -v;
           }
         }
