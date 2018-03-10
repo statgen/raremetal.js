@@ -154,6 +154,12 @@ async function extractScoreStats(fpath, region, variants) {
       let alt_freq = parseFloat(ar[colAltFreq]);
       let ea = ar[colEffectAllele];
 
+      // Drop variants that are monomorphic. We can't use them.
+      // @todo: Need to log this somehow, research JS logging packages
+      if (alt_freq === 0) {
+        continue;
+      }
+
       /*
        * The variant's effect direction in the score stat file is coded towards
        * the alternate allele. However, we want the effect coded towards the minor allele,
