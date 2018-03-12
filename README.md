@@ -1,3 +1,5 @@
+:warning: This package is under development and not ready for production use. :warning:
+
 ## raremetal.js
 
 A package for performing burden tests and meta-analysis using score covariance matrices
