@@ -8,7 +8,7 @@ const fs = require("fs");
 const readline = require("readline");
 const {execSync, spawn} = require("child_process");
 const {REGEX_EPACTS} = require("./constants.js");
-const {ScoreStatTable, GenotypeCovarianceMatrix} = require("./stats.js");
+const {ScoreStatTable, GenotypeCovarianceMatrix, VariantMask} = require("./stats.js");
 const num = require("numeric");
 const {printScoreTable, printCovarianceMatrix} = require("./pprint.js");
 const zlib = require("zlib");
@@ -63,7 +63,7 @@ function _variantSort(a, b) {
  */
 function readMaskFileSync(fpath) {
   const data = fs.readFileSync(fpath, {encoding: "utf8"});
-  const groups = {};
+  const mask = new VariantMask();
   for (let line of data.split("\n")) {
     line = line.trim();
     if (line === '') {
@@ -83,10 +83,11 @@ function readMaskFileSync(fpath) {
     // Enforce that variants are in sorted order by position
     variants.sort(_variantSort);
 
-    groups[group] = variants;
+    // Add group to the mask object
+    mask.createGroup(group,variants);
   }
 
-  return groups;
+  return mask;
 }
 
 /**

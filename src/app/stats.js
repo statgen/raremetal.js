@@ -17,6 +17,62 @@ function arraysEqual(a1,a2) {
 }
 
 /**
+ * Class for storing a variant mask, which is a mapping from groups to lists of variants
+ * For example, "TCF7L2" -> ["variant1","variant2",...]
+ */
+class VariantMask {
+  constructor() {
+    this.groups = new Map();
+  }
+
+  /**
+   * Add a variant to a group
+   * @param group Group, for example a gene "TCF7L2"
+   * @param variant Variant ID, usually "1:1_A/T"
+   */
+  addVariantForGroup(group,variant) {
+    if (this.groups.has(group)) {
+      this.groups.get(group).push(variant);
+    }
+    else {
+      let ar = [variant];
+      this.groups.set(group,ar);
+    }
+  }
+
+  /**
+   * Create a group from a list of variants
+   * @param group
+   * @param variants
+   */
+  createGroup(group,variants) {
+    this.groups.set(group,variants);
+  }
+
+  /**
+   * Get the number of groups
+   * @return {*}
+   */
+  size() { return this.groups.size() }
+
+  /**
+   * Iterate over groups with syntax:
+   * for (let [group, variants] in mask) { ... }
+   * @return {IterableIterator<[K , V]>}
+   */
+  [Symbol.iterator]() { return this.groups.entries() }
+
+  /**
+   * Retrieve a specific group's variants.
+   * @param group
+   * @return list of variants
+   */
+  getGroup(group) {
+    return this.groups.get(group);
+  }
+}
+
+/**
  * Class for storing score statistics
  *
  * Assumptions:
@@ -308,5 +364,5 @@ function testVt(u, v, w) {
 
 }
 
-module.exports = {ScoreStatTable, GenotypeCovarianceMatrix, testBurden, testSkat, testVt};
+module.exports = {ScoreStatTable, GenotypeCovarianceMatrix, VariantMask, testBurden, testSkat, testVt};
 

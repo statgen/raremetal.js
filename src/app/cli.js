@@ -74,9 +74,9 @@ async function single(args) {
   // Run test on one group, or all groups
   const results = new Results();
 
-  let total = args.group == null ? Object.keys(mask).length : 1;
+  let total = args.group == null ? mask.size() : 1;
   let i = 1;
-  for (let [group, groupVars] of Object.entries(mask)) {
+  for (let [group, groupVars] of mask) {
     if (args.group !== null && args.group !== group) {
       continue;
     }
@@ -136,9 +136,9 @@ async function meta(args) {
     results[test] = new Results();
   }
 
-  let total = spec.settings.group == null ? Object.keys(mask).length : 1;
+  let total = spec.settings.group == null ? mask.size() : 1;
   let i = 1;
-  for (let [group, groupVars] of Object.entries(mask)) {
+  for (let [group, groupVars] of mask) {
     if (spec.settings.group != null && spec.settings.group !== group) {
       continue;
     }
