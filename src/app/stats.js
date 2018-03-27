@@ -179,12 +179,39 @@ class ScoreStatTable {
 
   /**
    * Subset the score stats down to a subset of variants, in this exact ordering
-   * @todo Implement
-   * @param variants List of variants
-   * @return New ScoreStatTable after subsetting (not in-place)
+   * @param variantList List of variants
+   * @return {ScoreStatTable} Score statistics after subsetting (not in-place, returns a new copy)
    */
-  subsetToVariants(variants) {
+  subsetToVariants(variantList) {
+    if (typeof variantList === "undefined") {
+      throw new Error("Must specify list of variants when subsetting");
+    }
 
+    // First figure out which variants supplied are actually in this set of score stats
+    variantList = variantList.filter(x => this.variantMap.has(x));
+
+    // Subset each member to only those variants
+    let idx = variantList.map(x => this.variantMap.get(x));
+    let variants = idx.map(i => this.variants[i]);
+    let positions = idx.map(i => this.positions[i]);
+    let u = idx.map(i => this.u[i]);
+    let v = idx.map(i => this.v[i]);
+    let altFreq = idx.map(i => this.altFreq[i]);
+
+    let variantMap = new Map(variants.map((element,index,_) => [element,index]));
+    let positionMap = new Map(variants.map((element,index,_) => [element,index]));
+
+    // Assemble new score table object
+    let newTable = new ScoreStatTable();
+    newTable.variants = variants;
+    newTable.positions = positions;
+    newTable.variantMap = variantMap;
+    newTable.positionMap = positionMap;
+    newTable.u = u;
+    newTable.v = v;
+    newTable.altFreq = altFreq;
+
+    return newTable;
   }
 }
 
