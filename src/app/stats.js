@@ -198,8 +198,8 @@ class ScoreStatTable {
     let v = idx.map(i => this.v[i]);
     let altFreq = idx.map(i => this.altFreq[i]);
 
-    let variantMap = new Map(variants.map((element,index,_) => [element,index]));
-    let positionMap = new Map(variants.map((element,index,_) => [element,index]));
+    let variantMap = new Map(variants.map((element,index) => [element,index]));
+    let positionMap = new Map(variants.map((element,index) => [element,index]));
 
     // Assemble new score table object
     let newTable = new ScoreStatTable();
@@ -363,13 +363,13 @@ function testSkat(u, v, w, method = "satterthwaite") {
  */
 function _skatSatterthwaite(u, v, w) {
   let m = u.length;
-  let q = num.dot(num.dot(num.transpose(u), w), u);
+  //let q = num.dot(num.dot(num.transpose(u), w), u);
   let vsqrt = num.sqrt(v);
   let eigMatrix = num.dot(num.dot(vsqrt, w), vsqrt);
   let lambdas = num.eig(eigMatrix).lambda.x;
   let [stat, s1, s2, s3] = Array(4).fill(0.0);
   let x;
-  for (i = 0; i < m; i++) {
+  for (let i = 0; i < m; i++) {
     stat += u[i] * u[i];
     x = lambdas[i];
     s1 += x;

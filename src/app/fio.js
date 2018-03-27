@@ -10,7 +10,6 @@ const {execSync, spawn} = require("child_process");
 const {REGEX_EPACTS} = require("./constants.js");
 const {ScoreStatTable, GenotypeCovarianceMatrix, VariantMask} = require("./stats.js");
 const num = require("numeric");
-const {printScoreTable, printCovarianceMatrix} = require("./pprint.js");
 const zlib = require("zlib");
 
 const STATS_FORMAT = {
@@ -246,7 +245,7 @@ async function detectFormat(fpath) {
 async function extractCovariance(fpath, region, variants, scoreStats) {
   const fileFormat = await detectFormat(fpath);
   let colCov, colPos;
-  let colChrom = 0; // doesn't change
+  //let colChrom = 0;
 
   if (fileFormat === STATS_FORMAT.RAREMETAL) {
     colCov = 3;
@@ -297,7 +296,7 @@ async function extractCovariance(fpath, region, variants, scoreStats) {
   // Call tabix and prepare to extract the region of interest
   // This uses readline to iterate over the results from tabix line by line
   const cmd = `tabix ${fpath} ${region}`;
-  const proc = spawn(cmd, options = {shell: true});
+  const proc = spawn(cmd, [], {shell: true});
   const rl = readline.createInterface(proc.stdout);
 
   // Async start reading lines into array, formatting as necessary
@@ -321,7 +320,10 @@ async function extractCovariance(fpath, region, variants, scoreStats) {
 
     // Binary traits will have extra information including the covariance
     // of the trait with covariates, and genotypes with covariates
-    let [cov_geno, cov_geno_covar, cov_covar] = ar[colCov].split(":");
+    // First: covariance between genotypes
+    // Second: covariance between genotypes and covariates
+    // Third: covariance between covariates
+    let [cov_geno,,] = ar[colCov].split(":");
 
     // At least cov_geno must be defined
     if (typeof cov_geno === 'undefined') {
@@ -480,67 +482,6 @@ async function extractCovariance(fpath, region, variants, scoreStats) {
 //
 //   return new GenotypeCovarianceMatrix(covmat,variants,positions);
 // }
-
-function main() {
-  let test_file_scores = "/net/snowwhite/home/welchr/projects/covarmatrices/studies/bridges/results/rvtests.bts.BP.pheno.chrom22.MetaScore.assoc.gz";
-  let test_file_cov = "/net/snowwhite/home/welchr/projects/covarmatrices/studies/bridges/results/rvtests.bts.BP.pheno.chrom22.MetaCov.assoc.gz";
-  let test_region = "22:40410281-40636702";
-  let test_mask = "/net/snowwhite/home/welchr/projects/lz-burden-examples/finnseq/finmetseq.PTV.grp";
-
-  let args = getSettings();
-  //let scores = extractScoreStats(test_file_scores,test_region);
-  //let covmatrix = extractCovariance(test_file_cov,test_region);
-  covmatrix = extractCovariance("test.cov.gz", "5:1-250");
-  //let groups = await readMaskFile(test_mask);
-  //console.log(scores);
-  //console.log(groups);
-  //console.table(covmatrix);
-  //console.log(getNumberOfVariantsFromCovarianceFile(test_file_cov,test_region))
-  return covmatrix;
-}
-
-async function aio_main() {
-  console.log("Trying rvtest file: ");
-  let fmt = await detectFormat("/net/snowwhite/home/welchr/projects/covarmatrices/studies/bridges/results/rvtest.qts.RAND.chrom22.MetaCov.assoc.gz");
-  console.log(fmt);
-  console.log("")
-
-  console.log("Trying raremetal file: ");
-  fmt = await detectFormat("/net/snowwhite/home/welchr/projects/covarmatrices/studies/bridges/results/raremetal.qts.RAND.chrom22.RAND.singlevar.cov.txt.gz");
-  console.log(fmt);
-  console.log("");
-}
-
-function test_load() {
-  //console.log("Entire matrix: \n");
-  //let cov = extractCovariance("test.cov.gz","5:1-500");
-  //printCovarianceMatrix(cov);
-
-  //console.log("Only a subset of variants that form a complete matrix: \n");
-  //let variants = "5:7_C/A 5:14_G/G 5:25_T/C 5:26_A/C 5:29_A/A".split(/ /);
-  //cov = extractCovariance("test.cov.gz","5:1-500",variants);
-  //printCovarianceMatrix(cov);
-
-  //console.log("Score statistics (all): \n");
-  //let scores = extractScoreStats("test.score.gz","5:1-500");
-  //printScoreTable(scores);
-
-  //console.log("Score statistics (subset): \n");
-  //scores = extractScoreStats("test.score.gz","5:1-500",variants);
-  //printScoreTable(scores);
-
-  let test_mask = "/net/snowwhite/home/welchr/projects/lz-burden-examples/finnseq/finmetseq.PTV.grp";
-  let groups = readMaskFileSync(test_mask);
-  console.log(groups);
-}
-
-if (typeof require !== 'undefined' && require.main === module) {
-  aio_main().then((x) => {
-    console.log(x)
-  }).catch((x) => {
-    throw new Error(x);
-  })
-}
 
 module.exports = {readMaskFileSync, extractScoreStats, extractCovariance, detectFormat};
 

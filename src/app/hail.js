@@ -120,7 +120,7 @@ class HailRequester {
       {
         method: 'POST',
         body:    JSON.stringify(this.json),
-        headers: { 'Content-Type': 'application/json' },
+        headers: {'Content-Type': 'application/json'},
       }
     );
 
@@ -254,4 +254,4 @@ if (typeof require !== 'undefined' && require.main === module) {
   _test();
 }
 
-module.exports = { HailRequester };
+module.exports = {HailRequester};

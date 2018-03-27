@@ -97,7 +97,7 @@ async function single(args) {
     let cov = await extractCovariance(args.cov, region, scores.variants, scores);
 
     if (args.test === 'burden') {
-      let [z, p] = testBurden(scores.u, cov.matrix, null);
+      let [, p] = testBurden(scores.u, cov.matrix, null);
       results.addResult(group, p);
     }
     else if (args.test === 'skat') {
@@ -155,7 +155,7 @@ async function meta(args) {
     let finalScores = null;
     let finalCov = null;
     for (let [study, files] of Object.entries(spec.studies)) {
-      let scores = await extractScoreStatsSync(files.scores, region, groupVars);
+      let scores = await extractScoreStats(files.scores, region, groupVars);
 
       /**
        * During the loading of the score stats, we may have dropped some of the
@@ -185,7 +185,7 @@ async function meta(args) {
     // Now run the tests with the final scores/covariances
     for (let test of spec.settings.tests) {
       if (test === 'burden') {
-        let [z, p] = testBurden(finalScores.u, finalCov.matrix, null);
+        let [, p] = testBurden(finalScores.u, finalCov.matrix, null);
         results[test].addResult(group, p);
       }
 
@@ -224,9 +224,7 @@ if (typeof require !== 'undefined' && require.main === module) {
     process.exit(1);
   }
 
-  main(args).then(result => {
-
-  }).catch(error => {
+  main(args).catch(error => {
     console.log(error);
   })
 }

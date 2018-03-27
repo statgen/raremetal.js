@@ -47,4 +47,4 @@ function printCovarianceMatrix(matrix) {
   console.log("\n");
 }
 
-module.exports = { printScoreTable, printCovarianceMatrix };
+module.exports = {printScoreTable, printCovarianceMatrix};

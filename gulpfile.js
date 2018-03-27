@@ -31,9 +31,9 @@ function cleanTmp(done) {
 // Lint a set of files
 function lint(files) {
   return gulp.src(files)
-  .pipe($.eslint())
-  .pipe($.eslint.format())
-  .pipe($.eslint.failAfterError());
+    .pipe($.eslint())
+    .pipe($.eslint.format())
+    .pipe($.eslint.failAfterError());
 }
 
 function lintSrc() {
@@ -50,45 +50,45 @@ function lintGulpfile() {
 
 function build() {
   return gulp.src(path.join('src/app', config.entryFileName))
-  .pipe(webpackStream({
-    output: {
-      filename: `${exportFileName}.js`,
-      libraryTarget: 'umd',
-      library: config.mainVarName
-    },
-    // Add your own externals here. For instance,
-    // {
-    //   jquery: true
-    // }
-    // would externalize the `jquery` module.
-    externals: {},
-    module: {
-      loaders: [
-        { 
-          test: /\.js$/, 
-          exclude: /node_modules/, 
-          loader: 'babel-loader' 
-        }
-      ]
-    },
-    devtool: 'source-map'
-  }))
-  .pipe(gulp.dest(destinationFolder))
-  .pipe($.filter(['**', '!**/*.js.map']))
-  .pipe($.rename(`${exportFileName}.min.js`))
-  .pipe($.sourcemaps.init({ loadMaps: true }))
-  .pipe($.uglify())
-  .pipe($.sourcemaps.write('./'))
-  .pipe(gulp.dest(destinationFolder));
+    .pipe(webpackStream({
+      output: {
+        filename: `${exportFileName}.js`,
+        libraryTarget: 'umd',
+        library: config.mainVarName
+      },
+      // Add your own externals here. For instance,
+      // {
+      //   jquery: true
+      // }
+      // would externalize the `jquery` module.
+      externals: {},
+      module: {
+        loaders: [
+          {
+            test: /\.js$/,
+            exclude: /node_modules/,
+            loader: 'babel-loader'
+          }
+        ]
+      },
+      devtool: 'source-map'
+    }))
+    .pipe(gulp.dest(destinationFolder))
+    .pipe($.filter(['**', '!**/*.js.map']))
+    .pipe($.rename(`${exportFileName}.min.js`))
+    .pipe($.sourcemaps.init({loadMaps: true}))
+    .pipe($.uglify())
+    .pipe($.sourcemaps.write('./'))
+    .pipe(gulp.dest(destinationFolder));
 }
 
 function _mocha() {
-  return gulp.src(['test/setup/node.js', 'test/unit/**/*.js', 'test/integration/**/*.js'], { read: false })
-  .pipe($.mocha({
-    reporter: 'dot',
-    globals: Object.keys(mochaGlobals.globals),
-    ignoreLeaks: false
-  }));
+  return gulp.src(['test/setup/node.js', 'test/unit/**/*.js', 'test/integration/**/*.js'], {read: false})
+    .pipe($.mocha({
+      reporter: 'dot',
+      globals: Object.keys(mochaGlobals.globals),
+      ignoreLeaks: false
+    }));
 }
 
 function _registerBabel() {
@@ -103,16 +103,16 @@ function test() {
 function coverage(done) {
   _registerBabel();
   gulp.src(['src/app/**/*.js'])
-  .pipe($.istanbul({
-    instrumenter: Instrumenter,
-    includeUntested: true
-  }))
-  .pipe($.istanbul.hookRequire())
-  .on('finish', () => {
-    return test()
-    .pipe($.istanbul.writeReports())
-    .on('end', done);
-  });
+    .pipe($.istanbul({
+      instrumenter: Instrumenter,
+      includeUntested: true
+    }))
+    .pipe($.istanbul.hookRequire())
+    .on('finish', () => {
+      return test()
+        .pipe($.istanbul.writeReports())
+        .on('end', done);
+    });
 }
 
 const watchFiles = ['src/app/**/*', 'test/**/*', 'package.json', '**/.eslintrc'];
@@ -137,36 +137,36 @@ function testBrowser() {
   // This empty stream might seem like a hack, but we need to specify all of our files through
   // the `entry` option of webpack. Otherwise, it ignores whatever file(s) are placed in here.
   return gulp.src('')
-  .pipe($.plumber())
-  .pipe(webpackStream({
-    watch: true,
-    entry: allFiles,
-    output: {
-      filename: '__spec-build.js'
-    },
-    // Externals isn't necessary here since these are for tests.
-    module: {
-      loaders: [
-        // This is what allows us to author in future JavaScript
-        { test: /\.js$/, exclude: /node_modules/, loader: 'babel-loader' }
-      ]
-    },
-    plugins: [
-      // By default, webpack does `n=>n` compilation with entry files. This concatenates
-      // them into a single chunk.
-      new webpack.optimize.LimitChunkCountPlugin({ maxChunks: 1 })
-    ],
-    devtool: 'inline-source-map'
-  }, null, () => {
-    if (firstBuild) {
-      $.livereload.listen({ port: 35729, host: 'localhost', start: true });
-      gulp.watch(watchFiles, ['lint']);
-    } else {
-      $.livereload.reload('./tmp/__spec-build.js');
-    }
-    firstBuild = false;
-  }))
-  .pipe(gulp.dest('./tmp'));
+    .pipe($.plumber())
+    .pipe(webpackStream({
+      watch: true,
+      entry: allFiles,
+      output: {
+        filename: '__spec-build.js'
+      },
+      // Externals isn't necessary here since these are for tests.
+      module: {
+        loaders: [
+          // This is what allows us to author in future JavaScript
+          {test: /\.js$/, exclude: /node_modules/, loader: 'babel-loader'}
+        ]
+      },
+      plugins: [
+        // By default, webpack does `n=>n` compilation with entry files. This concatenates
+        // them into a single chunk.
+        new webpack.optimize.LimitChunkCountPlugin({maxChunks: 1})
+      ],
+      devtool: 'inline-source-map'
+    }, null, () => {
+      if (firstBuild) {
+        $.livereload.listen({port: 35729, host: 'localhost', start: true});
+        gulp.watch(watchFiles, ['lint']);
+      } else {
+        $.livereload.reload('./tmp/__spec-build.js');
+      }
+      firstBuild = false;
+    }))
+    .pipe(gulp.dest('./tmp'));
 }
 
 // Remove the built files
@@ -195,6 +195,9 @@ gulp.task('quick-build', ['clean'], build);
 
 // Lint and run our tests
 gulp.task('test', ['lint'], test);
+
+// Quick test without linting
+gulp.task('quick-test', test);
 
 // Set up coverage and run tests
 gulp.task('coverage', ['lint'], coverage);
