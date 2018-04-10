@@ -23,6 +23,8 @@ function arraysEqual(a1,a2) {
 class VariantMask {
   constructor() {
     this.groups = new Map();
+    this.label = null;
+    this.id = null;
   }
 
   /**
