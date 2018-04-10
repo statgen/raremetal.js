@@ -240,11 +240,41 @@ class HailRequester {
   }
 }
 
+async function fetchHail(args) {
+  // Retrieve data, either via POST to Hail API, or read a JSON file.
+
+  const response = await fetch(
+    args.url,
+    {
+      method: 'POST',
+      body:    JSON.stringify(this.json),
+      headers: {'Content-Type': 'application/json'},
+    }
+  );
+
+  if (!response.ok) {
+    let msg = `Error ${response.status}: ${response.statusText}`;
+    throw new Error(msg);
+  }
+
+  return response;
+}
+
 async function _test() {
   const hailReq = new HailRequester("http://localhost:6060/getStats","sa");
   hailReq.addCovariate("SEX","phenotype");
   hailReq.addPhenotype("ENSG00000075275");
   hailReq.setRegion("22:46706731-46983067");
+
+  let foo = new HailRequest({
+    url: "http://...",
+    root: "sa",
+    covariates: {
+      "SEX": "phenotype"
+    },
+    phenotype: "ENSG0000075275",
+    region: "22:46706731-46983067"
+  });
 
   const scores = await hailReq.getScoreStats();
   const cov = await hailReq.getCovarianceMatrix();
