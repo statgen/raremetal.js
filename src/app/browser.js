@@ -21,7 +21,16 @@ function isNode() {
 }
 
 async function parsePortalJson(json) {
-  // Load the masks
+  // Result storage
+  let loaded = {
+    masks: {},
+    scorecov: {}
+  };
+
+  /**
+   * Store parsed masks to an object that looks like:
+   * masks = { (group id): mask object }
+   */
   let masks = {};
   for (let maskData of json.data.masks) {
     let mask = new VariantMask();
@@ -35,10 +44,13 @@ async function parsePortalJson(json) {
     masks[mask.id] = mask;
   }
 
+  // Store masks for return
+  loaded["masks"] = masks;
+
   // Load scores and covariance matrices
-  let loaded = [];
   for (let scoreBlock of json.scorecov) {
-    let variants = masks[scoreBlock.mask].getGroup(scoreBlock.group);
+    let mask = masks[scoreBlock.mask];
+    let variants = mask.getGroup(scoreBlock.group);
     let positions = variants.map(x => parseInt(x.match(/(chr)?(\w+):(\d+)_([A-Z]+)\/([A-Z]+)/)[3]));
 
     // Scores
@@ -54,7 +66,7 @@ async function parsePortalJson(json) {
         positions[i],
         scoreBlock.scores[i],
         variance,
-        scoreBlock.alt_freq[i]
+        scoreBlock.altFreq[i]
       );
     }
 
@@ -86,13 +98,13 @@ async function parsePortalJson(json) {
     let covMatrix = new GenotypeCovarianceMatrix(covmat,variants,posMap);
 
     // Store result
-    loaded.push({
+    loaded.scorecov[[scoreBlock.mask,scoreBlock.group]] = {
       mask: scoreBlock.mask,
       group: scoreBlock.group,
       nsamples: scoreBlock.nsamples,
       scores: scoreTable,
       covariance: covMatrix
-    });
+    };
   }
 
   return loaded;
