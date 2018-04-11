@@ -71,7 +71,10 @@ function build() {
           }
         ]
       },
-      devtool: 'source-map'
+      devtool: 'source-map',
+      node: {
+        fs: "empty"
+      }
     }))
     .pipe(gulp.dest(destinationFolder))
     .pipe($.filter(['**', '!**/*.js.map']))
