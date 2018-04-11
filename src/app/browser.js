@@ -20,7 +20,12 @@ function isNode() {
   return Object.prototype.toString.call(typeof process !== 'undefined' ? process : 0) === '[object process]';
 }
 
-async function parsePortalJson(json) {
+/**
+ * Parse the idealized portal response JSON for requesting covariance matrices
+ * A spec of this format can be found in src/docs/portal-api.md
+ * @param json
+ */
+function parsePortalJson(json) {
   // Result storage
   let loaded = {
     masks: {},
@@ -111,53 +116,81 @@ async function parsePortalJson(json) {
 }
 
 /**
+ * Function to run multiple tests and masks.
+ *
+ * "Tests" means aggregation tests, for example burden or SKAT.
+ *
+ * A mask is a mapping from a group label to a list of variants. Usually the group is a gene ID or name
+ * but in reality it can be anything.
+ *
+ * @param tests A mapping of test labels -> test functions
+ * @param scoreCov Object retrieved from parsePortalJson(). Contains masks, score statistics, and covariance matrices.
+ * @param metaData An object that will be returned with the results. It could have an ID or description of what was tested.
+ * @return {Promise<Object>} Rows of results, one per mask * group
+ */
+async function runAggregationTests(tests, scoreCov, metaData) {
+  let results = {
+    "resultFrame": []
+  };
+
+  Object.assign(results,metaData);
+
+  for (let scoreBlock of Object.values(scoreCov.scorecov)) {
+    let row = [
+      scoreBlock.group,
+      scoreBlock.mask
+    ];
+
+    // Do we have any variants?
+    if (scoreBlock.scores.u.length === 0 || scoreBlock.covariance.matrix.length === 0) {
+      row.push(NaN, NaN);
+    }
+    else {
+      for (let [testLabel, testFunc] of Object.entries(tests)) {
+        let [stat, p] = testFunc(scoreBlock.scores.u, scoreBlock.covariance.matrix);
+        row.push(stat, p);
+      }
+    }
+
+    results.resultFrame.push(row);
+  }
+
+  return results;
+}
+
+/**
  * Example of running many tests + masks at once
  * @return {Promise<void>}
  * @private
  */
 async function _example() {
   // Load example JSON of portal response from requesting covariance in a region
-  let json;
+  let json, scoreCov;
   if (isNode()) {
     const fs = require("fs");
     let jsonRaw = fs.readFileSync("example.json");
     json = JSON.parse(jsonRaw);
+    scoreCov = parsePortalJson(json);
   }
   else {
     const response = await fetch("example.json");
     json = await response.json();
+    scoreCov = parsePortalJson(json);
   }
 
-  return parsePortalJson(json);
-
   // Run all tests/masks
-  /*
   let results = await runAggregationTests(
     {
-      "Collapsing burden test": testBurden,
-      "SKAT test": testSkat,
+      "zegginiBurden": testBurden
     },
-    {
-      "PTV": {
-        mask: mask1,
-        label: "Only protein truncating variants",
-        type: "gene"
-      },
-      "LOF": {
-        mask: mask2,
-        label: "Loss of function variants",
-        type: "gene"
-      }
-    },
-    score_cov,
+    scoreCov,
     {
       id: 100, // This gets repeated in the response
       description: "This is an example of running multiple tests and masks at once"
     }
   );
 
-  return results;
-  */
+  return [scoreCov, results];
 }
 
-module.exports = {parsePortalJson, _example};
+module.exports = {parsePortalJson, runAggregationTests, _example};
