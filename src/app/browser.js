@@ -10,6 +10,7 @@
 
 const {VariantMask, ScoreStatTable, GenotypeCovarianceMatrix, testBurden, testSkat} = require("./stats.js");
 const fetch = require("node-fetch");
+const num = require("numeric");
 
 /**
  * Check if we're running in node.js or browser
@@ -65,13 +66,19 @@ function parsePortalJson(json) {
       // Diagonal element of linearized (lower triangular) covariance matrix
       let n = i + 1;
       let variance = scoreBlock.covariance[n*(n+1)/2-1];
+      let altFreq = scoreBlock.altFreq[i];
+      let score = scoreBlock.scores[i];
+
+      if (altFreq > 0.5) {
+        score = -score;
+      }
 
       scoreTable.appendScore(
         variants[i],
         positions[i],
-        scoreBlock.scores[i],
+        score,
         variance,
-        scoreBlock.altFreq[i]
+        altFreq
       );
     }
 
@@ -92,12 +99,25 @@ function parsePortalJson(json) {
     // Load the covariance matrix from the response JSON
     let c = 0;
     for (let i = 0; i < n_variants; i++) {
-      for (let j = 0; j < i + 1; j++) {
-        covmat[i][j] = scoreBlock.covariance[c];
-        covmat[j][i] = scoreBlock.covariance[c];
+      for (let j = i; j < n_variants; j++) {
+        let v = scoreBlock.covariance[c];
+        let iAltFreq = scoreTable.altFreq[i];
+        let jAltFreq = scoreTable.altFreq[j];
+
+        if (i !== j) {
+          if ((iAltFreq > 0.5) ^ (jAltFreq > 0.5)) {
+            v = -v;
+          }
+        }
+
+        covmat[i][j] = v;
+        covmat[j][i] = v;
+
         c += 1;
       }
     }
+
+    covmat = num.mul(scoreTable.sampleSize, covmat);
 
     // Construct the covariance matrix object and store it
     let covMatrix = new GenotypeCovarianceMatrix(covmat,variants,posMap);
