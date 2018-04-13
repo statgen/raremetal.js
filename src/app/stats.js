@@ -356,19 +356,15 @@ function testSkat(u, v, w, method = "satterthwaite") {
 
 /**
  * Apparently the Satterthwaite approximation (requires verification, not ready for use)
- * @todo what is q and why is it not used here?
  * @param u
  * @param v
  * @param w
- * @return {number}
  * @private
  */
 function _skatSatterthwaite(u, v, w) {
+  let iter = 50000;
   let m = u.length;
-  //let q = num.dot(num.dot(num.transpose(u), w), u);
-  let vsqrt = num.sqrt(v);
-  let eigMatrix = num.dot(num.dot(vsqrt, w), vsqrt);
-  let lambdas = num.eig(eigMatrix).lambda.x;
+  let lambdas = num.eig(v,iter).lambda.x;
   let [stat, s1, s2, s3] = Array(4).fill(0.0);
   let x;
   for (let i = 0; i < m; i++) {
@@ -383,7 +379,8 @@ function _skatSatterthwaite(u, v, w) {
   let df = (s2 ** 3) / (s3 ** 2);
   let a = s3 / s2;
   let b = s1 - (s2 ** 2) / s3;
-  return 1 - jStat.chisquare.cdf((stat - b) / a, df);
+  let chi = (stat - b) / a;
+  return [chi, 1 - jStat.chisquare.cdf(chi, df)];
 }
 
 /**
