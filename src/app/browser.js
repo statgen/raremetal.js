@@ -195,7 +195,8 @@ async function _example() {
   // Run all tests/masks
   let results = await runAggregationTests(
     {
-      "zegginiBurden": testBurden
+      "zegginiBurden": testBurden,
+      "skat": testSkat
     },
     scoreCov,
     {
