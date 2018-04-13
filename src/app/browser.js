@@ -156,23 +156,17 @@ async function runAggregationTests(tests, scoreCov, metaData) {
   Object.assign(results,metaData);
 
   for (let scoreBlock of Object.values(scoreCov.scorecov)) {
-    let row = [
-      scoreBlock.group,
-      scoreBlock.mask
-    ];
-
-    // Do we have any variants?
-    if (scoreBlock.scores.u.length === 0 || scoreBlock.covariance.matrix.length === 0) {
-      row.push(NaN, NaN);
-    }
-    else {
-      for (let [testLabel, testFunc] of Object.entries(tests)) {
-        let [stat, p] = testFunc(scoreBlock.scores.u, scoreBlock.covariance.matrix);
-        row.push(stat, p);
+    for (let [testLabel, testFunc] of Object.entries(tests)) {
+      let row = [scoreBlock.group,scoreBlock.mask];
+      if (scoreBlock.scores.u.length === 0 || scoreBlock.covariance.matrix.length === 0) {
+        row.push(Array(3).fill(NaN));
       }
+      else {
+        let [stat, p] = testFunc(scoreBlock.scores.u, scoreBlock.covariance.matrix);
+        row.push(testLabel, stat, p);
+      }
+      results.resultFrame.push(row);
     }
-
-    results.resultFrame.push(row);
   }
 
   return results;
