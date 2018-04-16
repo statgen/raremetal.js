@@ -55,7 +55,7 @@ class VariantMask {
    * Get the number of groups
    * @return {*}
    */
-  size() { return this.groups.size() }
+  size() { return this.groups.size }
 
   /**
    * Iterate over groups with syntax:
