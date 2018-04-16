@@ -89,11 +89,13 @@ class ScoreStatTable {
     this.positionMap = new Map();
     this.u = [];
     this.v = [];
-    this.altFreq = [];
     this.sampleSize = 0;
+    this.altFreq = [];
+    this.effectAllele = [];
+    this.effectAlleleFreq = [];
   }
 
-  appendScore(variant, position, u, v, altFreq) {
+  appendScore(variant, position, u, v, altFreq, ea, eaFreq) {
     this.variants.push(variant);
     this.positions.push(position);
 
@@ -103,6 +105,8 @@ class ScoreStatTable {
     this.u.push(u);
     this.v.push(v);
     this.altFreq.push(altFreq);
+    this.effectAllele.push(ea);
+    this.effectAlleleFreq.push(eaFreq);
   }
 
   /**

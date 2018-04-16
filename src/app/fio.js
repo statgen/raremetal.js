@@ -151,12 +151,13 @@ async function extractScoreStats(fpath, region, variants) {
       let position = parseInt(ar[colPos]);
       let u = parseFloat(ar[colU]);
       let sqrt_v = parseFloat(ar[colV]);
-      let alt_freq = parseFloat(ar[colAltFreq]);
+      let altFreq = parseFloat(ar[colAltFreq]);
       let ea = ar[colEffectAllele];
+      let eaFreq = altFreq;
 
       // Drop variants that are monomorphic. We can't use them.
       // @todo: Need to log this somehow, research JS logging packages
-      if (alt_freq === 0) {
+      if (altFreq === 0) {
         continue;
       }
 
@@ -165,16 +166,19 @@ async function extractScoreStats(fpath, region, variants) {
        * the alternate allele. However, we want the effect coded towards the minor allele,
        * since most rare variant tests assume you are counting the rare/minor allele.
        */
-      if (alt_freq > 0.5) {
+      if (altFreq > 0.5) {
         // Effect allele is now the reference allele, not the alt allele.
         ea = ar[colRef];
 
         // Flip the score stat direction.
         u = -u;
+
+        // Effect allele frequency
+        eaFreq = 1 - altFreq;
       }
 
       if (!given_variants || variants.includes(variant)) {
-        scoreTable.appendScore(variant, position, u, sqrt_v, alt_freq);
+        scoreTable.appendScore(variant, position, u, sqrt_v, altFreq, ea, eaFreq);
       }
     }
   }
