@@ -150,22 +150,35 @@ function parsePortalJson(json) {
  */
 async function runAggregationTests(tests, scoreCov, metaData) {
   let results = {
-    "resultFrame": []
+    data: {
+      masks: [],
+      results: []
+    }
   };
 
   Object.assign(results,metaData);
+  results.data.masks = Object.values(scoreCov.masks);
 
   for (let scoreBlock of Object.values(scoreCov.scorecov)) {
     for (let [testLabel, testFunc] of Object.entries(tests)) {
-      let row = [scoreBlock.group,scoreBlock.mask];
+      let res = {
+        group: scoreBlock.group,
+        mask: scoreBlock.mask,
+        test: testLabel,
+        pvalue: NaN,
+        stat: NaN
+      };
+
       if (scoreBlock.scores.u.length === 0 || scoreBlock.covariance.matrix.length === 0) {
-        row.push(Array(3).fill(NaN));
+        continue;
       }
       else {
         let [stat, p] = testFunc(scoreBlock.scores.u, scoreBlock.covariance.matrix);
-        row.push(testLabel, stat, p);
+        res.pvalue = p;
+        res.stat = stat;
       }
-      results.resultFrame.push(row);
+
+      results.data.results.push(res);
     }
   }
 
