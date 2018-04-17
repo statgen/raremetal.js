@@ -13,6 +13,9 @@
         },
         "CallExpression": {
           "arguments": "first"
+        },
+        "FunctionDeclaration": {
+          "parameters": "first"
         }
       }
     ],

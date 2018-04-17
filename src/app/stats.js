@@ -291,9 +291,9 @@ class GenotypeCovarianceMatrix {
    * @param variants List of variants
    * @return New GenotypeCovarianceMatrix after subsetting (not in-place)
    */
-  subsetToVariants(variants) {
-
-  }
+  // subsetToVariants(variants) {
+  //
+  // }
 }
 
 /**

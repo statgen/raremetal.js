@@ -74,7 +74,7 @@ function readMaskFileSync(fpath) {
     let variants = ar.slice(1);
 
     // Enforce all variants must be on same chromosome
-    let n_uniq = (new Set(variants.map(x => x.match(REGEX_EPACTS)[1]))).size
+    let n_uniq = (new Set(variants.map(x => x.match(REGEX_EPACTS)[1]))).size;
     if (n_uniq > 1) {
       throw `All variants for group ${group} must be on same chromosome`;
     }
