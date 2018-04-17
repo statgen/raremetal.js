@@ -187,19 +187,20 @@ async function runAggregationTests(tests, scoreCov, metaData) {
 
 /**
  * Example of running many tests + masks at once
- * @return {Promise<void>}
- * @private
+ * @return {Promise<Object>} Result object, which matches the format of the "result JSON format"
  */
 async function _example() {
   // Load example JSON of portal response from requesting covariance in a region
   let json, scoreCov;
   if (isNode()) {
+    // We're in node.js, so we can retrieve this directly from the filesystem.
     const fs = require("fs");
     let jsonRaw = fs.readFileSync("example.json");
     json = JSON.parse(jsonRaw);
     scoreCov = parsePortalJson(json);
   }
   else {
+    // We're in the browser, so we need to fetch this instead.
     const response = await fetch("example.json");
     json = await response.json();
     scoreCov = parsePortalJson(json);
@@ -218,7 +219,7 @@ async function _example() {
     }
   );
 
-  return [scoreCov, results];
+  return results;
 }
 
 module.exports = {parsePortalJson, runAggregationTests, _example};

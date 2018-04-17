@@ -60,7 +60,7 @@ class VariantMask {
   /**
    * Iterate over groups with syntax:
    * for (let [group, variants] in mask) { ... }
-   * @return {IterableIterator<[K , V]>}
+   * @return Iterator over entries, yields [group, array of variants]
    */
   [Symbol.iterator]() { return this.groups.entries() }
 
