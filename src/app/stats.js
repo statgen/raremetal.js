@@ -6,6 +6,7 @@
 
 const num = require("numeric");
 const jStat = require("jStat");
+const qf = require("./qfc.js");
 
 function arraysEqual(a1,a2) {
   for (let i = 0; i < a1.length; i++) {
@@ -337,38 +338,115 @@ function testBurden(u, v, w) {
 }
 
 /**
+ * Calculate typical SKAT weights using beta pdf
+ * @param mafs Array of minor allele frequencies
+ * @param a alpha defaults to 1
+ * @param b beta defaults to 25
+ */
+function calcSkatWeights(mafs, a = 1, b = 25) {
+  let weights = Array(mafs.length).fill(NaN);
+  for (let i = 0; i < mafs.length; i++) {
+    let w = jStat.beta.pdf(mafs[i], a, b);
+    w *= w;
+    weights[i] = w;
+  }
+  return weights;
+}
+
+/**
  * Calculate SKAT test
  *
  * @param {Number[]} u Vector of score statistics (length m, number of variants)
  * @param {Number[]} v Covariance matrix of score statistics (m x m)
  * @param {Number[]} w Weight vector (length m, number of variants)
- * @param {String} method Can be "satterthwaite", or "davies"
+ * @param {String} method Can be "satterthwaite", "davies", or "liu"
  *   The Satterthwaite approximation is fastSKAT
  *   Davies is the method used in the original Wu et al. SKAT paper
  * @return {Number} SKAT p-value
  */
-function testSkat(u, v, w, method = "satterthwaite") {
+function testSkat(u, v, w, method = "davies") {
+  // Calculate Q
+  let q = num.dot(num.dot(u,num.diag(w)),u);
+
+  // Calculate lambdas
+  let svd = num.svd(v);
+  let sqrtS = num.sqrt(svd.S);
+  let uT = num.transpose(svd.U);
+  let eigenRhs = num.dot(num.dot(svd.U,num.diag(sqrtS)),uT);
+  let eigenLhs = num.dot(eigenRhs,num.diag(w));
+  let eigen = num.dot(eigenLhs,eigenRhs);
+  let finalSvd = num.svd(eigen);
+  let lambdas = num.abs(finalSvd.S);
+
+  if (num.sum(lambdas) < 0.0000000001) {
+    console.error("Sum of lambda values for SKAT test is essentially zero");
+    return [NaN, NaN];
+  }
+
+  // P-value method
   if (method === "satterthwaite") {
-    return _skatSatterthwaite(u, v, w);
+    return _skatSatterthwaite(lambdas, q);
   } else if (method === "davies") {
-    // Requires porting qfc.cpp to JS or compiling to asm.js...
-    throw 'Not implemented';
+    return _skatDavies(lambdas, q);
   } else {
     throw 'Not implemented';
   }
 }
 
 /**
- * Apparently the Satterthwaite approximation (requires verification, not ready for use)
- * @param u
- * @param v
- * @param w
- * @private
+ * Calculate SKAT p-value using Davies method
  */
-function _skatSatterthwaite(u, v, w) {
-  let iter = 50000;
+function _skatDavies(lambdas, qstat) {
+  /**
+   * lambdas - coefficient of jth chi-squared variable
+   * nc1 - non-centrality parameters
+   * n1 - degrees of freedom
+   * n - number of chi-squared variables
+   * sigma - coefficient of standard normal variable
+   * qstat - point at which cdf is to be evaluated (this is SKAT Q stat usually)
+   * lim1 - max number of terms in integration
+   * acc - maximum error
+   * trace - array into which the following is stored:
+   *   trace[0]	absolute sum
+   *   trace[1]	total number of integration terms
+   *   trace[2]	number of integrations
+   *   trace[3]	integration interval in final integration
+   *   trace[4]	truncation point in initial integration
+   *   trace[5]	s.d. of initial convergence factor
+   *   trace[6]	cycles to locate integration parameters
+   * ifault - array into which the following fault codes are stored:
+   *   0 normal operation
+   *   1 required accuracy not achieved
+   *   2 round-off error possibly significant
+   *   3 invalid parameters
+   *   4 unable to locate integration parameters
+   *   5 out of memory
+   * res - store final value into this variable
+   */
+  let n = lambdas.length;
+  let nc1 = Array(n).fill(0);
+  let n1 = Array(n).fill(1);
+  let trace = Array(7).fill(0);
+  let sigma = 0.0;
+  let lim1 = 10000;
+  let acc = 0.0001;
+  let ifault = 0;
+  let res = qf._qf(lambdas, nc1, n1, n, sigma, qstat, lim1, acc, trace, ifault);
+
+  if (ifault > 0) {
+    throw new Error("Mixture chi-square CDF returned an error code of " + ifault.toString());
+  }
+
+  res = 1.0 - res;
+  return [qstat, res];
+}
+
+/**
+ * Calculate SKAT p-value using Liu method
+ */
+function _skatLiu(lambdas, qstat) {
+  let iter = 100000;
   let m = u.length;
-  let lambdas = num.eig(v,iter).lambda.x;
   let [stat, s1, s2, s3] = Array(4).fill(0.0);
   let x;
   for (let i = 0; i < m; i++) {
@@ -388,11 +466,18 @@ function _skatSatterthwaite(u, v, w) {
 }
 
 /**
+ * Calculate SKAT p-value using Satterthwaite approximation
+ */
+function _skatSatterthwaite(lambdas, qstat) {
+
+}
+
+/**
  * Calculate VT test meta-analysis
  */
 function testVt(u, v, w) {
 
 }
 
-module.exports = {ScoreStatTable, GenotypeCovarianceMatrix, VariantMask, testBurden, testSkat, testVt};
+module.exports = {ScoreStatTable, GenotypeCovarianceMatrix, VariantMask, testBurden, testSkat, calcSkatWeights, testVt};
 

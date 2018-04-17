@@ -9,7 +9,7 @@
 const {ArgumentParser} = require("argparse");
 const {readMaskFileSync, extractScoreStats, extractCovariance} = require("./fio.js");
 const {REGEX_EPACTS} = require("./constants.js");
-const {testBurden} = require("./stats.js");
+const {testBurden, testSkat, calcSkatWeights} = require("./stats.js");
 const fs = require("fs");
 const yaml = require("js-yaml");
 
@@ -101,7 +101,10 @@ async function single(args) {
       results.addResult(group, p);
     }
     else if (args.test === 'skat') {
-      throw 'SKAT not yet implemented';
+      // Use default weights for now
+      let w = calcSkatWeights(scores.altFreq.map(x => Math.min(x,1-x)));
+      let [, p] = testSkat(scores.u, cov.matrix, w);
+      results.addResult(group, p);
     }
 
     i += 1;
