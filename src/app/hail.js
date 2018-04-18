@@ -1,5 +1,10 @@
 /**
  * Functions for interacting with HAIL and requesting score/covariance statistics
+ *
+ * THIS CODE IS NOT CURRENTLY USED. It may be serve as a reference in the future when pulling data from the portal API.
+ * Ideally we will not pull data from HAIL directly, but rather a passthrough API on the portal that allows retrieving
+ * covariance for multiple masks/datasets/genes all at once.
+ *
  * @module hail
  * @license MIT
  */
@@ -240,25 +245,26 @@ class HailRequester {
   }
 }
 
-async function fetchHail(args) {
-  // Retrieve data, either via POST to Hail API, or read a JSON file.
-
-  const response = await fetch(
-    args.url,
-    {
-      method: 'POST',
-      body:    JSON.stringify(this.json),
-      headers: {'Content-Type': 'application/json'},
-    }
-  );
-
-  if (!response.ok) {
-    let msg = `Error ${response.status}: ${response.statusText}`;
-    throw new Error(msg);
-  }
-
-  return response;
-}
+// Playing with methods for retrieving HAIL in a less stateful way
+// async function fetchHail(args) {
+//   // Retrieve data, either via POST to Hail API, or read a JSON file.
+//
+//   const response = await fetch(
+//     args.url,
+//     {
+//       method: 'POST',
+//       body:    JSON.stringify(this.json),
+//       headers: {'Content-Type': 'application/json'},
+//     }
+//   );
+//
+//   if (!response.ok) {
+//     let msg = `Error ${response.status}: ${response.statusText}`;
+//     throw new Error(msg);
+//   }
+//
+//   return response;
+// }
 
 async function _test() {
   const hailReq = new HailRequester("http://localhost:6060/getStats","sa");
@@ -266,18 +272,20 @@ async function _test() {
   hailReq.addPhenotype("ENSG00000075275");
   hailReq.setRegion("22:46706731-46983067");
 
-  let foo = new HailRequest({
-    url: "http://...",
-    root: "sa",
-    covariates: {
-      "SEX": "phenotype"
-    },
-    phenotype: "ENSG0000075275",
-    region: "22:46706731-46983067"
-  });
-
   const scores = await hailReq.getScoreStats();
   const cov = await hailReq.getCovarianceMatrix();
+
+  // Another option for how to do this, less stateful
+  // let foo = new HailRequest({
+  //   url: "http://...",
+  //   root: "sa",
+  //   covariates: {
+  //     "SEX": "phenotype"
+  //   },
+  //   phenotype: "ENSG0000075275",
+  //   region: "22:46706731-46983067"
+  // });
+
 }
 
 if (typeof require !== 'undefined' && require.main === module) {
