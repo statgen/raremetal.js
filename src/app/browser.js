@@ -148,7 +148,7 @@ function parsePortalJson(json) {
  * @param metaData An object that will be returned with the results. It could have an ID or description of what was tested.
  * @return {Promise<Object>} Rows of results, one per mask * group
  */
-async function runAggregationTests(tests, scoreCov, metaData) {
+function runAggregationTests(tests, scoreCov, metaData) {
   let results = {
     data: {
       masks: [],
@@ -207,7 +207,7 @@ async function _example() {
   }
 
   // Run all tests/masks
-  let results = await runAggregationTests(
+  let results = runAggregationTests(
     {
       "zegginiBurden": testBurden,
       "skat": testSkat
