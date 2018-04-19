@@ -7,6 +7,7 @@ const path = require('path');
 const isparta = require('isparta');
 const webpack = require('webpack');
 const webpackStream = require('webpack-stream');
+const uglify = require("gulp-uglify-es").default;
 
 const Instrumenter = isparta.Instrumenter;
 const mochaGlobals = require('./test/setup/.globals');
@@ -81,7 +82,7 @@ function build() {
     .pipe($.filter(['**', '!**/*.js.map']))
     .pipe($.rename(`${exportFileName}.min.js`))
     .pipe($.sourcemaps.init({loadMaps: true}))
-    .pipe($.uglify())
+    .pipe(uglify())
     .on('error', function (err) { gutil.log(gutil.colors.red('[Error]'), err.toString()); })
     .pipe($.sourcemaps.write('./'))
     .pipe(gulp.dest(destinationFolder));
