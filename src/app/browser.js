@@ -222,4 +222,4 @@ async function _example() {
   return results;
 }
 
-module.exports = {parsePortalJson, runAggregationTests, _example};
+module.exports = {parsePortalJson, runAggregationTests, isNode, _example};
