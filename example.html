@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang='en'>
+<head>
+  <meta charset='utf-8'>
+  <title>Test raremetal.js</title>
+
+  <!--<script src="../node_modules//babel-polyfill/dist/polyfill.min.js"></script>-->
+
+  <!-- Load the built library -->
+  <script src='dist/raremetal.js'></script>
+
+  <!-- Try running a few burden tests -->
+  <script>
+    console.log("Starting burden tests...");
+    console.time("total runtime")
+    let promise = raremetal._example();
+    promise.then(x => {
+      console.timeEnd("total runtime");
+      console.log(x);
+    });
+  </script>
+
+</head>
+<body>
+
+</body>
+</html>
