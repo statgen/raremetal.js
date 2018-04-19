@@ -8,7 +8,7 @@
  * @license MIT
  */
 
-const {VariantMask, ScoreStatTable, GenotypeCovarianceMatrix, testBurden, testSkat} = require("./stats.js");
+const {VariantMask, ScoreStatTable, GenotypeCovarianceMatrix, testBurden, testSkat, calcSkatWeights} = require("./stats.js");
 const fetch = require("node-fetch");
 const num = require("numeric");
 
@@ -160,7 +160,17 @@ function runAggregationTests(tests, scoreCov, metaData) {
   results.data.masks = Object.values(scoreCov.masks);
 
   for (let scoreBlock of Object.values(scoreCov.scorecov)) {
-    for (let [testLabel, testFunc] of Object.entries(tests)) {
+    for (let [testLabel, testObject] of Object.entries(tests)) {
+      let testFunc;
+      let weightFunc;
+      if (typeof testObject === 'function') {
+        testFunc = testObject;
+      }
+      else if (typeof testObject === 'object') {
+        weightFunc = testObject.weights;
+        testFunc = testObject.test;
+      }
+
       let res = {
         group: scoreBlock.group,
         mask: scoreBlock.mask,
@@ -172,11 +182,17 @@ function runAggregationTests(tests, scoreCov, metaData) {
       if (scoreBlock.scores.u.length === 0 || scoreBlock.covariance.matrix.length === 0) {
         continue;
       }
-      else {
-        let [stat, p] = testFunc(scoreBlock.scores.u, scoreBlock.covariance.matrix);
-        res.pvalue = p;
-        res.stat = stat;
+
+      // Calculate weights if necessary
+      let w;
+      if (weightFunc) {
+        // Use default weights for now, will offer option to specify later
+        w = weightFunc(scoreBlock.scores.altFreq.map(x => Math.min(x,1-x)));
       }
+
+      let [stat, p] = testFunc(scoreBlock.scores.u, scoreBlock.covariance.matrix, w);
+      res.pvalue = p;
+      res.stat = stat;
 
       results.data.results.push(res);
     }
@@ -210,7 +226,10 @@ async function _example() {
   let results = runAggregationTests(
     {
       "zegginiBurden": testBurden,
-      "skat": testSkat
+      "skatLiu": {
+        test: (u, v, w) => testSkat(u, v, w, "liu"),
+        weights: calcSkatWeights
+      }
     },
     scoreCov,
     {
