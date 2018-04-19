@@ -82,6 +82,7 @@ async function single(args) {
     }
 
     console.log(`Testing [${i}/${total}]: ${group} | nvariants: ${groupVars.length}`);
+    console.time("  Total time");
     let chrom = groupVars[0].match(REGEX_EPACTS)[1];
     let start = groupVars[0].match(REGEX_EPACTS)[2];
     let end = groupVars[groupVars.length - 1].match(REGEX_EPACTS)[2];
@@ -100,13 +101,17 @@ async function single(args) {
       let [, p] = testBurden(scores.u, cov.matrix, null);
       results.addResult(group, p);
     }
-    else if (args.test === 'skat') {
+    else if (args.test.startsWith('skat')) {
       // Use default weights for now
       let w = calcSkatWeights(scores.altFreq.map(x => Math.min(x,1-x)));
-      let [, p] = testSkat(scores.u, cov.matrix, w);
+
+      // Method
+      let method = args.test.replace('skat-','');
+      let [, p] = testSkat(scores.u, cov.matrix, w, method);
       results.addResult(group, p);
     }
 
+    console.timeEnd("  Total time");
     i += 1;
   }
 

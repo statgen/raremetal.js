@@ -7,6 +7,8 @@
 const num = require("numeric");
 const jStat = require("jStat");
 const qf = require("./qfc.js");
+const rmath = require("lib-r-math.js");
+const pchisq = rmath.ChiSquared().pchisq;
 
 function arraysEqual(a1,a2) {
   for (let i = 0; i < a1.length; i++) {
@@ -362,21 +364,27 @@ function calcSkatWeights(mafs, a = 1, b = 25) {
  * @param {String} method Can be "satterthwaite", "davies", or "liu"
  *   The Satterthwaite approximation is fastSKAT
  *   Davies is the method used in the original Wu et al. SKAT paper
- * @return {Number} SKAT p-value
+ * @return {Number[]} SKAT p-value
  */
 function testSkat(u, v, w, method = "davies") {
   // Calculate Q
   let q = num.dot(num.dot(u,num.diag(w)),u);
 
   // Calculate lambdas
-  let svd = num.svd(v);
-  let sqrtS = num.sqrt(svd.S);
-  let uT = num.transpose(svd.U);
-  let eigenRhs = num.dot(num.dot(svd.U,num.diag(sqrtS)),uT);
-  let eigenLhs = num.dot(eigenRhs,num.diag(w));
-  let eigen = num.dot(eigenLhs,eigenRhs);
-  let finalSvd = num.svd(eigen);
-  let lambdas = num.abs(finalSvd.S);
+  let lambdas;
+  try {
+    let svd = num.svd(v);
+    let sqrtS = num.sqrt(svd.S);
+    let uT = num.transpose(svd.U);
+    let eigenRhs = num.dot(num.dot(svd.U, num.diag(sqrtS)), uT);
+    let eigenLhs = num.dot(eigenRhs, num.diag(w));
+    let eigen = num.dot(eigenLhs, eigenRhs);
+    let finalSvd = num.svd(eigen);
+    lambdas = num.abs(finalSvd.S);
+  } catch(error) {
+    console.log(error);
+    return [NaN, NaN];
+  }
 
   if (num.sum(lambdas) < 0.0000000001) {
     console.error("Sum of lambda values for SKAT test is essentially zero");
@@ -388,6 +396,8 @@ function testSkat(u, v, w, method = "davies") {
     return _skatSatterthwaite(lambdas, q);
   } else if (method === "davies") {
     return _skatDavies(lambdas, q);
+  } else if (method === "liu") {
+    return _skatLiu(lambdas, q);
   } else {
     throw 'Not implemented';
   }
@@ -395,6 +405,10 @@ function testSkat(u, v, w, method = "davies") {
 
 /**
  * Calculate SKAT p-value using Davies method
+ * @param lambdas Eigenvalues of sqrtV * W * sqrtV
+ * @param qstat SKAT test statistic U.T * W * U
+ * @return {Number[]} pvalue
+ * @private
  */
 function _skatDavies(lambdas, qstat) {
   /**
@@ -443,26 +457,52 @@ function _skatDavies(lambdas, qstat) {
 
 /**
  * Calculate SKAT p-value using Liu method
+ * @param lambdas Eigenvalues of sqrtV * W * sqrtV
+ * @param qstat SKAT test statistic U.T * W * U
+ * @return {Number[]} [qstat, pvalue]
+ * @private
  */
 function _skatLiu(lambdas, qstat) {
-  let iter = 100000;
-  let m = u.length;
-  let [stat, s1, s2, s3] = Array(4).fill(0.0);
-  let x;
-  for (let i = 0; i < m; i++) {
-    stat += u[i] * u[i];
-    x = lambdas[i];
-    s1 += x;
-    x *= x;
-    s2 += x;
-    x *= x;
-    s3 += x;
+  let n = lambdas.length;
+  let [c1, c2, c3, c4] = Array(4).fill(0.0);
+  for (let i = 0; i < n; i++) {
+    let ilambda = lambdas[i];
+    c1 += ilambda;
+    c2 += ilambda * ilambda;
+    c3 += ilambda * ilambda * ilambda;
+    c4 += ilambda * ilambda * ilambda * ilambda;
   }
-  let df = (s2 ** 3) / (s3 ** 2);
-  let a = s3 / s2;
-  let b = s1 - (s2 ** 2) / s3;
-  let chi = (stat - b) / a;
-  return [chi, 1 - jStat.chisquare.cdf(chi, df)];
+
+  let s1 = c3 / Math.sqrt(c2 * c2 * c2);
+  let s2 = c4 / (c2 * c2);
+  let muQ = c1;
+  let sigmaQ = Math.sqrt(2.0 * c2);
+  let tStar = (qstat - muQ) / sigmaQ;
+
+  let delta, l, a;
+  if (s1 * s1 > s2) {
+    a = 1.0 / (s1 - Math.sqrt(s1 * s1 - s2));
+    delta = s1 * a * a * a - a * a;
+    l = a * a - 2.0 * delta;
+  } else {
+    a = 1.0 / s1;
+    delta = 0.0;
+    l = c2 * c2 * c2 / (c3 * c3);
+  }
+
+  let muX = l + delta;
+  let sigmaX = Math.sqrt(2.0) * a;
+  let qNew = tStar * sigmaX + muX;
+  let p;
+
+  if (delta === 0) {
+    p = pchisq(qNew,l,0,0);
+  } else {
+    // Non-central chi-squared
+    p = pchisq(qNew,l,delta,0,0);
+  }
+
+  return [qstat, p];
 }
 
 /**

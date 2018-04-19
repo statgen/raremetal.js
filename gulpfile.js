@@ -1,4 +1,5 @@
 const gulp = require('gulp');
+const gutil = require('gulp-util');
 const loadPlugins = require('gulp-load-plugins');
 const del = require('del');
 const glob = require('glob');
@@ -81,6 +82,7 @@ function build() {
     .pipe($.rename(`${exportFileName}.min.js`))
     .pipe($.sourcemaps.init({loadMaps: true}))
     .pipe($.uglify())
+    .on('error', function (err) { gutil.log(gutil.colors.red('[Error]'), err.toString()); })
     .pipe($.sourcemaps.write('./'))
     .pipe(gulp.dest(destinationFolder));
 }
