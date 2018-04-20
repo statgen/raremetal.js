@@ -195,14 +195,8 @@ gulp.task('lint', ['lint-src', 'lint-test', 'lint-gulpfile']);
 // Build two versions of the library
 gulp.task('build', ['test', 'clean'], build);
 
-// Build two versions of the library
-gulp.task('quick-build', ['clean'], build);
-
 // Lint and run our tests
 gulp.task('test', ['lint'], test);
-
-// Quick test without linting
-gulp.task('quick-test', test);
 
 // Set up coverage and run tests
 gulp.task('coverage', ['lint'], coverage);
@@ -215,4 +209,3 @@ gulp.task('watch', watch);
 
 // An alias of test
 gulp.task('default', ['test']);
-
