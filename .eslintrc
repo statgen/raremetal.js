@@ -29,7 +29,9 @@
         "allow": [
           "log",
           "warn",
-          "error"
+          "error",
+          "time",
+          "timeEnd"
         ]
       }
     ]

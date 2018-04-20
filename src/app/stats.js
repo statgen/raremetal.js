@@ -393,7 +393,8 @@ function testSkat(u, v, w, method = "davies") {
 
   // P-value method
   if (method === "satterthwaite") {
-    return _skatSatterthwaite(lambdas, q);
+    throw 'Not implemented';
+    //return _skatSatterthwaite(lambdas, q);
   } else if (method === "davies") {
     return _skatDavies(lambdas, q);
   } else if (method === "liu") {
@@ -508,16 +509,20 @@ function _skatLiu(lambdas, qstat) {
 /**
  * Calculate SKAT p-value using Satterthwaite approximation
  */
+/*
 function _skatSatterthwaite(lambdas, qstat) {
 
 }
+/*
 
 /**
  * Calculate VT test meta-analysis
  */
+/*
 function testVt(u, v, w) {
 
 }
+*/
 
-module.exports = {ScoreStatTable, GenotypeCovarianceMatrix, VariantMask, testBurden, testSkat, calcSkatWeights, testVt};
+module.exports = {ScoreStatTable, GenotypeCovarianceMatrix, VariantMask, testBurden, testSkat, calcSkatWeights};
 
