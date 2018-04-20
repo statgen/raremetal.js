@@ -19,8 +19,8 @@ describe('Full integration of covariance and aggregation tests', function() {
       results = runAggregationTests(
         {
           'zegginiBurden': testBurden,
-          "skatLiu": {
-            test: (u, v, w) => testSkat(u, v, w, "liu"),
+          'skatLiu': {
+            test: (u, v, w) => testSkat(u, v, w, 'liu'),
             weights: calcSkatWeights
           }
         },
@@ -35,6 +35,11 @@ describe('Full integration of covariance and aggregation tests', function() {
     it('should match expected burden p-value for HIC2', function() {
       let t = results.data.results.filter(x => x.group === 'HIC2' && x.test === 'zegginiBurden')[0];
       assert.closeTo(t.pvalue,0.42913956,0.001);
+    });
+
+    it('should match expected skat liu p-value for HIC2', function() {
+      let t = results.data.results.filter(x => x.group === 'HIC2' && x.test === 'skatLiu')[0];
+      assert.closeTo(t.pvalue,0.739,0.001);
     });
   });
 });
