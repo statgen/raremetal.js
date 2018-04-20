@@ -83,7 +83,6 @@
     "jStat": "^1.7.1",
     "js-yaml": "^3.11.0",
     "lib-r-math.js": "git://github.com/welchr/libRmath.js.git#npm",
-    "node-fetch": "^2.1.2",
     "numeric": "^1.2.6"
   }
 }

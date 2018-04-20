@@ -9,7 +9,6 @@
  */
 
 const {VariantMask, ScoreStatTable, GenotypeCovarianceMatrix, testBurden, testSkat, calcSkatWeights} = require("./stats.js");
-const fetch = require("node-fetch");
 const num = require("numeric");
 
 /**
@@ -208,6 +207,8 @@ function runAggregationTests(tests, scoreCov, metaData) {
 async function _example() {
   // Load example JSON of portal response from requesting covariance in a region
   let json, scoreCov;
+
+  console.time("total json");
   if (isNode()) {
     // We're in node.js, so we can retrieve this directly from the filesystem.
     const fs = require("fs");
@@ -217,12 +218,19 @@ async function _example() {
   }
   else {
     // We're in the browser, so we need to fetch this instead.
+    console.time("fetching json");
     const response = await fetch("example.json");
     json = await response.json();
+    console.timeEnd("fetching json");
+
+    console.time("parsing json");
     scoreCov = parsePortalJson(json);
+    console.timeEnd("parsing json");
   }
+  console.timeEnd("total json");
 
   // Run all tests/masks
+  console.time("running tests");
   let results = runAggregationTests(
     {
       "zegginiBurden": testBurden,
@@ -237,6 +245,7 @@ async function _example() {
       description: "This is an example of running multiple tests and masks at once"
     }
   );
+  console.timeEnd("running tests");
 
   return results;
 }

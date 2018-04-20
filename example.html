@@ -12,10 +12,8 @@
   <!-- Try running a few burden tests -->
   <script>
     console.log("Starting burden tests...");
-    console.time("total runtime")
     let promise = raremetal._example();
     promise.then(x => {
-      console.timeEnd("total runtime");
       console.log(x);
     });
   </script>
