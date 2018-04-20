@@ -1,5 +1,5 @@
 const {parsePortalJson, runAggregationTests} = require('../../src/app/browser.js');
-const {testBurden, testSkat} = require('../../src/app/stats.js');
+const {testBurden, testSkat, calcSkatWeights} = require('../../src/app/stats.js');
 const fs = require('fs');
 
 describe('Full integration of covariance and aggregation tests', function() {
@@ -14,11 +14,15 @@ describe('Full integration of covariance and aggregation tests', function() {
       let jsonRaw = fs.readFileSync('test/integration/example.json');
       let json = JSON.parse(jsonRaw);
       var scoreCov = parsePortalJson(json);
+
       // Run all tests/masks and return results
       results = runAggregationTests(
         {
           'zegginiBurden': testBurden,
-          'skat': testSkat
+          "skatLiu": {
+            test: (u, v, w) => testSkat(u, v, w, "liu"),
+            weights: calcSkatWeights
+          }
         },
         scoreCov,
         {
