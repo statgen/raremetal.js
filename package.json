@@ -17,7 +17,7 @@
     "build": "gulp build && npm run docs && npm run pandoc",
     "quick-build": "gulp quick-build && npm run docs && npm run pandoc",
     "docs": "jsdoc src/app -R README.md -d docs/",
-    "pandoc": "pandoc -V geometry:margin=1in -o docs/api/portal-api.pdf src/docs/portal-api.md",
+    "pandoc": "pandoc -V geometry:margin=1in -o docs/portal-api.pdf src/docs/portal-api.md",
     "coverage": "gulp coverage"
   },
   "repository": {
