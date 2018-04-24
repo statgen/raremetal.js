@@ -7,6 +7,7 @@ const path = require('path');
 const isparta = require('isparta');
 const webpack = require('webpack');
 const webpackStream = require('webpack-stream');
+const ShakePlugin = require('webpack-common-shake').Plugin;
 const uglify = require('gulp-uglify-es').default;
 
 const Instrumenter = isparta.Instrumenter;
@@ -73,6 +74,10 @@ function build() {
           }
         ]
       },
+      plugins: [
+        // CommonJS tree-shaking
+        new ShakePlugin()
+      ],
       devtool: 'source-map',
       node: {
         fs: "empty"
