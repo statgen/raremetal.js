@@ -1,10 +1,11 @@
 const gulp = require('gulp');
 const gutil = require('gulp-util');
 const loadPlugins = require('gulp-load-plugins');
-const del = require('del');
 const path = require('path');
 const isparta = require('isparta');
-const webpack = require('webpack');
+const uglify = require("gulp-uglify-es").default;
+
+const CleanWebpackPlugin = require('clean-webpack-plugin');
 const webpackStream = require('webpack-stream');
 const ShakePlugin = require('webpack-common-shake').Plugin;
 
@@ -20,14 +21,6 @@ const config = manifest.babelBoilerplateOptions;
 const mainFile = manifest.main;
 const destinationFolder = path.dirname(mainFile);
 const exportFileName = path.basename(mainFile, path.extname(mainFile));
-
-function cleanDist(done) {
-  del([destinationFolder]).then(() => done());
-}
-
-function cleanTmp(done) {
-  del(['tmp']).then(() => done());
-}
 
 // Lint a set of files
 function lint(files) {
@@ -57,13 +50,16 @@ function build() {
         libraryTarget: 'umd',
         library: config.mainVarName
       },
-      // Add your own externals here. For instance,
-      // {
-      //   jquery: true
-      // }
-      // would externalize the `jquery` module.
       externals: {},
       module: {
+        // Make sure to load the source maps for any dependent libraries
+        rules: [
+          {
+            test: /\.js$/,
+            use: ["source-map-loader"],
+            enforce: "pre"
+          }
+        ],
         loaders: [
           {
             test: /\.js$/,
@@ -73,9 +69,11 @@ function build() {
         ]
       },
       plugins: [
-        // CommonJS tree-shaking
+        new CleanWebpackPlugin(['dist']),
+        // CommonJS tree-shaking is not well supported by webpack, but this gives some small benefits
         new ShakePlugin()
       ],
+      // TODO: there are known issues with sourcemaps being built from webpack
       devtool: 'source-map',
       node: {
         fs: "empty"
@@ -86,7 +84,9 @@ function build() {
     .pipe($.rename(`${exportFileName}.min.js`))
     .pipe($.sourcemaps.init({ loadMaps: true }))
     .pipe(uglify())
-    .on('error', function (err) { gutil.log(gutil.colors.red('[Error]'), err.toString()); })
+    .on('error', function (err) {
+      gutil.log(gutil.colors.red('[Error]'), err.toString());
+    })
     .pipe($.sourcemaps.write('./'))
     .pipe(gulp.dest(destinationFolder));
 }
@@ -130,12 +130,6 @@ function watch() {
   gulp.watch(watchFiles, ['test']);
 }
 
-// Remove the built files
-gulp.task('clean', cleanDist);
-
-// Remove our temporary files
-gulp.task('clean-tmp', cleanTmp);
-
 // Lint our source code
 gulp.task('lint-src', lintSrc);
 
@@ -149,7 +143,7 @@ gulp.task('lint-gulpfile', lintGulpfile);
 gulp.task('lint', ['lint-src', 'lint-test', 'lint-gulpfile']);
 
 // Build two versions of the library
-gulp.task('build', ['test', 'clean'], build);
+gulp.task('build', ['test'], build);
 
 // Lint and run our tests
 gulp.task('test', ['lint'], test);
