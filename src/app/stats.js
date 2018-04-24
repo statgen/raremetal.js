@@ -7,7 +7,7 @@
 const numeric = require("numeric");  // 70k minified
 const jStat = require("jStat");  // 119k minified
 const qf = require("./qfc.js");  // 55k minified
-const rmath = require("lib-r-math.js");  // 485k minified
+const rmath = require("lib-r-math.js");  // ? minified
 const pchisq = rmath.ChiSquared().pchisq;
 
 function arraysEqual(a1,a2) {
