@@ -4,10 +4,10 @@
  * @license MIT
  */
 
-const num = require("numeric");
-const jStat = require("jStat");
-const qf = require("./qfc.js");
-const rmath = require("lib-r-math.js");
+const numeric = require("numeric");  // 70k minified
+const jStat = require("jStat");  // 119k minified
+const qf = require("./qfc.js");  // 55k minified
+const rmath = require("lib-r-math.js");  // 485k minified
 const pchisq = rmath.ChiSquared().pchisq;
 
 function arraysEqual(a1,a2) {
@@ -329,8 +329,8 @@ function testBurden(u, v, w) {
 
   // This is taken from:
   // https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#BURDEN_META_ANALYSIS
-  let over = num.dot(w, u);
-  let under = Math.sqrt(num.dot(num.dot(w, v), w));
+  let over = numeric.dot(w, u);
+  let under = Math.sqrt(numeric.dot(numeric.dot(w, v), w));
   let z = over / under;
 
   // The -Math.abs(z) is because jStat.normal.cdf returns the lower tail probability from the normal dist
@@ -368,25 +368,25 @@ function calcSkatWeights(mafs, a = 1, b = 25) {
  */
 function testSkat(u, v, w, method = "davies") {
   // Calculate Q
-  let q = num.dot(num.dot(u,num.diag(w)),u);
+  let q = numeric.dot(numeric.dot(u,numeric.diag(w)),u);
 
   // Calculate lambdas
   let lambdas;
   try {
-    let svd = num.svd(v);
-    let sqrtS = num.sqrt(svd.S);
-    let uT = num.transpose(svd.U);
-    let eigenRhs = num.dot(num.dot(svd.U, num.diag(sqrtS)), uT);
-    let eigenLhs = num.dot(eigenRhs, num.diag(w));
-    let eigen = num.dot(eigenLhs, eigenRhs);
-    let finalSvd = num.svd(eigen);
-    lambdas = num.abs(finalSvd.S);
+    let svd = numeric.svd(v);
+    let sqrtS = numeric.sqrt(svd.S);
+    let uT = numeric.transpose(svd.U);
+    let eigenRhs = numeric.dot(numeric.dot(svd.U, numeric.diag(sqrtS)), uT);
+    let eigenLhs = numeric.dot(eigenRhs, numeric.diag(w));
+    let eigen = numeric.dot(eigenLhs, eigenRhs);
+    let finalSvd = numeric.svd(eigen);
+    lambdas = numeric.abs(finalSvd.S);
   } catch(error) {
     console.log(error);
     return [NaN, NaN];
   }
 
-  if (num.sum(lambdas) < 0.0000000001) {
+  if (numeric.sum(lambdas) < 0.0000000001) {
     console.error("Sum of lambda values for SKAT test is essentially zero");
     return [NaN, NaN];
   }
@@ -524,5 +524,7 @@ function testVt(u, v, w) {
 }
 */
 
-module.exports = {ScoreStatTable, GenotypeCovarianceMatrix, VariantMask, testBurden, testSkat, calcSkatWeights};
+const rollup = { ScoreStatTable, GenotypeCovarianceMatrix, VariantMask, testBurden, testSkat, calcSkatWeights };
+export default rollup;
+export { ScoreStatTable, GenotypeCovarianceMatrix, VariantMask, testBurden, testSkat, calcSkatWeights };
 

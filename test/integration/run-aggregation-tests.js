@@ -1,5 +1,5 @@
-const {parsePortalJson, runAggregationTests} = require('../../src/app/browser.js');
-const {testBurden, testSkat, calcSkatWeights} = require('../../src/app/stats.js');
+import { parsePortalJson, runAggregationTests }  from '../../src/app/helpers.js';
+import { testBurden, testSkat, calcSkatWeights } from '../../src/app/stats.js';
 const fs = require('fs');
 
 describe('Full integration of covariance and aggregation tests', function() {

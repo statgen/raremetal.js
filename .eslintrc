@@ -21,7 +21,7 @@
     ],
     "object-curly-spacing": [
       "error",
-      "never"
+      "always"
     ],
     "no-console": [
       "error",

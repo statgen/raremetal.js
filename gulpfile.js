@@ -7,7 +7,7 @@ const path = require('path');
 const isparta = require('isparta');
 const webpack = require('webpack');
 const webpackStream = require('webpack-stream');
-const uglify = require("gulp-uglify-es").default;
+const uglify = require('gulp-uglify-es').default;
 
 const Instrumenter = isparta.Instrumenter;
 const mochaGlobals = require('./test/setup/.globals');
@@ -81,7 +81,7 @@ function build() {
     .pipe(gulp.dest(destinationFolder))
     .pipe($.filter(['**', '!**/*.js.map']))
     .pipe($.rename(`${exportFileName}.min.js`))
-    .pipe($.sourcemaps.init({loadMaps: true}))
+    .pipe($.sourcemaps.init({ loadMaps: true }))
     .pipe(uglify())
     .on('error', function (err) { gutil.log(gutil.colors.red('[Error]'), err.toString()); })
     .pipe($.sourcemaps.write('./'))
@@ -89,7 +89,7 @@ function build() {
 }
 
 function _mocha() {
-  return gulp.src(['test/setup/node.js', 'test/unit/**/*.js', 'test/integration/**/*.js'], {read: false})
+  return gulp.src(['test/setup/node.js', 'test/unit/**/*.js', 'test/integration/**/*.js'], { read: false })
     .pipe($.mocha({
       globals: Object.keys(mochaGlobals.globals),
       ignoreLeaks: false
@@ -153,18 +153,18 @@ function testBrowser() {
       module: {
         loaders: [
           // This is what allows us to author in future JavaScript
-          {test: /\.js$/, exclude: /node_modules/, loader: 'babel-loader'}
+          { test: /\.js$/, exclude: /node_modules/, loader: 'babel-loader' }
         ]
       },
       plugins: [
         // By default, webpack does `n=>n` compilation with entry files. This concatenates
         // them into a single chunk.
-        new webpack.optimize.LimitChunkCountPlugin({maxChunks: 1})
+        new webpack.optimize.LimitChunkCountPlugin({ maxChunks: 1 })
       ],
       devtool: 'inline-source-map'
     }, null, () => {
       if (firstBuild) {
-        $.livereload.listen({port: 35729, host: 'localhost', start: true});
+        $.livereload.listen({ port: 35729, host: 'localhost', start: true });
         gulp.watch(watchFiles, ['lint']);
       } else {
         $.livereload.reload('./tmp/__spec-build.js');
