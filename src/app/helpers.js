@@ -3,6 +3,8 @@
  */
 
 
+const numeric = require("numeric");
+
 import { calcSkatWeights, GenotypeCovarianceMatrix, ScoreStatTable, testBurden, testSkat, VariantMask } from "./stats";
 
 /**
