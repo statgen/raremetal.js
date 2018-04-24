@@ -6,9 +6,9 @@
 
 const fs = require("fs");
 const readline = require("readline");
-const {execSync, spawn} = require("child_process");
-const {REGEX_EPACTS} = require("./constants.js");
-const {ScoreStatTable, GenotypeCovarianceMatrix, VariantMask} = require("./stats.js");
+const { execSync, spawn } = require("child_process");
+const { REGEX_EPACTS } = require("./constants.js");
+const { ScoreStatTable, GenotypeCovarianceMatrix, VariantMask } = require("./stats.js");
 const num = require("numeric");
 const zlib = require("zlib");
 
@@ -61,7 +61,7 @@ function _variantSort(a, b) {
  * @param {string} fpath Path to mask file
  */
 function readMaskFileSync(fpath) {
-  const data = fs.readFileSync(fpath, {encoding: "utf8"});
+  const data = fs.readFileSync(fpath, { encoding: "utf8" });
   const mask = new VariantMask();
   for (let line of data.split("\n")) {
     line = line.trim();
@@ -125,7 +125,7 @@ async function extractScoreStats(fpath, region, variants) {
   }
 
   // Read in data in region from tabix
-  const lines = execSync(`tabix -h ${fpath} ${region}`, {encoding: "utf8"});
+  const lines = execSync(`tabix -h ${fpath} ${region}`, { encoding: "utf8" });
 
   const given_variants = variants != null;
   if (given_variants) {
@@ -194,7 +194,7 @@ async function extractScoreStats(fpath, region, variants) {
  */
 function getNumberOfVariantsFromCovarianceFile(covar_file, region) {
   const cmd = `tabix ${covar_file} ${region}`;
-  const lines = execSync(cmd, {encoding: "utf8"});
+  const lines = execSync(cmd, { encoding: "utf8" });
   const positions = new Set();
   for (let e of lines.split("\n")) {
     if (e.startsWith("#")) continue;
@@ -300,7 +300,7 @@ async function extractCovariance(fpath, region, variants, scoreStats) {
   // Call tabix and prepare to extract the region of interest
   // This uses readline to iterate over the results from tabix line by line
   const cmd = `tabix ${fpath} ${region}`;
-  const proc = spawn(cmd, [], {shell: true});
+  const proc = spawn(cmd, [], { shell: true });
   const rl = readline.createInterface(proc.stdout);
 
   // Async start reading lines into array, formatting as necessary
@@ -487,5 +487,5 @@ async function extractCovariance(fpath, region, variants, scoreStats) {
 //   return new GenotypeCovarianceMatrix(covmat,variants,positions);
 // }
 
-module.exports = {readMaskFileSync, extractScoreStats, extractCovariance, detectFormat};
+module.exports = { readMaskFileSync, extractScoreStats, extractCovariance, detectFormat };
 

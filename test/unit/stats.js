@@ -1,4 +1,4 @@
-const {testBurden} = require('../../src/app/stats.js');
+const { testBurden } = require('../../src/app/stats.js');
 
 describe('stats.js', function() {
   describe('testBurden', function() {
