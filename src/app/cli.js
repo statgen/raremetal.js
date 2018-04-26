@@ -6,10 +6,10 @@
  * @license MIT
  */
 
-const {ArgumentParser} = require("argparse");
-const {readMaskFileSync, extractScoreStats, extractCovariance} = require("./fio.js");
-const {REGEX_EPACTS} = require("./constants.js");
-const {testBurden, testSkat, calcSkatWeights} = require("./stats.js");
+const { ArgumentParser } = require("argparse");
+const { readMaskFileSync, extractScoreStats, extractCovariance } = require("./fio.js");
+const { REGEX_EPACTS } = require("./constants.js");
+const { testBurden, testSkat, calcSkatWeights } = require("./stats.js");
 const fs = require("fs");
 const yaml = require("js-yaml");
 
@@ -24,17 +24,17 @@ function getSettings() {
     dest: "subcommand"
   });
 
-  let single = subParsers.addParser("single", {addHelp: true});
+  let single = subParsers.addParser("single", { addHelp: true });
 
-  single.addArgument(["-m", "--mask"], {help: "Mask file defining variants assigned to each group"});
-  single.addArgument(["-s", "--score"], {help: "File containing score statistics per variant"});
-  single.addArgument(["-t", "--test"], {help: "Specify group-based test to run. Can be 'burden', 'skat'."});
-  single.addArgument(["-c", "--cov"], {help: "File containing covariance statistics across windows of variants"});
-  single.addArgument(["-g", "--group"], {help: "Only analyze 1 group/gene."});
-  single.addArgument(["-o", "--out"], {help: "File to write results to."});
+  single.addArgument(["-m", "--mask"], { help: "Mask file defining variants assigned to each group" });
+  single.addArgument(["-s", "--score"], { help: "File containing score statistics per variant" });
+  single.addArgument(["-t", "--test"], { help: "Specify group-based test to run. Can be 'burden', 'skat'." });
+  single.addArgument(["-c", "--cov"], { help: "File containing covariance statistics across windows of variants" });
+  single.addArgument(["-g", "--group"], { help: "Only analyze 1 group/gene." });
+  single.addArgument(["-o", "--out"], { help: "File to write results to." });
 
-  let meta = subParsers.addParser("meta", {addHelp: true});
-  meta.addArgument(["--spec"], {help: "YAML file specifying studies & their files."});
+  let meta = subParsers.addParser("meta", { addHelp: true });
+  meta.addArgument(["--spec"], { help: "YAML file specifying studies & their files." });
 
   return parser.parseArgs();
 }
@@ -117,7 +117,7 @@ async function single(args) {
 
   if (args.out != null) {
     // @todo should compress this
-    fs.writeFileSync(args.out, results.toString(), {encoding: "utf8"});
+    fs.writeFileSync(args.out, results.toString(), { encoding: "utf8" });
   } else {
     console.log(results.toString());
   }
@@ -211,7 +211,7 @@ async function meta(args) {
     let test_results = results[test];
 
     // @todo should compress this
-    fs.writeFileSync(out, test_results.toString(), {encoding: "utf8"});
+    fs.writeFileSync(out, test_results.toString(), { encoding: "utf8" });
   }
 
   return results;

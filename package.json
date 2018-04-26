@@ -1,5 +1,6 @@
 {
   "name": "raremetal.js",
+  "sideEffects": false,
   "version": "0.1.0",
   "description": "Calculate aggregation tests and meta-analysis of aggregation test results using score statistics and covariance matrices",
   "engines": {
@@ -40,6 +41,7 @@
   },
   "homepage": "https://github.com/statgen/raremetal.js",
   "devDependencies": {
+    "argparse": "^1.0.10",
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.4",
     "babel-plugin-transform-runtime": "^6.23.0",
@@ -47,8 +49,8 @@
     "babel-preset-env": "^1.6.1",
     "babel-register": "^6.26.0",
     "chai": "^4.1.2",
+    "clean-webpack-plugin": "^0.1.19",
     "cli-table": "^0.3.1",
-    "del": "^3.0.0",
     "glob": "7.1.2",
     "gulp": "^3.9.1",
     "gulp-eslint": "^4.0.2",
@@ -65,11 +67,14 @@
     "gulp-uglify": "3.0.0",
     "gulp-uglify-es": "^1.0.1",
     "isparta": "4.0.0",
+    "js-yaml": "^3.11.0",
     "jsdoc": "^3.5.5",
     "mocha": "^5.0.5",
     "sinon": "^4.5.0",
     "sinon-chai": "^3.0.0",
+    "source-map-loader": "^0.2.3",
     "webpack": "^3.11.0",
+    "webpack-common-shake": "^1.5.3",
     "webpack-stream": "^4.0.3"
   },
   "babelBoilerplateOptions": {
@@ -77,10 +82,7 @@
     "mainVarName": "raremetal"
   },
   "dependencies": {
-    "argparse": "^1.0.10",
-    "cli-table2": "^0.2.0",
     "jStat": "^1.7.1",
-    "js-yaml": "^3.11.0",
     "lib-r-math.js": "git://github.com/welchr/libRmath.js.git#npm",
     "numeric": "^1.2.6"
   }
