@@ -450,8 +450,8 @@ function _skatDavies(lambdas, qstat) {
     throw new Error("Mixture chi-square CDF returned an error code of " + ifault.toString());
   }
 
-  qfval = 1.0 - qfval;
-  return qfval;
+  pval = 1.0 - qfval;
+  return [qstat, pval];
 }
 
 /**
