@@ -5,7 +5,7 @@
 
 const numeric = require("numeric");
 
-import { calcSkatWeights, GenotypeCovarianceMatrix, ScoreStatTable, testBurden, testSkat, VariantMask } from "./stats";
+const { VariantMask, ScoreStatTable, GenotypeCovarianceMatrix, testBurden, testSkat, calcSkatWeights } = require("./stats.js");
 
 /**
  * Parse the idealized portal response JSON for requesting covariance matrices
@@ -214,7 +214,4 @@ async function _example(filename) {
   return runAggregationTests(tests, scoreCov, metadata);
 }
 
-
-const rollup = { parsePortalCovariance, runAggregationTests, _example };
-export default rollup;
-export { parsePortalCovariance, runAggregationTests, _example };
+module.exports =  { parsePortalCovariance, runAggregationTests, _example };

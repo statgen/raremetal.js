@@ -540,7 +540,5 @@ function testVt(u, v, w) {
 }
 */
 
-const rollup = { ScoreStatTable, GenotypeCovarianceMatrix, VariantMask, testBurden, testSkat, calcSkatWeights };
-export default rollup;
-export { ScoreStatTable, GenotypeCovarianceMatrix, VariantMask, testBurden, testSkat, calcSkatWeights };
+module.exports = { ScoreStatTable, GenotypeCovarianceMatrix, VariantMask, testBurden, testSkat, calcSkatWeights };
 

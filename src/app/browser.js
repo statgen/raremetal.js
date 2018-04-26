@@ -9,10 +9,9 @@
  * @license MIT
  */
 
-import helpers from './helpers.js';
-import stats from './stats.js';
+// For now, this will need to be built with webpack. For the purposes of future migration path we will attempt to
+//   support es6 semantics where feasible in browser-facing code.
+const helpers = require('./helpers.js');
+const stats = require('./stats.js');
 
-
-// TODO: For now the "rollup" of each module's contents must be maintained manually, but there are TC39 proposals
-//   (eg export-ns-from) for language features that will eventually streamline this process
 export { helpers, stats };
