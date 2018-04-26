@@ -6,7 +6,7 @@
 
 const num = require("numeric");
 const jStat = require("jStat");
-const qf = require("./qfc.js");
+const qfc = require("./qfc.js");
 const rmath = require("lib-r-math.js");
 const pchisq = rmath.ChiSquared().pchisq;
 
@@ -441,19 +441,17 @@ function _skatDavies(lambdas, qstat) {
   let n = lambdas.length;
   let nc1 = Array(n).fill(0);
   let n1 = Array(n).fill(1);
-  let trace = Array(7).fill(0);
   let sigma = 0.0;
   let lim1 = 10000;
   let acc = 0.0001;
-  let ifault = 0;
-  let res = qf._qf(lambdas, nc1, n1, n, sigma, qstat, lim1, acc, trace, ifault);
+  let [ qfval, ifault, trace ] = qfc.qf(lambdas, nc1, n1, n, sigma, qstat, lim1, acc);
 
   if (ifault > 0) {
     throw new Error("Mixture chi-square CDF returned an error code of " + ifault.toString());
   }
 
-  res = 1.0 - res;
-  return [qstat, res];
+  qfval = 1.0 - qfval;
+  return qfval;
 }
 
 /**
