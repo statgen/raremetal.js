@@ -444,7 +444,7 @@ function _skatDavies(lambdas, qstat) {
   let sigma = 0.0;
   let lim1 = 10000;
   let acc = 0.0001;
-  let [ qfval, ifault, trace ] = qfc.qf(lambdas, nc1, n1, n, sigma, qstat, lim1, acc);
+  let [ qfval, ifault, , ] = qfc.qf(lambdas, nc1, n1, n, sigma, qstat, lim1, acc);
 
   if (ifault > 0) {
     throw new Error("Mixture chi-square CDF returned an error code of " + ifault.toString());
