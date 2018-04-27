@@ -44,6 +44,34 @@ describe('qfc.js', function() {
         count += 1;
       }
     });
+
+    describe('Edge cases found from testing genome-wide', function() {
+      it('case 1', function() {
+        let lambdas = [ 164121.3743475122,
+          14747.802766005561,
+          14747.076530665458,
+          14721.947692685235 ];
+        let nc1 = [
+          0,
+          0,
+          0,
+          0
+        ];
+        let n1 = [
+          1,
+          1,
+          1,
+          1
+        ];
+        let n = 4;
+        let sigma = 0;
+        let acc = 0.0001;
+        let lim = 10000;
+        let qstat = 48692.70492647851;
+        let res = qfc.qf(lambdas, nc1, n1, n, sigma, qstat, lim, acc);
+        assert.closeTo(res[0],0.1891,0.001)
+      })
+    });
   });
 });
 
