@@ -5,10 +5,11 @@
  */
 
 const num = require("numeric");
-const jStat = require("jStat");
 const qfc = require("./qfc.js");
 const rmath = require("lib-r-math.js");
 const pchisq = rmath.ChiSquared().pchisq;
+const dbeta = rmath.Beta().dbeta;
+const pnorm = rmath.Normal().pnorm;
 
 function arraysEqual(a1,a2) {
   for (let i = 0; i < a1.length; i++) {
@@ -333,9 +334,9 @@ function testBurden(u, v, w) {
   let under = Math.sqrt(num.dot(num.dot(w, v), w));
   let z = over / under;
 
-  // The -Math.abs(z) is because jStat.normal.cdf returns the lower tail probability from the normal dist
+  // The -Math.abs(z) is because pnorm returns the lower tail probability from the normal dist
   // The * 2 is for a two-sided p-value.
-  let p = jStat.normal.cdf(-Math.abs(z), 0, 1) * 2;
+  let p = pnorm(-Math.abs(z), 0, 1) * 2;
   return [z, p];
 }
 
@@ -348,7 +349,7 @@ function testBurden(u, v, w) {
 function calcSkatWeights(mafs, a = 1, b = 25) {
   let weights = Array(mafs.length).fill(NaN);
   for (let i = 0; i < mafs.length; i++) {
-    let w = jStat.beta.pdf(mafs[i], a, b);
+    let w = dbeta(mafs[i], a, b);
     w *= w;
     weights[i] = w;
   }
