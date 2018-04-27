@@ -26,7 +26,7 @@ function exp1(x) {
 function counter() {
   count += 1;
   if (count > lim) {
-    throw new RangeError("Exceeded limit");
+    throw new RangeError("Exceeded limit of " + lim + " calls");
   }
 }
 
@@ -286,6 +286,7 @@ function qf(lb1, nc1, n1, r1, sigma, c1, lim1, acc)  {
     return [qfval, ifault, trace];
   }
 
+  count = 0;
   r = r1;
   lim = lim1;
   c = c1;
@@ -340,104 +341,116 @@ function qf(lb1, nc1, n1, r1, sigma, c1, lim1, acc)  {
   up = 4.5 / sd;
   un = -up;
 
-  /* truncation point with no convergence factor */
-  utx = findu(utx, 0.5 * acc1);
+  try {
+    /* truncation point with no convergence factor */
+    utx = findu(utx, 0.5 * acc1);
 
-  /* does convergence factor help */
-  if (c != 0.0 && (almx > 0.07 * sd)) {
-    tausq = .25 * acc1 / cfe(c);
-    if (fail)
-      fail = FALSE;
-    else if (truncation(utx, tausq) < .2 * acc1) {
-      sigsq = sigsq + tausq;
-      utx = findu(utx, 0.25 * acc1);
-      trace[5] = Math.sqrt(tausq);
+    /* does convergence factor help */
+    if (c != 0.0 && (almx > 0.07 * sd)) {
+      tausq = .25 * acc1 / cfe(c);
+      if (fail)
+        fail = false;
+      else if (truncation(utx, tausq) < .2 * acc1) {
+        sigsq = sigsq + tausq;
+        utx = findu(utx, 0.25 * acc1);
+        trace[5] = Math.sqrt(tausq);
+      }
     }
-  }
-  trace[4] = utx;
-  acc1 = 0.5 * acc1;
+    trace[4] = utx;
+    acc1 = 0.5 * acc1;
 
-  /* find RANGE of distribution, quit if outside this */
-  let ctffx;
-  function l1() {
-    [ctffx, up] = ctff(acc1, up);
-    d1 = ctffx - c;
-    if (d1 < 0.0) {
-      qfval = 1.0;
-      return done();
+    /* find RANGE of distribution, quit if outside this */
+    let ctffx;
+
+    function l1() {
+      [ctffx, up] = ctff(acc1, up);
+      d1 = ctffx - c;
+      if (d1 < 0.0) {
+        qfval = 1.0;
+        return done();
+      }
+      [ctffx, un] = ctff(acc1, un);
+      d2 = c - ctffx;
+      if (d2 < 0.0) {
+        qfval = 0.0;
+        return done();
+      }
+
+      /* find integration interval */
+      intv = 2.0 * pi / ((d1 > d2) ? d1 : d2);
+
+      /* calculate number of terms required for main and
+         auxillary integrations */
+      xnt = utx / intv;
+      xntm = 3.0 / Math.sqrt(acc1);
+      if (xnt > xntm * 1.5) {
+        /* parameters for auxillary integration */
+        if (xntm > xlim) {
+          ifault = 1;
+          return done();
+        }
+        ntm = Math.floor(xntm + 0.5);
+        intv1 = utx / ntm;
+        x = 2.0 * pi / intv1;
+        if (x <= Math.abs(c)) return l2();
+
+        /* calculate convergence factor */
+        tausq = .33 * acc1 / (1.1 * (cfe(c - x) + cfe(c + x)));
+        if (fail) return l2();
+        acc1 = .67 * acc1;
+
+        /* auxillary integration */
+        integrate(ntm, intv1, tausq, false);
+        xlim = xlim - xntm;
+        sigsq = sigsq + tausq;
+        trace[2] = trace[2] + 1;
+        trace[1] = trace[1] + ntm + 1;
+
+        /* find truncation point with new convergence factor */
+        utx = findu(utx, .25 * acc1);
+        acc1 = 0.75 * acc1;
+        return l1();
+      }
+
+      return l2();
     }
-    [ctffx, un] = ctff(acc1, un);
-    d2 = c - ctffx;
-    if (d2 < 0.0) {
-      qfval = 0.0;
-      return done();
-    }
 
-    /* find integration interval */
-    intv = 2.0 * pi / ((d1 > d2) ? d1 : d2);
-
-    /* calculate number of terms required for main and
-       auxillary integrations */
-    xnt = utx / intv;
-    xntm = 3.0 / Math.sqrt(acc1);
-    if (xnt > xntm * 1.5) {
-      /* parameters for auxillary integration */
-      if (xntm > xlim) {
+    /* main integration */
+    function l2() {
+      trace[3] = intv;
+      if (xnt > xlim) {
         ifault = 1;
         return done();
       }
-      ntm = Math.floor(xntm + 0.5);
-      intv1 = utx / ntm;
-      x = 2.0 * pi / intv1;
-      if (x <= Math.abs(c)) return l2();
-
-      /* calculate convergence factor */
-      tausq = .33 * acc1 / (1.1 * (cfe(c - x) + cfe(c + x)));
-      if (fail) return l2();
-      acc1 = .67 * acc1;
-
-      /* auxillary integration */
-      integrate(ntm, intv1, tausq, false);
-      xlim = xlim - xntm;
-      sigsq = sigsq + tausq;
+      nt = Math.floor(xnt + 0.5);
+      integrate(nt, intv, 0.0, true);
       trace[2] = trace[2] + 1;
-      trace[1] = trace[1] + ntm + 1;
+      trace[1] = trace[1] + nt + 1;
+      qfval = 0.5 - intl;
+      trace[0] = ersm;
 
-      /* find truncation point with new convergence factor */
-      utx = findu(utx, .25 * acc1);
-      acc1 = 0.75 * acc1;
-      l1();
-    }
+      /* test whether round-off error could be significant
+         allow for radix 8 or 16 machines */
+      up = ersm;
+      x = up + acc / 10.0;
+      for (j = 0; j < 4; j++) {
+        if (rats[j] * x === rats[j] * up) ifault = 2;
+      }
 
-    return l2();
-  }
-
-  /* main integration */
-  function l2() {
-    trace[3] = intv;
-    if (xnt > xlim) {
-      ifault = 1;
       return done();
     }
-    nt = Math.floor(xnt + 0.5);
-    integrate(nt, intv, 0.0, true);
-    trace[2] = trace[2] + 1;
-    trace[1] = trace[1] + nt + 1;
-    qfval = 0.5 - intl;
-    trace[0] = ersm;
 
-    /* test whether round-off error could be significant
-       allow for radix 8 or 16 machines */
-    up = ersm;
-    x = up + acc / 10.0;
-    for (j = 0; j < 4; j++) {
-      if (rats[j] * x === rats[j] * up) ifault = 2;
-    }
-
-    return done();
+    return l1();
   }
-
-  return l1();
+  catch (error) {
+    if (error.name === "RangeError") {
+      ifault = 4;
+      return done();
+    }
+    else {
+      throw error;
+    }
+  }
 }
 
 module.exports = { qf };

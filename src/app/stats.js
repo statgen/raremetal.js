@@ -396,7 +396,14 @@ function testSkat(u, v, w, method = "davies") {
     throw 'Not implemented';
     //return _skatSatterthwaite(lambdas, q);
   } else if (method === "davies") {
-    return _skatDavies(lambdas, q);
+    if (lambdas.length == 1) {
+      // Davies method does not support 1 lambda
+      // This is what raremetal does
+      return _skatLiu(lambdas, q);
+    }
+    else {
+      return _skatDavies(lambdas, q);
+    }
   } else if (method === "liu") {
     return _skatLiu(lambdas, q);
   } else {
@@ -444,13 +451,23 @@ function _skatDavies(lambdas, qstat) {
   let sigma = 0.0;
   let lim1 = 10000;
   let acc = 0.0001;
-  let [ qfval, ifault, , ] = qfc.qf(lambdas, nc1, n1, n, sigma, qstat, lim1, acc);
+  let res = qfc.qf(lambdas, nc1, n1, n, sigma, qstat, lim1, acc);
+  let qfval = res[0];
 
-  if (ifault > 0) {
-    throw new Error("Mixture chi-square CDF returned an error code of " + ifault.toString());
+  let pval = 1.0 - qfval;
+
+  if (pval <= 0 || pval === 2.0) {
+    // Routine adapted from raremetal
+    let iter = 0;
+    while ((iter < 10000) && (pval <= 0 || pval === 2.0)) {
+      qstat *= 0.9999;
+      res = qfc.qf(lambdas, nc1, n1, n, sigma, qstat, lim1, acc);
+      qfval = res[0];
+      pval = 1 - qfval;
+      iter += 1;
+    }
   }
 
-  pval = 1.0 - qfval;
   return [qstat, pval];
 }
 
