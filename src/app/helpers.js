@@ -12,7 +12,7 @@ const { VariantMask, ScoreStatTable, GenotypeCovarianceMatrix, testBurden, testS
  * A spec of this format can be found in src/docs/portal-api.md
  * @param json
  */
-function parsePortalCovariance(json) {
+function parsePortalJson(json) {
   // Result storage
   let loaded = {
     masks: {},
@@ -130,7 +130,7 @@ function parsePortalCovariance(json) {
  * but in reality it can be anything.
  *
  * @param tests A mapping of test labels -> test functions
- * @param scoreCov Object retrieved from parsePortalCovariance(). Contains masks, score statistics, and covariance matrices.
+ * @param scoreCov Object retrieved from parsePortalJson(). Contains masks, score statistics, and covariance matrices.
  * @param metaData An object that will be returned with the results. It could have an ID or description of what was tested.
  * @return {Promise<Object>} Rows of results, one per mask * group
  */
@@ -196,7 +196,7 @@ async function _example(filename) {
   filename = filename || "example.json";
   const response = await fetch(filename, { credentials: 'include' });
   const json = await response.json();
-  const scoreCov = parsePortalCovariance(json);
+  const scoreCov = parsePortalJson(json);
 
   const tests = {
     "zegginiBurden": testBurden,
@@ -218,4 +218,4 @@ async function _example(filename) {
   return runAggregationTests(tests, scoreCov, metadata);
 }
 
-module.exports =  { parsePortalCovariance, runAggregationTests, _example };
+module.exports =  { parsePortalJson, runAggregationTests, _example };

@@ -1,4 +1,4 @@
-import { parsePortalCovariance, runAggregationTests }  from '../../src/app/helpers.js';
+import { parsePortalJson, runAggregationTests }  from '../../src/app/helpers.js';
 import { testBurden, testSkat, calcSkatWeights } from '../../src/app/stats.js';
 const fs = require('fs');
 
@@ -13,7 +13,7 @@ describe('Full integration of covariance and aggregation tests', function() {
       // Load example JSON of portal response from requesting covariance in a region
       let jsonRaw = fs.readFileSync('test/integration/example.json');
       let json = JSON.parse(jsonRaw);
-      var scoreCov = parsePortalCovariance(json);
+      var scoreCov = parsePortalJson(json);
 
       // Run all tests/masks and return results
       results = runAggregationTests(
