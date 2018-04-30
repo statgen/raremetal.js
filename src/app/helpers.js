@@ -203,6 +203,10 @@ async function _example(filename) {
     "skatLiu": {
       test: (u, v, w) => testSkat(u, v, w, "liu"),
       weights: calcSkatWeights
+    },
+    "skatDavies": {
+      test: (u, v, w) => testSkat(u, v, w, "davies"),
+      weights: calcSkatWeights
     }
   };
   const metadata = {
