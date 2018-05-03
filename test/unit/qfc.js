@@ -2,8 +2,7 @@
  * These are the original test values supplied with the qfc.c source code.
  */
 
-const { assert } = require('chai');
-const qfc = require('../../src/app/qfc.js');
+import qfc from '../../src/app/qfc.js';
 
 describe('qfc.js', function() {
   describe('qf()', function() {
