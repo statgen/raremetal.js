@@ -4,9 +4,10 @@
  * @license MIT
  */
 
-const qfc = require("./qfc.js");
-const rmath = require("lib-r-math.js");
-const numeric = require("numeric");  // 70k minified
+import * as qfc from './qfc.js';
+import * as rmath from 'lib-r-math.js';
+import numeric from 'numeric';
+
 const pchisq = rmath.ChiSquared().pchisq;
 const dbeta = rmath.Beta().dbeta;
 const pnorm = rmath.Normal().pnorm;
@@ -540,5 +541,4 @@ function testVt(u, v, w) {
 }
 */
 
-module.exports = { ScoreStatTable, GenotypeCovarianceMatrix, VariantMask, testBurden, testSkat, calcSkatWeights };
-
+export { ScoreStatTable, GenotypeCovarianceMatrix, VariantMask, testBurden, testSkat, calcSkatWeights };

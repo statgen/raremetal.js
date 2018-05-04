@@ -9,9 +9,7 @@
  * @license MIT
  */
 
-// For now, this will need to be built with webpack. For the purposes of future migration path we will attempt to
-//   support es6 semantics where feasible in browser-facing code.
-const helpers = require('./helpers.js');
-const stats = require('./stats.js');
+import * as helpers from './helpers.js';
+import * as stats from './stats.js';
 
 export { helpers, stats };

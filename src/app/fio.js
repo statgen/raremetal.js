@@ -4,13 +4,13 @@
  * @license MIT
  */
 
-const fs = require("fs");
-const readline = require("readline");
-const { execSync, spawn } = require("child_process");
-const { REGEX_EPACTS } = require("./constants.js");
-const { ScoreStatTable, GenotypeCovarianceMatrix, VariantMask } = require("./stats.js");
-const num = require("numeric");
-const zlib = require("zlib");
+import fs from 'fs';
+import readline from 'readline';
+import { execSync, spawn } from 'child_process';
+import REGEX_EPACTS from './constants.js';
+import { ScoreStatTable, GenotypeCovarianceMatrix, VariantMask } from './stats.js';
+import numeric from 'numeric';
+import zlib from 'zlib';
 
 const STATS_FORMAT = {
   "RAREMETAL": 0,
@@ -383,7 +383,7 @@ async function extractCovariance(fpath, region, variants, scoreStats) {
       // For some reason rvtest/RAREMETAL divide by the sample size.
       if (stored_value) {
         // We successfully read at least 1 value into the covariance matrix
-        covmat = num.mul(scoreStats.sampleSize, covmat);
+        covmat = numeric.mul(scoreStats.sampleSize, covmat);
         let covobj = new GenotypeCovarianceMatrix(covmat, variants, positions);
         resolve(covobj);
       } else {
@@ -487,5 +487,5 @@ async function extractCovariance(fpath, region, variants, scoreStats) {
 //   return new GenotypeCovarianceMatrix(covmat,variants,positions);
 // }
 
-module.exports = { readMaskFileSync, extractScoreStats, extractCovariance, detectFormat };
+export { readMaskFileSync, extractScoreStats, extractCovariance, detectFormat };
 

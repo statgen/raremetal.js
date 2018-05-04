@@ -2,7 +2,7 @@
  * These are the original test values supplied with the qfc.c source code.
  */
 
-import qfc from '../../src/app/qfc.js';
+import * as qfc from '../../src/app/qfc.js';
 
 describe('qfc.js', function() {
   describe('qf()', function() {

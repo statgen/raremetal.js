@@ -453,4 +453,4 @@ function qf(lb1, nc1, n1, r1, sigma, c1, lim1, acc)  {
   }
 }
 
-module.exports = { qf };
+export { qf };

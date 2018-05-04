@@ -9,7 +9,7 @@
  * @license MIT
  */
 
-const Table = require("cli-table2");
+import Table from 'cli-table2';
 
 /**
  * Pretty print a table of score statistics
@@ -47,4 +47,4 @@ function printCovarianceMatrix(matrix) {
   console.log("\n");
 }
 
-module.exports = { printScoreTable, printCovarianceMatrix };
+export { printScoreTable, printCovarianceMatrix };

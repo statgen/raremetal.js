@@ -2,10 +2,8 @@
  * Helper methods devoted to running a calculation
  */
 
-
-const numeric = require("numeric");
-
-const { VariantMask, ScoreStatTable, GenotypeCovarianceMatrix, testBurden, testSkat, calcSkatWeights } = require("./stats.js");
+import numeric from 'numeric';
+import { VariantMask, ScoreStatTable, GenotypeCovarianceMatrix, testBurden, testSkat, calcSkatWeights } from './stats.js';
 
 /**
  * Parse the idealized portal response JSON for requesting covariance matrices
@@ -220,4 +218,4 @@ async function _example(filename) {
   return runAggregationTests(tests, scoreCov, metadata);
 }
 
-module.exports =  { parsePortalJson, runAggregationTests, _example };
+export { parsePortalJson, runAggregationTests, _example };

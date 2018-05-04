@@ -2,10 +2,14 @@
 
 /**
  * Command-line interface for running aggregation tests locally in node.js
+ *
+ * This file should be the only file using node.js require() - the remainder of the package uses ES6 module imports. 
+ *
  * @module cli
  * @license MIT
  */
 
+require("babel-register");
 const { ArgumentParser } = require("argparse");
 const { readMaskFileSync, extractScoreStats, extractCovariance } = require("./fio.js");
 const { REGEX_EPACTS } = require("./constants.js");
