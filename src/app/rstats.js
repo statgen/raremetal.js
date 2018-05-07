@@ -1,6 +1,11 @@
 /**
  * JavaScript port of Rmath functions
  *
+ * @todo Fix exports in this file
+ * @todo Make sure Matthew is in contributors
+ * @todo Test against R (mocha test cases?)
+ * @todo Fix license when more information known
+ *
  * @author Matthew Flickinger
  * @author Ryan Welch
  * @license LGPL?
@@ -9,8 +14,9 @@
 // Constants
 
 const DBL_EPSILON = 2.2204460492503130808472633361816e-16;
-const DBL_MIN = 2.2250738585072014e-308;
-const DBL_MAX_EXP = 1020; //this is a guess
+const DBL_MIN = Number.MIN_VALUE;
+const DBL_MAX_EXP = 308;
+const DBL_MIN_EXP = -323;
 const DBL_MAX = Number.MAX_VALUE;
 const SCALE_FACTOR = 1.157920892373162e+77;
 const EULERS_CONST = 0.5772156649015328606065120900824024;
@@ -20,12 +26,50 @@ const LGAMMA_C = 0.2273736845824652515226821577978691e-12;
 const DXREL = 1.490116119384765625e-8;
 
 const M_LN2 = Math.LN2; //0.693147180559945309417232121458;
+const M_LN10 = Math.LN10; //2.302585092994045684017991454684;
 const M_PI = Math.PI;
 const M_2PI = 2 * M_PI;
 const M_LN_SQRT_2PI = Math.log(Math.sqrt(M_2PI));
 const M_SQRT_32 = 5.656854249492380195206754896838;
 const M_1_SQRT_2PI = 0.398942280401432677939946059934;
 const M_CUTOFF = M_LN2 * DBL_MAX_EXP / DBL_EPSILON;
+
+const _dbl_min_exp = M_LN2 * DBL_MIN_EXP;
+
+const ME_DOMAIN = 1;
+const ME_RANGE = 2;
+const ME_NOCONV = 4;
+const ME_PRECISION = 8;
+const ME_UNDERFLOW = 16;
+
+function ML_ERROR(x, s) {
+  if (x > ME_DOMAIN) {
+    let msg = "";
+    switch(x) {
+      case ME_DOMAIN:
+        msg = `argument out of domain in ${s}`;
+        break;
+      case ME_RANGE:
+        msg = `value out of range in ${s}`;
+        break;
+      case ME_NOCONV:
+        msg = `convergence failed in ${s}`;
+        break;
+      case ME_PRECISION:
+        msg = `full precision may not have been achieved in ${s}`;
+        break;
+      case ME_UNDERFLOW:
+        msg = `underflow occurred in ${s}`;
+        break;
+    }
+    console.error(msg);
+  }
+}
+
+function ML_ERR_return_NAN() {
+  ML_ERROR(ME_DOMAIN, "");
+  return NaN;
+}
 
 const S0 = 0.083333333333333333333;
 /* 1/12 */
@@ -253,6 +297,52 @@ const PNORM_Q = [
   0.00378239633202758244,
   7.29751555083966205e-5
 ];
+
+const R_D__0 = () => (log_p ? -Infinity : 0.0);
+const R_D__1 = () => (log_p ? 0.0 : 1.0);
+const R_DT_0 = () => (lower_tail ? R_D__1() : R_D__0());
+const R_DT_1 = () => (lower_tail ? R_D__0() : R_D__1());
+const R_D_half = () => (log_p ? -M_LN2 : 0.5);
+
+const R_D_val = (x)	=> (log_p ? Math.log(x) : (x));
+const R_D_Clog = (p) => (log_p ? Math.log1p(-(p)) : (0.5 - (p) + 0.5));
+const R_DT_val = (x) => ((lower_tail ? R_D_val(x) : R_D_Clog(x)));
+
+function fmin2(x, y) {
+  if (isNaN(x) || isNaN(y)) {
+    return x + y;
+  }
+  return (x < y) ? x : y;
+}
+
+function fmax2(x, y) {
+  if (isNaN(x) || isNaN(y)) {
+    return x + y;
+  }
+  return (x < y) ? y : x;
+}
+
+function expm1(x) {
+  let y, a = Math.abs(x);
+
+  if (a < DBL_EPSILON) {
+    return x;
+  }
+
+  if (a > 0.697) {
+    return Math.exp(x) - 1;
+  }
+
+  if (a > 1e-8) {
+    y = Math.exp(x) - 1
+  }
+  else {
+    y = (x / 2 + 1) * x;
+  }
+
+  y -= (1 + y) * (Math.log1p(y) - x);
+  return y;
+}
 
 function R_Log1_Exp(x) {
   return ((x) > -M_LN2 ? Math.log(-Math.expm1(x)) : Math.log1p(-Math.exp(x)));
@@ -918,8 +1008,159 @@ function pgamma(x, alph, scale, lower_tail, log_p) {
   return pgamma_raw(x, alph, lower_tail, log_p);
 }
 
-function pchisq(x, df, lower_tail, log_p) {
-  return pgamma(x, df / 2.0, 2.0, lower_tail, log_p);
+export function pchisq(q, df, ncp = 0, lower_tail = true, log_p = false) {
+  if (ncp === 0) { return pgamma(q, df / 2.0, 2.0, lower_tail, log_p); }
+  else { return pnchisq(q, df, ncp, lower_tail, log_p) }
+}
+
+function pnchisq(q, df, ncp = 0, lower_tail = true, log_p = false) {
+  if (df < 0 || ncp < 0) { return NaN; }
+
+  let ans = pnchisq_raw(q, df, ncp, 1e-12, 8 * DBL_EPSILON, 1000000, lower_tail, log_p);
+  if (ncp >= 80) {
+    if (lower_tail) {
+      ans = fmin2(ans, R_D__1());
+    } else {
+      if (ans < (log_p ? (-10.0 * M_LN10) : 1e-10)) {
+        ML_ERROR(ME_PRECISION, "pnchisq");
+      }
+      if (!log_p) {
+        ans = fmax2(ans, 0.0);
+      }
+    }
+  }
+
+  if (!log_p || ans < -1e-8) {
+    return ans;
+  }
+  else {
+    ans = pnchisq_raw(q, df, ncp, 1e-12, 8 * DBL_EPSILON, 1000000, !lower_tail, false);
+    return Math.log1p(-ans);
+  }
+}
+
+function pnchisq_raw(x, f, theta, errmax, reltol, itrmax, lower_tail, log_p) {
+  let lam, x2, f2, term, bound, f_x_2n, f_2n;
+  let l_lam = -1.0;
+  let l_x = -1.0;
+  let n;
+  let lamSml, tSml, is_r, is_b, is_it;
+  let ans, u, v, t, lt, lu = -1;
+
+  if (x <= 0.0) {
+    if (x === 0.0 && f === 0.0) {
+      const _L = -0.5 * theta;
+      return lower_tail ? R_D_exp(_L) : (log_p ? R_Log1_Exp(_L) : -expm1(_L));
+    }
+    return R_DT_0();
+  }
+
+  if (!isFinite(x)) { return R_DT_1() }
+
+  if (theta < 80) {
+    let ans, i;
+    if (lower_tail && f > 0.0 && Math.log(x) < M_LN2 + 2 / f * (lgammafn(f / 2.0 + 1) + _dbl_min_exp)) {
+      let lambda = 0.5 * theta;
+      let sum, sum2, pr = -lambda;
+      sum = sum2 = -Infinity;
+      for (let i = 0; i < 110; pr === Math.log(lambda) - Math.log(++i)) {
+        sum2 = logspace_add(sum2, pr);
+        sum = logspace_add(sum, pr + pchisq(x, f + 2 * i, 0, lower_tail, true));
+        if (sum2 >= -1e-15) break;
+      }
+      ans = sum - sum2;
+      return log_p ? ans : Math.exp(ans);
+    }
+    else {
+      let lambda = 0.5 * theta;
+      let sum = 0, sum2 = 0, pr = Math.exp(-lambda);
+      /* we need to renormalize here: the result could be very close to 1 */
+      for (let i = 0; i < 110; pr *= lambda / ++i) {
+        sum2 += pr;
+        sum += pr * pchisq(x, f + 2 * i, 0, lower_tail, false);
+        if (sum2 >= 1 - 1e-15) break;
+      }
+      ans = sum / sum2;
+      return log_p ? Math.log(ans) : ans;
+    }
+  }
+
+  lam = .5 * theta;
+  lamSml = (-lam < _dbl_min_exp);
+  if (lamSml) {
+    u = 0;
+    lu = -lam;/* == ln(u) */
+    l_lam = Math.log(lam);
+  } else {
+    u = Math.exp(-lam);
+  }
+
+  v = u;
+  x2 = .5 * x;
+  f2 = .5 * f;
+  f_x_2n = f - x;
+
+  if (f2 * DBL_EPSILON > 0.125 && Math.abs(t = x2 - f2) < Math.sqrt(DBL_EPSILON) * f2) {
+    lt = (1 - t) * (2 - t / (f2 + 1)) - M_LN_SQRT_2PI - 0.5 * Math.log(f2 + 1);
+  } else {
+    lt = f2 * Math.log(x2) - x2 - lgammafn(f2 + 1);
+  }
+
+  tSml = (lt < _dbl_min_exp);
+  if (tSml) {
+    if (x > f + theta + 5 * Math.sqrt(2 * (f + 2 * theta))) {
+      return R_DT_1();
+    }
+    l_x = Math.log(x);
+    ans = term = 0.;
+    t = 0;
+  } else {
+    t = Math.exp(lt);
+    ans = term = v * t;
+  }
+
+  for (n = 1, f_2n = f + 2., f_x_2n += 2.;; n++, f_2n += 2, f_x_2n += 2) {
+    if (f_x_2n > 0) {
+      bound = (t * x / f_x_2n);
+      is_r = is_it = false;
+      if (((is_b = (bound <= errmax)) && (is_r = (term <= reltol * ans))) || (is_it = (n > itrmax))) {
+        break; /* out completely */
+      }
+    }
+
+    if (lamSml) {
+      lu += l_lam - Math.log(n); /* u = u* lam / n */
+      if (lu >= _dbl_min_exp) {
+        /* no underflow anymore ==> change regime */
+        v = u = Math.exp(lu); /* the first non-0 'u' */
+        lamSml = false;
+      }
+    } else {
+      u *= lam / n;
+      v += u;
+    }
+    if (tSml) {
+      lt += l_x - Math.log(f_2n);/* t <- t * (x / f2n) */
+      if (lt >= _dbl_min_exp) {
+        /* no underflow anymore ==> change regime */
+        t = Math.exp(lt); /* the first non-0 't' */
+        tSml = false;
+      }
+    } else {
+      t *= x / f_2n;
+    }
+    if (!lamSml && !tSml) {
+      term = v * t;
+      ans += term;
+    }
+  }
+
+  if (is_it) {
+    console.error(`pnchisq(x=${x},...) not converged in ${itrmax}`);
+  }
+
+  let dans = ans;
+  return R_DT_val(dans);
 }
 
 function pnorm_both(x, i_tail, log_p) {
@@ -1130,12 +1371,13 @@ const rollup = {
     give_log = parseBoolean(give_log, false);
     return pnorm(x, mu, sigma, lower_tail, give_log);
   },
-  pchisq: function (x, df, lower_tail, give_log) {
+  pchisq: function (x, df, ncp, lower_tail, give_log) {
     x = parseNumeric(x);
     df = parseNumeric(df);
+    ncp = parseNumeric(ncp,0);
     lower_tail = parseBoolean(lower_tail, true);
     give_log = parseBoolean(give_log, false);
-    return pchisq(x, df, lower_tail, give_log);
+    return pchisq(x, df, ncp, lower_tail, give_log);
   },
   pgamma: function (q, shape, scale, lower_tail, give_log) {
     q = parseNumeric(q);
