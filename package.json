@@ -83,7 +83,6 @@
     "argparse": "^1.0.10",
     "cli-table2": "^0.2.0",
     "js-yaml": "^3.11.0",
-    "lib-r-math.js": "git://github.com/welchr/libRmath.js.git#npm",
     "numeric": "^1.2.6"
   }
 }
