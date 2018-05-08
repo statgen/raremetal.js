@@ -66,10 +66,10 @@ function ML_ERROR(x, s) {
   }
 }
 
-function ML_ERR_return_NAN() {
-  ML_ERROR(ME_DOMAIN, "");
-  return NaN;
-}
+// function ML_ERR_return_NAN() {
+//   ML_ERROR(ME_DOMAIN, "");
+//   return NaN;
+// }
 
 const S0 = 0.083333333333333333333;
 /* 1/12 */
@@ -298,15 +298,15 @@ const PNORM_Q = [
   7.29751555083966205e-5
 ];
 
-const R_D__0 = () => (log_p ? -Infinity : 0.0);
-const R_D__1 = () => (log_p ? 0.0 : 1.0);
-const R_DT_0 = () => (lower_tail ? R_D__1() : R_D__0());
-const R_DT_1 = () => (lower_tail ? R_D__0() : R_D__1());
-const R_D_half = () => (log_p ? -M_LN2 : 0.5);
+const R_D__0 = (log_p) => (log_p ? -Infinity : 0.0);
+const R_D__1 = (log_p) => (log_p ? 0.0 : 1.0);
+const R_DT_0 = (lower_tail, log_p) => (lower_tail ? R_D__1(log_p) : R_D__0(log_p));
+const R_DT_1 = (lower_tail, log_p) => (lower_tail ? R_D__0(log_p) : R_D__1(log_p));
+// const R_D_half = () => (log_p ? -M_LN2 : 0.5);
 
-const R_D_val = (x)	=> (log_p ? Math.log(x) : (x));
-const R_D_Clog = (p) => (log_p ? Math.log1p(-(p)) : (0.5 - (p) + 0.5));
-const R_DT_val = (x) => ((lower_tail ? R_D_val(x) : R_D_Clog(x)));
+const R_D_val = (x, log_p)	=> (log_p ? Math.log(x) : (x));
+const R_D_Clog = (p, log_p) => (log_p ? Math.log1p(-(p)) : (0.5 - (p) + 0.5));
+const R_DT_val = (x, lower_tail, log_p) => ((lower_tail ? R_D_val(x, log_p) : R_D_Clog(x, log_p)));
 
 function fmin2(x, y) {
   if (isNaN(x) || isNaN(y)) {
@@ -496,8 +496,7 @@ function gammafn(x) {
   }
 }
 
-function lgammafn_sign(x) { //, sgn) {
-                            //we are going to ignore sgn (it's a reference in the orig)
+function lgammafn_sign(x) {
   var ans, y, sinpiy;
   //sgn = 1;
   var xmax = 2.5327372760800758e+305;
@@ -684,33 +683,33 @@ function logspace_add(logx, logy) {
   return ((logx > logy) ? logx : logy) + Math.log1p(Math.exp(-Math.abs(logx - logy)));
 }
 
-function logspace_sub(logx, logy) {
-  return logx + R_Log1_Exp(logy - logx);
-}
+// function logspace_sub(logx, logy) {
+//   return logx + R_Log1_Exp(logy - logx);
+// }
 
-function logspace_sum(logx, n) {
-  if (n == 0) {
-    return Number.NEGATIVE_INFINITY;
-  }
-  if (n == 1) {
-    return logx[0];
-  }
-  if (n == 2) {
-    return logspace_add(logx[0] + logx[1]);
-  }
-  var i;
-  var Mx = logx[0];
-  for (i = 1; i < n; i++) {
-    if (Mx < logx[i]) {
-      Mx = logx[i];
-    }
-  }
-  var s = 0;
-  for (i = 0; i < n; i++) {
-    s += Math.exp(logx[i] - Mx);
-  }
-  return Mx + Math.log(s);
-}
+// function logspace_sum(logx, n) {
+//   if (n == 0) {
+//     return Number.NEGATIVE_INFINITY;
+//   }
+//   if (n == 1) {
+//     return logx[0];
+//   }
+//   if (n == 2) {
+//     return logspace_add(logx[0] + logx[1]);
+//   }
+//   var i;
+//   var Mx = logx[0];
+//   for (i = 1; i < n; i++) {
+//     if (Mx < logx[i]) {
+//       Mx = logx[i];
+//     }
+//   }
+//   var s = 0;
+//   for (i = 0; i < n; i++) {
+//     s += Math.exp(logx[i] - Mx);
+//   }
+//   return Mx + Math.log(s);
+// }
 
 function dpois_wrap(x_plus_1, lambda, give_log) {
   if (!isFinite(lambda)) {
@@ -1019,7 +1018,7 @@ function pnchisq(q, df, ncp = 0, lower_tail = true, log_p = false) {
   let ans = pnchisq_raw(q, df, ncp, 1e-12, 8 * DBL_EPSILON, 1000000, lower_tail, log_p);
   if (ncp >= 80) {
     if (lower_tail) {
-      ans = fmin2(ans, R_D__1());
+      ans = fmin2(ans, R_D__1(log_p));
     } else {
       if (ans < (log_p ? (-10.0 * M_LN10) : 1e-10)) {
         ML_ERROR(ME_PRECISION, "pnchisq");
@@ -1052,13 +1051,13 @@ function pnchisq_raw(x, f, theta, errmax, reltol, itrmax, lower_tail, log_p) {
       const _L = -0.5 * theta;
       return lower_tail ? R_D_exp(_L) : (log_p ? R_Log1_Exp(_L) : -expm1(_L));
     }
-    return R_DT_0();
+    return R_DT_0(lower_tail, log_p);
   }
 
-  if (!isFinite(x)) { return R_DT_1() }
+  if (!isFinite(x)) { return R_DT_1(lower_tail, log_p) }
 
   if (theta < 80) {
-    let ans, i;
+    let ans;
     if (lower_tail && f > 0.0 && Math.log(x) < M_LN2 + 2 / f * (lgammafn(f / 2.0 + 1) + _dbl_min_exp)) {
       let lambda = 0.5 * theta;
       let sum, sum2, pr = -lambda;
@@ -1109,7 +1108,7 @@ function pnchisq_raw(x, f, theta, errmax, reltol, itrmax, lower_tail, log_p) {
   tSml = (lt < _dbl_min_exp);
   if (tSml) {
     if (x > f + theta + 5 * Math.sqrt(2 * (f + 2 * theta))) {
-      return R_DT_1();
+      return R_DT_1(lower_tail, log_p);
     }
     l_x = Math.log(x);
     ans = term = 0.;
@@ -1122,9 +1121,11 @@ function pnchisq_raw(x, f, theta, errmax, reltol, itrmax, lower_tail, log_p) {
   for (n = 1, f_2n = f + 2., f_x_2n += 2.;; n++, f_2n += 2, f_x_2n += 2) {
     if (f_x_2n > 0) {
       bound = (t * x / f_x_2n);
-      is_r = is_it = false;
-      if (((is_b = (bound <= errmax)) && (is_r = (term <= reltol * ans))) || (is_it = (n > itrmax))) {
-        break; /* out completely */
+      is_b = bound <= errmax;
+      is_r = term <= reltol * ans;
+      is_it = n > itrmax;
+      if (is_b && is_r || is_it) {
+        break;
       }
     }
 
@@ -1160,7 +1161,7 @@ function pnchisq_raw(x, f, theta, errmax, reltol, itrmax, lower_tail, log_p) {
   }
 
   let dans = ans;
-  return R_DT_val(dans);
+  return R_DT_val(dans, lower_tail, log_p);
 }
 
 function pnorm_both(x, i_tail, log_p) {
@@ -1171,7 +1172,7 @@ function pnorm_both(x, i_tail, log_p) {
     d = PNORM_D, p = PNORM_P, q = PNORM_Q;
 
   if (isNaN(x)) {
-    return {cum: NaN, ccum: NaN};
+    return { cum: NaN, ccum: NaN };
   }
 
   eps = DBL_EPSILON * 0.5;
@@ -1283,7 +1284,7 @@ function pnorm_both(x, i_tail, log_p) {
   }
 
   //TODO left off here
-  return {cum: cum, ccum: ccum};
+  return { cum: cum, ccum: ccum };
 }
 
 function pnorm(x, mu, sigma, lower_tail, log_p) {
