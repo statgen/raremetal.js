@@ -860,7 +860,7 @@ function pd_lower_series(lambda, y) {
     sum += term;
     y--;
   }
-  if (y != Math.floor(y)) {
+  if (y !== Math.floor(y)) {
     var f = pd_lower_cf(y, lambda + 1 - y);
     sum += term * f;
   }
@@ -1049,7 +1049,7 @@ function pnchisq_raw(x, f, theta, errmax, reltol, itrmax, lower_tail, log_p) {
   if (x <= 0.0) {
     if (x === 0.0 && f === 0.0) {
       const _L = -0.5 * theta;
-      return lower_tail ? R_D_exp(_L) : (log_p ? R_Log1_Exp(_L) : -expm1(_L));
+      return lower_tail ? R_D_exp(_L, log_p) : (log_p ? R_Log1_Exp(_L) : -expm1(_L));
     }
     return R_DT_0(lower_tail, log_p);
   }
