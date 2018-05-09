@@ -19,12 +19,14 @@ function parsePortalJson(json) {
     scorecov: {}
   };
 
+  const data = json.data;
+
   /**
    * Store parsed masks to an object that looks like:
    * masks = { (group id): mask object }
    */
   let masks = {};
-  for (let maskData of json.data.masks) {
+  for (let maskData of data.masks) {
     let mask = new VariantMask();
     mask.id = maskData.id;
     mask.label = maskData.label;
@@ -40,7 +42,7 @@ function parsePortalJson(json) {
   loaded["masks"] = masks;
 
   // Load scores and covariance matrices
-  for (let scoreBlock of json.scorecov) {
+  for (let scoreBlock of data.scorecov) {
     let mask = masks[scoreBlock.mask];
     let variants = mask.getGroup(scoreBlock.group);
     let positions = variants.map(x => parseInt(x.match(/(chr)?(\w+):(\d+)_([A-Z]+)\/([A-Z]+)/)[3]));
