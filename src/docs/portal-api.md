@@ -55,7 +55,7 @@ For now, a description of the variant filtering and grouping criteria will proba
           "description": "Protein truncating variants",
           "grouping": "gene",
           "identifier": "ENSEMBL"
-        }
+        },
         {
           "id": "PTV & LoF & AF<0.05",
           "description": "Protein truncating variants with AF < 0.05",
@@ -89,7 +89,7 @@ Only requesting scores and covariance for the "PTV" mask just to save some space
   "end": 100000,
   "dataset": 42,
   "masks": [
-    "PTV",
+    "PTV"
   ]
 }
 ```
@@ -194,7 +194,7 @@ Looks identical to the same request used to retrieve covariance.
   "end": 100000,
   "dataset": 42,
   "masks": [
-    "PTV",
+    "PTV"
   ]
 }
 ```
