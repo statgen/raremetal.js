@@ -300,8 +300,8 @@ const PNORM_Q = [
 
 const R_D__0 = (log_p) => (log_p ? -Infinity : 0.0);
 const R_D__1 = (log_p) => (log_p ? 0.0 : 1.0);
-const R_DT_0 = (lower_tail, log_p) => (lower_tail ? R_D__1(log_p) : R_D__0(log_p));
-const R_DT_1 = (lower_tail, log_p) => (lower_tail ? R_D__0(log_p) : R_D__1(log_p));
+const R_DT_0 = (lower_tail, log_p) => (lower_tail ? R_D__0(log_p) : R_D__1(log_p));
+const R_DT_1 = (lower_tail, log_p) => (lower_tail ? R_D__1(log_p) : R_D__0(log_p));
 // const R_D_half = () => (log_p ? -M_LN2 : 0.5);
 
 const R_D_val = (x, log_p)	=> (log_p ? Math.log(x) : (x));
