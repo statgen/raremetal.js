@@ -1,14 +1,11 @@
 /**
  * JavaScript port of Rmath functions
  *
- * @todo Fix exports in this file
- * @todo Make sure Matthew is in contributors
- * @todo Test against R (mocha test cases?)
- * @todo Fix license when more information known
+ * @todo Test pnorm
  *
  * @author Matthew Flickinger
  * @author Ryan Welch
- * @license LGPL?
+ * @license LGPL-2.1
  */
 
 // Constants
