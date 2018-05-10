@@ -1,10 +1,7 @@
-//import { pchisq } from '../../src/app/rstats.js';
-require('babel-register');
-const rstats = require('../../src/app/rstats.js');
-const { pchisq, dbeta } = rstats;
-const { assert } = require('chai');
-const yaml = require('js-yaml');
-const fs = require('fs');
+import { pchisq, dbeta } from '../../src/app/rstats.js';
+import { assert } from 'chai';
+import * as yaml from 'js-yaml';
+import fs from 'fs';
 
 function* range(start, end, increment=1) {
   for (let i = start; i < end; i += increment) {
