@@ -21,22 +21,18 @@ describe('qfc.js', function() {
           testCase['acc']
         );
 
-        it('should match expected qf value for parameter set ' + count, function() {
+        it('should match expected values for parameter set ' + count, function() {
           let computedQf = result[0];
           let expectedQf = testCase['qfval'];
           assert.closeTo(computedQf,expectedQf,0.001);
-        });
 
-        it('should match ifault value for parameter set ' + count, function() {
           let ifault = result[1];
           assert.equal(ifault,0);
-        });
 
-        it('should match integration debug values for parameter set ' + count, function() {
           let computedTrace = result[2];
           let actualTrace = testCase['trace'];
           for (let i = 0; i < 6; i++) {
-            assert.closeTo(actualTrace[i],computedTrace[i],0.001); 
+            assert.closeTo(actualTrace[i],computedTrace[i],0.001);
           }
         });
 
