@@ -1318,6 +1318,17 @@ function pnorm(x, mu, sigma, lower_tail, log_p) {
   return (lower_tail) ? r.cum : r.ccum;
 }
 
+function _pnorm(x, mu, sigma, lower_tail, give_log) {
+  x = parseNumeric(x);
+  mu = parseNumeric(mu, 0);
+  sigma = parseNumeric(sigma, 1);
+  lower_tail = parseBoolean(lower_tail, true);
+  give_log = parseBoolean(give_log, false);
+  return pnorm(x, mu, sigma, lower_tail, give_log);
+}
+
+export { _pnorm as pnorm };
+
 function dnorm(x, mu, sigma, give_log) {
   if (isNaN(x) || isNaN(mu) || isNaN(sigma)) {
     return x + mu + sigma;
@@ -1401,7 +1412,7 @@ function dbinom_raw(x, n, p, q, give_log) {
   return R_D_exp(lc - 0.5 * lf, give_log);
 }
 
-function _dbeta(x, a, b, give_log) {
+function dbeta(x, a, b, give_log) {
   if (a < 0 || b < 0) ML_ERR_return_NAN();
   if (x < 0 || x > 1) return R_D__0(give_log);
 
@@ -1440,14 +1451,16 @@ function _dbeta(x, a, b, give_log) {
   return R_D_exp(lval, give_log);
 }
 
-export function dbeta(x, shape1, shape2, log) {
+function _dbeta(x, shape1, shape2, log) {
   x = parseNumeric(x);
   shape1 = parseNumeric(shape1);
   shape2 = parseNumeric(shape2);
   //ncp = parseNumeric(ncp, 0);
   log = parseBoolean(log, false);
-  return _dbeta(x, shape1, shape2, log);
+  return dbeta(x, shape1, shape2, log);
 }
+
+export { _dbeta as dbeta };
 
 function parseNumeric(x, default_value) {
   if (typeof(x) === "undefined") {
