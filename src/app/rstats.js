@@ -1008,9 +1008,15 @@ function pgamma(x, alph, scale, lower_tail, log_p) {
   return pgamma_raw(x, alph, lower_tail, log_p);
 }
 
-export function pchisq(q, df, ncp = 0, lower_tail = true, log_p = false) {
-  if (ncp === 0) { return pgamma(q, df / 2.0, 2.0, lower_tail, log_p); }
-  else { return pnchisq(q, df, ncp, lower_tail, log_p) }
+export function pchisq(x, df, ncp = 0, lower_tail = true, log_p = false) {
+  x = parseNumeric(x);
+  df = parseNumeric(df);
+  ncp = parseNumeric(ncp);
+  lower_tail = parseBoolean(lower_tail);
+  log_p = parseBoolean(log_p);
+
+  if (ncp === 0) { return pgamma(x, df / 2.0, 2.0, lower_tail, log_p); }
+  else { return pnchisq(x, df, ncp, lower_tail, log_p) }
 }
 
 function pnchisq(q, df, ncp = 0, lower_tail = true, log_p = false) {
@@ -1395,7 +1401,7 @@ function dbinom_raw(x, n, p, q, give_log) {
   return R_D_exp(lc - 0.5 * lf, give_log);
 }
 
-function dbeta(x, a, b, give_log) {
+function _dbeta(x, a, b, give_log) {
   if (a < 0 || b < 0) ML_ERR_return_NAN();
   if (x < 0 || x > 1) return R_D__0(give_log);
 
@@ -1415,10 +1421,12 @@ function dbeta(x, a, b, give_log) {
   if (x === 0) {
     if (a > 1) return R_D__0(give_log);
     if (a < 1) return Number.POSITIVE_INFINITY;
+    return R_D_val(b, give_log);
   }
   if (x === 1) {
-    if (b > 1) return R_D__0(log_p);
+    if (b > 1) return R_D__0(give_log);
     if (b < 1) return Number.POSITIVE_INFINITY;
+    return R_D_val(a, give_log);
   }
 
   let lval;
@@ -1430,6 +1438,15 @@ function dbeta(x, a, b, give_log) {
   }
 
   return R_D_exp(lval, give_log);
+}
+
+export function dbeta(x, shape1, shape2, log) {
+  x = parseNumeric(x);
+  shape1 = parseNumeric(shape1);
+  shape2 = parseNumeric(shape2);
+  //ncp = parseNumeric(ncp, 0);
+  log = parseBoolean(log, false);
+  return _dbeta(x, shape1, shape2, log);
 }
 
 function parseNumeric(x, default_value) {
@@ -1483,15 +1500,5 @@ const rollup = {
     lambda = parseNumeric(lambda);
     log = parseBoolean(log, false);
     return dpois(x, lambda, log);
-  },
-  dbeta: function(x, shape1, shape2, log) {
-    x = parseNumeric(x);
-    shape1 = parseNumeric(shape1);
-    shape2 = parseNumeric(shape2);
-    //ncp = parseNumeric(ncp, 0);
-    log = parseBoolean(log, false);
-    return dbeta(x, shape1, shape2, log);
   }
 };
-
-export default rollup;
