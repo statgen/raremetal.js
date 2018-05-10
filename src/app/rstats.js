@@ -855,7 +855,7 @@ function pd_lower_cf(y, d) {
 
 function pd_lower_series(lambda, y) {
   var term = 1, sum = 0;
-  while (y <= 1 && term > sum * DBL_EPSILON) {
+  while (y >= 1 && term > sum * DBL_EPSILON) {
     term *= y / lambda;
     sum += term;
     y--;
