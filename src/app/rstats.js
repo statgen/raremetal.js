@@ -29,6 +29,7 @@ const M_LN2 = Math.LN2; //0.693147180559945309417232121458;
 const M_LN10 = Math.LN10; //2.302585092994045684017991454684;
 const M_PI = Math.PI;
 const M_2PI = 2 * M_PI;
+const M_LN_2PI = Math.log(2 * Math.PI);
 const M_LN_SQRT_2PI = Math.log(Math.sqrt(M_2PI));
 const M_SQRT_32 = 5.656854249492380195206754896838;
 const M_1_SQRT_2PI = 0.398942280401432677939946059934;
@@ -66,10 +67,10 @@ function ML_ERROR(x, s) {
   }
 }
 
-// function ML_ERR_return_NAN() {
-//   ML_ERROR(ME_DOMAIN, "");
-//   return NaN;
-// }
+function ML_ERR_return_NAN() {
+  ML_ERROR(ME_DOMAIN, "");
+  return NaN;
+}
 
 const S0 = 0.083333333333333333333;
 /* 1/12 */
@@ -1342,6 +1343,95 @@ function dnorm(x, mu, sigma, give_log) {
   return M_1_SQRT_2PI * Math.exp(-0.5 * x * x) / sigma;
 }
 
+function lbeta(a, b) {
+  let corr, p, q;
+  p = q = a;
+  if (b < p) p = b;
+  if (b > q) q = b;
+
+  if (p < 0) {
+    return ML_ERR_return_NAN();
+  }
+  else if (p === 0) {
+    return Number.POSITIVE_INFINITY;
+  }
+  else if (!isFinite(q)) {
+    return Number.NEGATIVE_INFINITY;
+  }
+
+  if (p >= 10) {
+    corr = lgammacor(p) + lgammacor(q) - lgammacor(p + q);
+    return Math.log(q) * -0.5 + M_LN_SQRT_2PI + corr + (p - 0.5) * Math.log(p / (p + q)) + q * Math.log1p(-p / (p + q));
+  }
+  else if (q >= 10) {
+    corr = lgammacor(q) - lgammacor(p + q);
+    return lgammafn(p) + corr + p - p * Math.log(p + q) + (q - 0.5) * Math.log1p(-p / (p + q));
+  }
+  else {
+    if (p < 1e-306) return lgammafn(p) + (lgammafn(q) - lgammafn(p + q));
+    else return Math.log(gammafn(p) * (gammafn(q) / gammafn(p + q)));
+  }
+}
+
+function dbinom_raw(x, n, p, q, give_log) {
+  let lf, lc;
+
+  if (p === 0) return (x === 0 ? R_D__1(give_log) : R_D__0(give_log));
+  if (q === 0) return (x === n ? R_D__1(give_log) : R_D__0(give_log));
+
+  if (x === 0) {
+    if (n === 0) return R_D__1(log_p);
+    lc = p < 0.1 ? -bd0(n, n * q) - n * p : n * Math.log(q);
+    return R_D_exp(lc, give_log);
+  }
+  if (x === n) {
+    lc = q < 0.1 ? -bd0(n, n * p) - n * q : n * Math.log(p);
+    return R_D_exp(lc, give_log);
+  }
+  if (x < 0 || x > n) return R_D__0(give_log);
+
+  lc = stirlerr(n) - stirlerr(x) - stirlerr(n - x) - bd0(x, n * p) - bd0(n - x, n * q);
+  lf = M_LN_2PI + Math.log(x) + Math.log1p(-x / n);
+  return R_D_exp(lc - 0.5 * lf, give_log);
+}
+
+function dbeta(x, a, b, give_log) {
+  if (a < 0 || b < 0) ML_ERR_return_NAN();
+  if (x < 0 || x > 1) return R_D__0(give_log);
+
+  if (a === 0 || b ===0 || !isFinite(a) || !isFinite(b)) {
+    if (a === 0 && b === 0) {
+      if (x === 0 || x === 1) return Number.POSITIVE_INFINITY; else return R_D__0(give_log);
+    }
+    if (a === 0 || a / b === 0) {
+      if (x === 0) return Number.POSITIVE_INFINITY; else return R_D__0(give_log);
+    }
+    if (b === 0 || b / a === 0) {
+      if (x === 1) return Number.POSITIVE_INFINITY; else return R_D__0(give_log);
+    }
+    if (x === 0.5) return Number.POSITIVE_INFINITY; else return R_D__0(give_log);
+  }
+
+  if (x === 0) {
+    if (a > 1) return R_D__0(give_log);
+    if (a < 1) return Number.POSITIVE_INFINITY;
+  }
+  if (x === 1) {
+    if (b > 1) return R_D__0(log_p);
+    if (b < 1) return Number.POSITIVE_INFINITY;
+  }
+
+  let lval;
+  if (a <= 2 || b <= 2) {
+    lval = (a - 1) * Math.log(x) + (b - 1) * Math.log1p(-x) - lbeta(a, b);
+  }
+  else {
+    lval = Math.log(a + b - 1) + dbinom_raw(a - 1, a + b - 2, x, 1 - x, true);
+  }
+
+  return R_D_exp(lval, give_log);
+}
+
 function parseNumeric(x, default_value) {
   if (typeof(x) === "undefined") {
     return default_value;
@@ -1393,6 +1483,14 @@ const rollup = {
     lambda = parseNumeric(lambda);
     log = parseBoolean(log, false);
     return dpois(x, lambda, log);
+  },
+  dbeta: function(x, shape1, shape2, log) {
+    x = parseNumeric(x);
+    shape1 = parseNumeric(shape1);
+    shape2 = parseNumeric(shape2);
+    //ncp = parseNumeric(ncp, 0);
+    log = parseBoolean(log, false);
+    return dbeta(x, shape1, shape2, log);
   }
 };
 
