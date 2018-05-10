@@ -983,19 +983,19 @@ function pgamma_raw(x, alph, lower_tail, log_p) {
   }
 }
 
-function dpois(x, lambda, give_log) {
-  if (lambda < 0) {
-    return NaN;
-  }
-  if (x % 1 != 0) {
-    return NaN;
-  }
-  if (x < 0 || !Number.isFinite(x)) {
-    return R_D(0, give_log);
-  }
-  return dpois_raw(x, lambda, give_log);
-
-}
+// function dpois(x, lambda, give_log) {
+//   if (lambda < 0) {
+//     return NaN;
+//   }
+//   if (x % 1 != 0) {
+//     return NaN;
+//   }
+//   if (x < 0 || !Number.isFinite(x)) {
+//     return R_D(0, give_log);
+//   }
+//   return dpois_raw(x, lambda, give_log);
+//
+// }
 
 function pgamma(x, alph, scale, lower_tail, log_p) {
   if (isNaN(x) || alph < 0 || scale < 0) {
@@ -1386,7 +1386,7 @@ function dbinom_raw(x, n, p, q, give_log) {
   if (q === 0) return (x === n ? R_D__1(give_log) : R_D__0(give_log));
 
   if (x === 0) {
-    if (n === 0) return R_D__1(log_p);
+    if (n === 0) return R_D__1(give_log);
     lc = p < 0.1 ? -bd0(n, n * q) - n * p : n * Math.log(q);
     return R_D_exp(lc, give_log);
   }
@@ -1463,42 +1463,43 @@ function parseBoolean(x, default_value) {
   return !!((x || "false") != "false");
 }
 
-const rollup = {
-  dnorm: function (x, mu, sigma, give_log) {
-    x = +x;
-    mu = parseNumeric(mu, 0);
-    sigma = parseNumeric(sigma, 1);
-    give_log = parseBoolean(give_log, false);
-    return dnorm(x, mu, sigma, give_log);
-  },
-  pnorm: function (x, mu, sigma, lower_tail, give_log) {
-    x = parseNumeric(x);
-    mu = parseNumeric(mu, 0);
-    sigma = parseNumeric(sigma, 1);
-    lower_tail = parseBoolean(lower_tail, true);
-    give_log = parseBoolean(give_log, false);
-    return pnorm(x, mu, sigma, lower_tail, give_log);
-  },
-  pchisq: function (x, df, ncp, lower_tail, give_log) {
-    x = parseNumeric(x);
-    df = parseNumeric(df);
-    ncp = parseNumeric(ncp,0);
-    lower_tail = parseBoolean(lower_tail, true);
-    give_log = parseBoolean(give_log, false);
-    return pchisq(x, df, ncp, lower_tail, give_log);
-  },
-  pgamma: function (q, shape, scale, lower_tail, give_log) {
-    q = parseNumeric(q);
-    shape = parseNumeric(shape);
-    scale = parseNumeric(scale, 1);
-    lower_tail = parseBoolean(lower_tail, true);
-    give_log = parseBoolean(give_log, false);
-    return pgamma(q, shape, scale, lower_tail, give_log);
-  },
-  dpois: function (x, lambda, log) {
-    x = parseNumeric(x);
-    lambda = parseNumeric(lambda);
-    log = parseBoolean(log, false);
-    return dpois(x, lambda, log);
-  }
-};
+// Will slowly roll this into export statements as-needed
+// const rollup = {
+//   dnorm: function (x, mu, sigma, give_log) {
+//     x = +x;
+//     mu = parseNumeric(mu, 0);
+//     sigma = parseNumeric(sigma, 1);
+//     give_log = parseBoolean(give_log, false);
+//     return dnorm(x, mu, sigma, give_log);
+//   },
+//   pnorm: function (x, mu, sigma, lower_tail, give_log) {
+//     x = parseNumeric(x);
+//     mu = parseNumeric(mu, 0);
+//     sigma = parseNumeric(sigma, 1);
+//     lower_tail = parseBoolean(lower_tail, true);
+//     give_log = parseBoolean(give_log, false);
+//     return pnorm(x, mu, sigma, lower_tail, give_log);
+//   },
+//   pchisq: function (x, df, ncp, lower_tail, give_log) {
+//     x = parseNumeric(x);
+//     df = parseNumeric(df);
+//     ncp = parseNumeric(ncp,0);
+//     lower_tail = parseBoolean(lower_tail, true);
+//     give_log = parseBoolean(give_log, false);
+//     return pchisq(x, df, ncp, lower_tail, give_log);
+//   },
+//   pgamma: function (q, shape, scale, lower_tail, give_log) {
+//     q = parseNumeric(q);
+//     shape = parseNumeric(shape);
+//     scale = parseNumeric(scale, 1);
+//     lower_tail = parseBoolean(lower_tail, true);
+//     give_log = parseBoolean(give_log, false);
+//     return pgamma(q, shape, scale, lower_tail, give_log);
+//   },
+//   dpois: function (x, lambda, log) {
+//     x = parseNumeric(x);
+//     lambda = parseNumeric(lambda);
+//     log = parseBoolean(log, false);
+//     return dpois(x, lambda, log);
+//   }
+// };

@@ -110,7 +110,7 @@ describe('rstats.js', function() {
     });
 
     it('should match expected values over a range of parameters', function() {
-      let tests = require("./pchisq.json");
+      let tests = JSON.parse(fs.readFileSync('test/unit/pchisq.json'));
       for (let t of tests) {
         let actual = pchisq(t.x, t.df, t.ncp, t.tail, t.give_log);
         assert.closeTo(actual, t.expected, 0.0001, `failed on x=${t.x}, df=${t.df}, ncp=${t.ncp}, lower_tail=${t.tail}, log.p=${t.give_log}`);
@@ -138,7 +138,7 @@ describe('rstats.js', function() {
       assert.equal(dbeta(1, 1, 1, true), 0);
 
       // General parameters
-      let tests = yaml.safeLoad(fs.readFileSync("test/unit/dbeta.yaml", 'utf8'));
+      let tests = yaml.safeLoad(fs.readFileSync('test/unit/dbeta.yaml', 'utf8'));
       for (let t of tests) {
         let actual = dbeta(t.x, t.a, t.b, yamlParseBoolean(t.give_log));
         if (!isFinite(t.x) || !isFinite(t.expected)) {
