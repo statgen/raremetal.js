@@ -7,10 +7,7 @@
 import * as qfc from './qfc.js';
 import * as rmath from 'lib-r-math.js';
 import numeric from 'numeric';
-
-const pchisq = rmath.ChiSquared().pchisq;
-const dbeta = rmath.Beta().dbeta;
-const pnorm = rmath.Normal().pnorm;
+import { pchisq, dbeta, pnorm } from './rstats.js';
 
 function arraysEqual(a1,a2) {
   for (let i = 0; i < a1.length; i++) {
