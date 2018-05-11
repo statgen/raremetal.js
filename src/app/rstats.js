@@ -1296,18 +1296,18 @@ function pnorm(x, mu, sigma, lower_tail, log_p) {
   if (isNaN(x) || isNaN(mu) || isNaN(sigma)) {
     return NaN;
   }
-  if (!Number.isFinite(x) && mu == x) {
+  if (!Number.isFinite(x) && mu === x) {
     return NaN;
   }
   if (sigma <= 0) {
     if (sigma < 0) {
       return NaN;
     }
-    return (x < mu) ? R_DT(0, lower_tail, log_p) : R_DT(1, lower_tail, log_p);
+    return (x < mu) ? R_DT_0(lower_tail, log_p) : R_DT_1(lower_tail, log_p);
   }
   p = (x - mu) / sigma;
   if (!Number.isFinite(p)) {
-    return (x < mu) ? R_DT(0, lower_tail, log_p) : R_DT(1, lower_tail, log_p);
+    return (x < mu) ? R_DT_0(lower_tail, log_p) : R_DT_1(lower_tail, log_p);
   }
   x = p;
 
