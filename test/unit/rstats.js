@@ -176,7 +176,7 @@ describe('rstats.js', function() {
         2.8616,-0.1085,-0.0022,1.0252,1.8164,0.79,0.2236,0.0955,-0.0526,0.1262,0.2345,1.1784,-0.6072,2.1711,-0.8096,
         -0.3959,-0.3017,0.8944,-2.6268,1.8283,0.0046,0.4118,0.9103,-0.5463,-1.3732,-0.3442];
 
-      z.forEach((v, i) => {
+      z.forEach(v => {
         let a = pnorm(v);
         let aLog = Math.log(a);
         let b = 1 - pnorm(-v);
@@ -207,9 +207,9 @@ describe('rstats.js', function() {
 
       // General parameters
       let db = new sqlite3.Database('test/unit/pnorm.db');
-      db.all("SELECT * FROM PNORM", function(err, rows) {
+      db.all('SELECT * FROM PNORM', function(err, rows) {
         if (rows.length === 0) {
-          throw new Error("Retrieved 0 rows from sqlite3 database");
+          throw new Error('Retrieved 0 rows from sqlite3 database');
         }
 
         for (let t of rows) {
