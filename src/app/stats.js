@@ -5,7 +5,6 @@
  */
 
 import * as qfc from './qfc.js';
-import * as rmath from 'lib-r-math.js';
 import numeric from 'numeric';
 import { pchisq, dbeta, pnorm } from './rstats.js';
 
