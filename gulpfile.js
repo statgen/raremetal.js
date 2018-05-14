@@ -111,6 +111,7 @@ function test() {
 function coverage(done) {
   _registerBabel();
   gulp.src(['src/app/**/*.js'])
+    .pipe($.filter(['!**/*cli*js']))
     .pipe($.istanbul({
       instrumenter: Instrumenter,
       includeUntested: true
