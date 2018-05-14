@@ -39,6 +39,12 @@
   "bugs": {
     "url": "https://github.com/statgen/raremetal.js/issues"
   },
+  "files": [
+    "src/**/*.js",
+    "src/**/*.md",
+    "docs",
+    "dist"
+  ],
   "homepage": "https://github.com/statgen/raremetal.js",
   "devDependencies": {
     "babel-core": "^6.26.3",
