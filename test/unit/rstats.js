@@ -1,7 +1,5 @@
 import { dbeta, pchisq, pnorm } from '../../src/app/rstats.js';
 import { assert } from 'chai';
-import * as yaml from 'js-yaml';
-import fs from 'fs';
 import sqlite3 from 'sqlite3';
 
 function* range(start, end, increment=1) {
@@ -32,30 +30,6 @@ function nearlyEqual(a, b, epsilon = 0.00001) {
   }
   else {
     return diff / Math.min((absA + absB), Number.MAX_VALUE) < epsilon;
-  }
-}
-
-function yamlParseBoolean(x) {
-  if (typeof x === 'boolean') {
-    return x;
-  }
-  else if (typeof x === 'number') {
-    return Boolean(x);
-  }
-  else if (typeof x === 'string') {
-    if (x === 'yes') return true;
-    if (x === 'no') return false;
-    if (x === 'y') return true;
-    if (x === 'n') return false;
-    if (x === 'Y') return true;
-    if (x === 'N') return false;
-    if (x === 'true') return true;
-    if (x === 'false') return false;
-    if (x === 'on') return true;
-    if (x === 'off') return false;
-  }
-  else {
-    throw new Error('Unrecognized argument type for parsing YAML boolean: ' + x.toString());
   }
 }
 
@@ -110,12 +84,17 @@ describe('rstats.js', function() {
       pp.map((x,i) => { assert.closeTo(x, -th[i]/2.0, 1e-1) });
     });
 
-    it('should match expected values over a range of parameters', function() {
-      let tests = JSON.parse(fs.readFileSync('test/unit/pchisq.json'));
-      for (let t of tests) {
-        let actual = pchisq(t.x, t.df, t.ncp, t.tail, t.give_log);
-        assert.closeTo(actual, t.expected, 0.0001, `failed on x=${t.x}, df=${t.df}, ncp=${t.ncp}, lower_tail=${t.tail}, log.p=${t.give_log}`);
-      }
+    it('should match expected values over a range of parameters', function(done) {
+      let db = new sqlite3.Database('test/unit/pchisq.db');
+      db.all('SELECT * FROM PCHISQ', function(err, rows) {
+        for (let t of rows) {
+          let [x, df, ncp, expected] = [t.x, t.df, t.ncp, t.expected].map(parseFloat);
+          let actual = pchisq(x, df, ncp, t.tail, t.give_log);
+          assert.closeTo(actual, expected, 0.0001, `failed on x=${x}, df=${df}, ncp=${ncp}, lower_tail=${t.tail}, log.p=${t.give_log}`);
+        }
+
+        done();
+      });
     });
 
   });
@@ -132,24 +111,32 @@ describe('rstats.js', function() {
       }
     });
 
-    it('should match expected values over a range of parameters', function() {
+    it('should match expected values over a range of parameters', function(done) {
       // Edge cases
       assert.equal(dbeta(Infinity, 1, 1, true), -Infinity);
       assert.equal(dbeta(0, 1, 1, true), 0);
       assert.equal(dbeta(1, 1, 1, true), 0);
 
       // General parameters
-      let tests = yaml.safeLoad(fs.readFileSync('test/unit/dbeta.yaml', 'utf8'));
-      for (let t of tests) {
-        let actual = dbeta(t.x, t.a, t.b, yamlParseBoolean(t.give_log));
-        if (isNaN(t.x)) { assert.isNaN(actual) }
-        else if (!isFinite(t.x) || !isFinite(t.expected)) {
-          assert.equal(actual, t.expected, `failed on x=${t.x}, a=${t.a}, b=${t.b}, log.p=${t.give_log}`);
+      let db = new sqlite3.Database('test/unit/dbeta.db');
+      db.all('SELECT * FROM DBETA', function(err, rows) {
+        if (rows.length === 0) { throw new Error('Retrieved 0 rows from sqlite3 database'); }
+
+        for (let t of rows) {
+          let [x, a, b, expected] = [t.x, t.a, t.b, t.expected].map(parseFloat);
+          let actual = dbeta(x, a, b, t.give_log);
+
+          if (isNaN(x)) { assert.isNaN(actual) }
+          else if (!isFinite(x) || !isFinite(expected)) {
+            assert.equal(actual, expected, `failed on x=${x}, a=${a}, b=${b}, log.p=${t.give_log}`);
+          }
+          else {
+            assert(nearlyEqual(actual, expected, 0.001), `failed on x=${x}, a=${a}, b=${b}, log.p=${t.give_log}`);
+          }
         }
-        else {
-          assert(nearlyEqual(actual, t.expected, 0.001), `failed on x=${t.x}, a=${t.a}, b=${t.b}, log.p=${t.give_log}`);
-        }
-      }
+
+        done();
+      });
     });
   });
 
