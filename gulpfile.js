@@ -131,6 +131,17 @@ function watch() {
   gulp.watch(watchFiles, ['test']);
 }
 
+function watchDocs() {
+  const files = ['README.md', 'src/app/**/*js', 'test/**/*js', 'src/**/*.md'];
+  const exec = require('child_process').exec;
+  gulp.watch(files, async function() {
+    exec('npm run docs', function(err, stdout, stderr) {
+      console.log(stdout);
+      console.error(stderr);
+    });
+  });
+}
+
 // Lint our source code
 gulp.task('lint-src', lintSrc);
 
@@ -154,6 +165,7 @@ gulp.task('coverage', ['lint'], coverage);
 
 // Run the headless unit tests as you make changes.
 gulp.task('watch', watch);
+gulp.task('watch-docs', watchDocs);
 
 // An alias of test
 gulp.task('default', ['test']);

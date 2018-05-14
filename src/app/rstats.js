@@ -1,8 +1,7 @@
 /**
- * JavaScript port of Rmath functions
+ * JavaScript port of Rmath functions.
  *
- * @todo Test pnorm
- *
+ * @module rstats
  * @author Matthew Flickinger
  * @author Ryan Welch
  * @license LGPL-2.1

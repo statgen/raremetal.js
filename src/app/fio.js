@@ -12,11 +12,23 @@ import { ScoreStatTable, GenotypeCovarianceMatrix, VariantMask } from './stats.j
 import numeric from 'numeric';
 import zlib from 'zlib';
 
+/**
+ * An enum denoting score/covariance statistics file format.
+ * @type {{RAREMETAL: number, RVTEST: number}}
+ */
 const STATS_FORMAT = {
   "RAREMETAL": 0,
   "RVTEST": 1
 };
 
+/**
+ * Helper function to sort a list of variants (in EPACTS format) by position.
+ * @function
+ * @param a Variant 1
+ * @param b Variant 2
+ * @return {number} Comparison integer (0, -1, or 1.)
+ * @private
+ */
 function _variantSort(a, b) {
   let pos_a = a.match(REGEX_EPACTS)[2];
   let pos_b = b.match(REGEX_EPACTS)[2];
@@ -57,8 +69,11 @@ function _variantSort(a, b) {
 // }
 
 /**
- * Read groups from a mask file
- * @param {string} fpath Path to mask file
+ * Read groups from a mask file.
+ * @function
+ * @param {string} fpath Path to mask file.
+ * @return {VariantMask} A VariantMask object that stores a mapping of groups to lists of variants.
+ * @public
  */
 function readMaskFileSync(fpath) {
   const data = fs.readFileSync(fpath, { encoding: "utf8" });
@@ -90,10 +105,21 @@ function readMaskFileSync(fpath) {
 }
 
 /**
- * Extract score statistics from a file (either rvtest or raremetal format)
- * @param {string} fpath - The path to the bgzipped score statistics file (one variant per line)
+ * Extract score statistics from a file (either rvtest or raremetal format).
+ * @param {string} fpath - The path to the bgzipped score statistics file (one variant per line).
  * @param {string} region - Region containing the variants. Should be formatted in the typical "1:1-4000".
- * @param {string[]} variants - A list of variants to specifically extract, in this order
+ * @param {string[]} variants - A list of variants to specifically extract, in this order. If a list of variants is not
+ *  provided, all variants will be extracted in the region.
+ * @return {ScoreStatTable} An object containing statistics per variant, including:
+ *  <ul>
+ *    <li> Chromosome and position
+ *    <li> Score statistic
+ *    <li> Variance of the score statistic
+ *    <li> Reference allele
+ *    <li> Alternate allele and frequency
+ *    <li> Effect allele and frequency
+ *    <li> Number of genotyped samples present in the analysis when the score statistics were calculated
+ *  </ul>
  */
 async function extractScoreStats(fpath, region, variants) {
   // Figure out format.
@@ -187,13 +213,15 @@ async function extractScoreStats(fpath, region, variants) {
 }
 
 /**
- * Find the number of variants in a region of a covariance matrix file
- * @param {string} covar_file Path to covariance matrix file
+ * Find the number of variants in a region of a covariance matrix file.
+ * @function
+ * @public
+ * @param {string} covarFile Path to covariance matrix file
  * @param {string} region Region string, e.g. 1:1-4000
  * @returns {number} Number of variants in the region
  */
-function getNumberOfVariantsFromCovarianceFile(covar_file, region) {
-  const cmd = `tabix ${covar_file} ${region}`;
+function getNumberOfVariantsFromCovarianceFile(covarFile, region) {
+  const cmd = `tabix ${covarFile} ${region}`;
   const lines = execSync(cmd, { encoding: "utf8" });
   const positions = new Set();
   for (let e of lines.split("\n")) {
@@ -207,9 +235,9 @@ function getNumberOfVariantsFromCovarianceFile(covar_file, region) {
 }
 
 /**
- * Determine whether the file is in rvtest or raremetal format
- * @param fpath Path to file (can be covariance or score stats)
- * @return STATS_FORMAT.RAREMETAL or STATS_FORMAT.RVTEST
+ * Determine whether the file is in rvtest or raremetal format.
+ * @param fpath {string} Path to file (can be covariance or score stats).
+ * @return {number} STATS_FORMAT.RAREMETAL or STATS_FORMAT.RVTEST.
  */
 async function detectFormat(fpath) {
   let stream = fs.createReadStream(fpath);
@@ -236,15 +264,32 @@ async function detectFormat(fpath) {
 }
 
 /**
- * Extract covariance matrix from a file
+ * Extract covariance matrix from a file.
  * If variants are provided, only extract a matrix for the given variants. This only requires a single pass of the file.
  * If no variants are provided, a double pass is done - one to figure out the size of the matrix, the next to read it.
- * @param {string} fpath Path to covariance matrix file
- * @param {string} region Region string, e.g. 1:1-40000
+ *
+ * <p>
+ *
+ * This function assumes you have tabix installed, and it exists on your PATH.
+ * You can download tabix by visiting {@link http://www.htslib.org/download/|htslib.org}.
+ *
+ * <p>
+ *
+ * We assume that the file being loaded is a covariance matrix file produced by either
+ * {@link https://genome.sph.umich.edu/wiki/RAREMETAL_Documentation RAREMETAL} or
+ * {@link https://github.com/zhanxw/rvtests rvtests}. We specifically assume that, per these file formats, scores and
+ * covariances are oriented towards the alternate allele when reading. However, when storing, covariances are stored flipped
+ * towards the *minor allele*, as this is typically the convention used in aggregation tests. The covariance matrix is
+ * also multiplied by the sample size, since per convention, RAREMETAL and rvtests both divide each element by the sample
+ * size before writing out.
+ *
+ * @function
+ * @param {string} fpath Path to covariance matrix file.
+ * @param {string} region Region string, e.g. 1:1-40000.
  * @param {string[]} variants Array of variants to extract in this order. Variants should be EPACTS format, e.g. 1:4_A/G.
- * @param {ScoreStatTable} scoreStats Object containing score statistics and other required information
+ * @param {ScoreStatTable} scoreStats Object containing score statistics and other required information.
  *   This is needed because rvtest and raremetalworker both normalize the covariance matrix by the sample size.
- * @returns {GenotypeCovarianceMatrix} A genotype covariance matrix.
+ * @returns {Promise<GenotypeCovarianceMatrix>} A genotype covariance matrix.
  */
 async function extractCovariance(fpath, region, variants, scoreStats) {
   const fileFormat = await detectFormat(fpath);
