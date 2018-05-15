@@ -1,13 +1,18 @@
 /**
  * A port of Robert Davies' method for computing the distribution
- * of a linear combination of chi-squared random variables
+ * of a linear combination of chi-squared random variables.
+ *
+ * <p>
  *
  * Publication: 
- * The distribution of a linear combination of chi‐squared random variables. Applied Statistics 29 323‐333.
- * 
- * Original C code:
- * http://www.robertnz.net/QF.htm
+ * {@link https://www.jstor.org/stable/2346911|The distribution of a linear combination of chi‐squared random variables. Applied Statistics 29 323‐333.}
  *
+ * <p>
+ *
+ * Original C code:
+ * {@link http://www.robertnz.net/QF.htm}
+ *
+ * @module qfc
  * @license MIT
  */
 
@@ -244,6 +249,24 @@ function cfe(x) {
   }
 }
 
+/**
+ * Mixture chi-square distribution function. <p>
+ *
+ * This is the cumulative distribution for a linear mixture of chi-squared random variables, each having
+ * its own degrees of freedom and non-centrality parameter: <p>
+ *
+ * c1 = sum(lb1[j] * x_j) + sigma * X0, where each x_j is non-central chi-squared, and X0 is a standard normal variable.
+ *
+ * @param lb1 {number[]} Coefficient of each chi-squared variable.
+ * @param nc1 {number[]} Non-centrality parameter for each chi-squared variable x_j.
+ * @param n1 {number[]} Degrees of freedom for each chi-squared variable x_j.
+ * @param r1 {number} Number of chi-squared variables.
+ * @param sigma {number} Coefficient of standard normal variable.
+ * @param c1 {number[]} Mixture chi-squared statistic value (point at which function should be evaluated).
+ * @param lim1 {number} Maximum number of terms in integrations.
+ * @param acc {number} Maximum error.
+ * @return {number} Cumulative lower-tail probability.
+ */
 function qf(lb1, nc1, n1, r1, sigma, c1, lim1, acc)  {
 
 /*  distribution function of a linear combination of non-central

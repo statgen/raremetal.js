@@ -1,5 +1,5 @@
 /**
- * Methods for loading score statistics and covariance matrices from local files
+ * Methods for loading score statistics and covariance matrices from local files. This is primarily used by the CLI.
  * @module fio
  * @license MIT
  */
@@ -110,7 +110,7 @@ function readMaskFileSync(fpath) {
  * @param {string} region - Region containing the variants. Should be formatted in the typical "1:1-4000".
  * @param {string[]} variants - A list of variants to specifically extract, in this order. If a list of variants is not
  *  provided, all variants will be extracted in the region.
- * @return {ScoreStatTable} An object containing statistics per variant, including:
+ * @return {module:stats~ScoreStatTable} An object containing statistics per variant, including:
  *  <ul>
  *    <li> Chromosome and position
  *    <li> Score statistic

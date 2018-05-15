@@ -1,5 +1,6 @@
 /**
- * Calculate group-based tests from score statistics
+ * Calculate group-based tests from score statistics.
+ *
  * @module stats
  * @license MIT
  */
@@ -86,12 +87,12 @@ class VariantMask {
 }
 
 /**
- * Class for storing score statistics. <br/><br/>
+ * Class for storing score statistics. <p>
  *
  * Assumptions:
  * <ul>
  *   <li> This class assumes you are only storing statistics on a per-chromosome basis, and not genome wide.
- *   <li> Score statistic direction is towards the minor allele
+ *   <li> Score statistic direction is towards the minor allele.
  * </ul>
  */
 class ScoreStatTable {
@@ -167,9 +168,12 @@ class ScoreStatTable {
   }
 
   /**
-   * Combine this set of score statistics with another
-   * https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#SINGLE_VARIANT_META_ANALYSIS
-   * @param other
+   * Combine this set of score statistics with another. See also {@link https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#SINGLE_VARIANT_META_ANALYSIS}
+   * for information on how statistics are combined.
+   *
+   * @param other {ScoreStatTable} Another set of score statistics with which to combine this object for the purposes
+   *  of meta-analysis.
+   * @return {*} No object is returned; this method runs in-place.
    */
   add(other) {
     // First confirm both matrices are the same shape
@@ -395,7 +399,15 @@ function calcSkatWeights(mafs, a = 1, b = 25) {
 }
 
 /**
- * Calculate SKAT test.
+ * Calculate SKAT test. <p>
+ *
+ * This function implements two methods for calculating the p-value from the SKAT test statistic:
+ * <ul>
+ *   <li> Davies' approximation (method = davies). This method is a more exact approach, at the cost of performance.
+ *   <li> Liu approximation (method = liu). This method matches the first 3 moments of the mixture chi-square distribution.
+ *        It is faster, but has inflated type 1 error in the tails. It can also be used in the special edge case where
+ *        the Davies' approximation yields a p-value of 0.
+ * </ul>
  *
  * @function
  * @param {Number[]} u Vector of score statistics (length m, number of variants).

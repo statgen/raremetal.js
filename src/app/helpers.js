@@ -1,14 +1,18 @@
 /**
- * Helper methods devoted to running a calculation
+ * Helper methods devoted to running aggregation tests in browser.
+ *
+ * @module helpers
+ * @license MIT
  */
 
 import numeric from 'numeric';
 import { VariantMask, ScoreStatTable, GenotypeCovarianceMatrix, testBurden, testSkat, calcSkatWeights } from './stats.js';
 
 /**
- * Parse the idealized portal response JSON for requesting covariance matrices
- * A spec of this format can be found in src/docs/portal-api.md
- * @param json
+ * Parse the idealized portal response JSON for requesting covariance matrices.
+ * A spec of this format can be found in src/docs/portal-api.md.
+ * @param json JSON object from portal API response. An 'example.json' file is included in the root of this project.
+ *  The [_example]{@link module:helpers~_example} function shows an example of how to use it.
  */
 function parsePortalJson(json) {
   // Result storage
@@ -129,10 +133,10 @@ function parsePortalJson(json) {
  * A mask is a mapping from a group label to a list of variants. Usually the group is a gene ID or name
  * but in reality it can be anything.
  *
- * @param tests A mapping of test labels -> test functions
+ * @param tests A mapping of test labels -> test functions.
  * @param scoreCov Object retrieved from parsePortalJson(). Contains masks, score statistics, and covariance matrices.
  * @param metaData An object that will be returned with the results. It could have an ID or description of what was tested.
- * @return {Promise<Object>} Rows of results, one per mask * group
+ * @return {Promise<Object>} Rows of results, one per mask * group.
  */
 function runAggregationTests(tests, scoreCov, metaData) {
   let results = {
@@ -188,7 +192,8 @@ function runAggregationTests(tests, scoreCov, metaData) {
 }
 
 /**
- * Example of running many tests + masks at once
+ * Example of running many aggregation tests + masks at once.
+ * @param filename {string} Path to JSON object which contains portal API response for scores/covariance/masks.
  * @return {Promise<Object>} Result object, which matches the format of the "result JSON format"
  */
 async function _example(filename) {
@@ -209,8 +214,13 @@ async function _example(filename) {
       weights: calcSkatWeights
     }
   };
+
+  /**
+   * Example metadata to merge into the aggregation test result object.
+   * Can be left undefined if not desired.
+   */
   const metadata = {
-    id: 100, // This gets repeated in the response  TODO: Necessary?
+    id: 100,
     description: "This is an example of running multiple tests and masks at once"
   };
 

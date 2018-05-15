@@ -1,5 +1,5 @@
 /**
- * Functions for pretty-printing various data structures
+ * Functions for pretty-printing various data structures. <p>
  *
  * This should not be included in the browser bundle. The dependencies cause
  * a large increase in the download size (~ 200k -> 750k). And the pretty

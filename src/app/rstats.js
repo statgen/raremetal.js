@@ -1,5 +1,12 @@
 /**
- * JavaScript port of Rmath functions.
+ * JavaScript port of Rmath functions. <p>
+ *
+ * These functions have been directly ported from the Rmath library, found in the R source code repository under
+ * R-source/src/include/Rmath.h. Most of the code should look almost identical to the C code, with minor changes to
+ * adapt to features present in C but not in JS. <p>
+ *
+ * Test cases were ported from R-source/tests/d-p-q-r-tests.R. We additionally wrote other test cases over a range of
+ * parameter values and edge cases. These cases are found in our test suite in test/unit/rstats.js. <p>
  *
  * @module rstats
  * @author Matthew Flickinger
@@ -1004,6 +1011,17 @@ function pgamma(x, alph, scale, lower_tail, log_p) {
   return pgamma_raw(x, alph, lower_tail, log_p);
 }
 
+/**
+ * The chi-squared cumulative distribution function.
+ *
+ * Supports the non-centrality parameter ncp.
+ *
+ * @param x {number} Value.
+ * @param df {number} Degrees of freedom.
+ * @param ncp {number} Non-centrality parameter.
+ * @param lower_tail {bool} Return cumulative probability from lower tail?
+ * @param log_p {bool} Return log probability
+ */
 export function pchisq(x, df, ncp = 0, lower_tail = true, log_p = false) {
   x = parseNumeric(x);
   df = parseNumeric(df);
@@ -1314,6 +1332,16 @@ function pnorm(x, mu, sigma, lower_tail, log_p) {
   return (lower_tail) ? r.cum : r.ccum;
 }
 
+/**
+ * The normal cumulative distribution function.
+ *
+ * @function pnorm
+ * @param x {number} Value.
+ * @param mu {number} Mean of the normal distribution.
+ * @param sigma {number} Standard deviation of the normal distribution.
+ * @param lower_tail {bool} Should the cumulative probability returned be calculated as the lower tail?
+ * @param give_log {bool} Return log probability
+ */
 function _pnorm(x, mu, sigma, lower_tail, give_log) {
   x = parseNumeric(x);
   mu = parseNumeric(mu, 0);
@@ -1447,6 +1475,18 @@ function dbeta(x, a, b, give_log) {
   return R_D_exp(lval, give_log);
 }
 
+/**
+ * The beta density function.
+ *
+ * The non-central beta distribution parameter is not implemented currently.
+ *
+ * @function dbeta
+ * @param x {number} Value.
+ * @param shape1 {number} The first shape parameter, or "alpha."
+ * @param shape2 {number} The second shape parameter, or "beta."
+ * @param log {bool} Should the result be returned in log scale.
+ * @return {number} Probability density evaluated at x.
+ */
 function _dbeta(x, shape1, shape2, log) {
   x = parseNumeric(x);
   shape1 = parseNumeric(shape1);
