@@ -147,10 +147,9 @@ function parsePortalJson(json) {
  *
  * @param tests A mapping of test labels -> test functions.
  * @param scoreCov Object retrieved from parsePortalJson(). Contains masks, score statistics, and covariance matrices.
- * @param metaData An object that will be returned with the results. It could have an ID or description of what was tested.
  * @return {Promise<Object>} Rows of results, one per mask * group.
  */
-function runAggregationTests(tests, scoreCov, metaData) {
+function runAggregationTests(tests, scoreCov) {
   let results = {
     data: {
       masks: [],
@@ -169,7 +168,6 @@ function runAggregationTests(tests, scoreCov, metaData) {
     }
   };
 
-  Object.assign(results, metaData);
   results.data.masks = Object.values(scoreCov.masks);
 
   for (let scoreBlock of Object.values(scoreCov.scorecov)) {
@@ -238,17 +236,8 @@ async function _example(filename) {
     }
   };
 
-  /**
-   * Example metadata to merge into the aggregation test result object.
-   * Can be left undefined if not desired.
-   */
-  const metadata = {
-    id: 100,
-    description: "This is an example of running multiple tests and masks at once"
-  };
-
   // Run all tests/masks
-  return runAggregationTests(tests, scoreCov, metadata);
+  return runAggregationTests(tests, scoreCov);
 }
 
 export { parsePortalJson, runAggregationTests, _example };
