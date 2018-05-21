@@ -673,4 +673,4 @@ const AGGREGATION_TESTS = new AggregationTestContainer(
 );
 
 export { ScoreStatTable, GenotypeCovarianceMatrix, VariantMask,
-         AggregationTest, ZegginiBurdenTest, SkatTest, AGGREGATION_TESTS };
+  AggregationTest, ZegginiBurdenTest, SkatTest, AGGREGATION_TESTS };
