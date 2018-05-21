@@ -1,5 +1,5 @@
 import { parsePortalJson, runAggregationTests }  from '../../src/app/helpers.js';
-import { testBurden, testSkat, calcSkatWeights } from '../../src/app/stats.js';
+import { AGGREGATION_TESTS } from '../../src/app/stats.js';
 import fs from 'fs';
 import { assert } from 'chai';
 
@@ -17,24 +17,7 @@ describe('Full integration of covariance and aggregation tests', function() {
       var scoreCov = parsePortalJson(json);
 
       // Run all tests/masks and return results
-      results = runAggregationTests(
-        {
-          'zegginiBurden': testBurden,
-          'skatLiu': {
-            test: (u, v, w) => testSkat(u, v, w, 'liu'),
-            weights: calcSkatWeights
-          },
-          'skatDavies': {
-            test: (u, v, w) => testSkat(u, v, w, 'davies'),
-            weights: calcSkatWeights
-          }
-        },
-        scoreCov,
-        {
-          id: 100, // This gets repeated in the response
-          description: 'This is an example of running multiple tests and masks at once'
-        }
-      );
+      results = runAggregationTests(AGGREGATION_TESTS, scoreCov);
     });
 
     it('should match expected burden p-value for HIC2', function() {
