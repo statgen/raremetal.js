@@ -1019,8 +1019,8 @@ function pgamma(x, alph, scale, lower_tail, log_p) {
  * @param x {number} Value.
  * @param df {number} Degrees of freedom.
  * @param ncp {number} Non-centrality parameter.
- * @param lower_tail {bool} Return cumulative probability from lower tail?
- * @param log_p {bool} Return log probability
+ * @param lower_tail {boolean} Return cumulative probability from lower tail?
+ * @param log_p {boolean} Return log probability
  */
 export function pchisq(x, df, ncp = 0, lower_tail = true, log_p = false) {
   x = parseNumeric(x);
@@ -1339,8 +1339,8 @@ function pnorm(x, mu, sigma, lower_tail, log_p) {
  * @param x {number} Value.
  * @param mu {number} Mean of the normal distribution.
  * @param sigma {number} Standard deviation of the normal distribution.
- * @param lower_tail {bool} Should the cumulative probability returned be calculated as the lower tail?
- * @param give_log {bool} Return log probability
+ * @param lower_tail {boolean} Should the cumulative probability returned be calculated as the lower tail?
+ * @param give_log {boolean} Return log probability
  */
 function _pnorm(x, mu, sigma, lower_tail, give_log) {
   x = parseNumeric(x);
@@ -1484,7 +1484,7 @@ function dbeta(x, a, b, give_log) {
  * @param x {number} Value.
  * @param shape1 {number} The first shape parameter, or "alpha."
  * @param shape2 {number} The second shape parameter, or "beta."
- * @param log {bool} Should the result be returned in log scale.
+ * @param log {boolean} Should the result be returned in log scale.
  * @return {number} Probability density evaluated at x.
  */
 function _dbeta(x, shape1, shape2, log) {
