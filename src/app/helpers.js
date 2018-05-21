@@ -6,8 +6,11 @@
  */
 
 import numeric from 'numeric';
-import { VariantMask, ScoreStatTable, GenotypeCovarianceMatrix, testBurden, testSkat, calcSkatWeights } from './stats.js';
+
+import { VariantMask, ScoreStatTable, GenotypeCovarianceMatrix, testBurden, testSkat, calcSkatWeights,
+         AGGREGATION_TESTS } from './stats.js';
 import { REGEX_EPACTS } from './constants.js';
+
 
 /**
  * Parse the idealized portal response JSON for requesting covariance matrices.
@@ -145,9 +148,9 @@ function parsePortalJson(json) {
  * A mask is a mapping from a group label to a list of variants. Usually the group is a gene ID or name
  * but in reality it can be anything.
  *
- * @param tests A mapping of test labels -> test functions.
+ * @param tests {AggregationTestContainer} Object containing aggregation tests to run.
  * @param scoreCov Object retrieved from parsePortalJson(). Contains masks, score statistics, and covariance matrices.
- * @return {Promise<Object>} Rows of results, one per mask * group.
+ * @return {Object} Rows of results, one per mask * group.
  */
 function runAggregationTests(tests, scoreCov) {
   let results = {
@@ -171,34 +174,40 @@ function runAggregationTests(tests, scoreCov) {
   results.data.masks = Object.values(scoreCov.masks);
 
   for (let scoreBlock of Object.values(scoreCov.scorecov)) {
-    for (let [testLabel, testObject] of Object.entries(tests)) {
-      let testFunc;
-      let weightFunc;
-      if (typeof testObject === 'function') {
-        testFunc = testObject;
-      }
-      else if (typeof testObject === 'object') {
-        weightFunc = testObject.weights;
-        testFunc = testObject.test;
-      }
+
+    for (let aggTest of tests) {
+      let res = {
+        group: scoreBlock.group,
+        mask: scoreBlock.mask,
+        test: aggTest.key,
+        pvalue: NaN,
+        stat: NaN
+      };
 
       if (scoreBlock.scores.u.length === 0 || scoreBlock.covariance.matrix.length === 0) {
         continue;
       }
 
-      // Calculate weights if necessary
-      let w;
-      if (weightFunc) {
-        // Use default weights for now, will offer option to specify later
-        w = weightFunc(scoreBlock.scores.altFreq.map(x => Math.min(x, 1 - x)));
-      }
+      // Minor allele frequencies calculated from alternate allele frequencies
+      let mafs = scoreBlock.scores.altFreq.map(x => Math.min(x, 1 - x));
 
-      let [stat, p] = testFunc(scoreBlock.scores.u, scoreBlock.covariance.matrix, w);
+      /**
+       * Calculate the aggregation test.
+       */
+      let stat, p;
+      if (aggTest.requiresMaf) {
+        [stat, p] = aggTest.test(scoreBlock.scores.u, scoreBlock.covariance.matrix, null, mafs);
+      }
+      else {
+        [stat, p] = aggTest.test(scoreBlock.scores.u, scoreBlock.covariance.matrix);
+      }
+      res.pvalue = p;
+      res.stat = stat;
 
       // Store results for each group
       results.data.groupResults.group.push(scoreBlock.group);
       results.data.groupResults.mask.push(scoreBlock.mask);
-      results.data.groupResults.test.push(testLabel);
+      results.data.groupResults.test.push(aggTest.key);
       results.data.groupResults.pvalue.push(p);
       results.data.groupResults.stat.push(stat);
 
@@ -224,20 +233,8 @@ async function _example(filename) {
   const json = await response.json();
   const scoreCov = parsePortalJson(json);
 
-  const tests = {
-    "zegginiBurden": testBurden,
-    "skatLiu": {
-      test: (u, v, w) => testSkat(u, v, w, "liu"),
-      weights: calcSkatWeights
-    },
-    "skatDavies": {
-      test: (u, v, w) => testSkat(u, v, w, "davies"),
-      weights: calcSkatWeights
-    }
-  };
-
   // Run all tests/masks
-  return runAggregationTests(tests, scoreCov);
+  return runAggregationTests(AGGREGATION_TESTS, scoreCov);
 }
 
 export { parsePortalJson, runAggregationTests, _example };
