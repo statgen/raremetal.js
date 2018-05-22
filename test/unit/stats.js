@@ -1,4 +1,4 @@
-import { testBurden } from '../../src/app/stats.js';
+import { ZegginiBurdenTest } from '../../src/app/stats.js';
 
 describe('stats.js', function() {
   describe('testBurden', function() {
@@ -8,7 +8,8 @@ describe('stats.js', function() {
         [ -0.01359241884, 23.90577896, -0.01371627432, -0.1992892636 ],
         [ -0.01361261692, -0.01371627432, 23.9075214, -0.1996334844 ],
         [ -0.1976943976, -0.1992892636, -0.1996334844, 320.2882088 ] ];
-      let [, pval] = testBurden(u,cov,null);
+      let agg = new ZegginiBurdenTest();
+      let [, pval] = agg.test(u,cov,null);
       let expectedPval = 0.7141;
       assert.closeTo(
         pval,
