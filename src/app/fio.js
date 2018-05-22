@@ -7,7 +7,7 @@
 import fs from 'fs';
 import readline from 'readline';
 import { execSync, spawn } from 'child_process';
-import REGEX_EPACTS from './constants.js';
+import { REGEX_EPACTS } from './constants.js';
 import { ScoreStatTable, GenotypeCovarianceMatrix, VariantMask } from './stats.js';
 import numeric from 'numeric';
 import zlib from 'zlib';
