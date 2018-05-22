@@ -1,7 +1,7 @@
 {
   "name": "raremetal.js",
   "sideEffects": false,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Calculate aggregation tests and meta-analysis of aggregation test results using score statistics and covariance matrices",
   "engines": {
     "node": "~8.9.4"
