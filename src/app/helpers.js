@@ -6,8 +6,7 @@
  */
 
 import numeric from 'numeric';
-import { VariantMask, ScoreStatTable, GenotypeCovarianceMatrix, testBurden, testSkat, calcSkatWeights,
-         AGGREGATION_TESTS } from './stats.js';
+import { VariantMask, ScoreStatTable, GenotypeCovarianceMatrix, AGGREGATION_TESTS } from './stats.js';
 
 /**
  * Parse the idealized portal response JSON for requesting covariance matrices.
