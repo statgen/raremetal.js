@@ -19,7 +19,8 @@
     "docs": "jsdoc src/app -R README.md -d docs/",
     "pandoc": "pandoc -V geometry:margin=1in -o docs/portal-api.pdf src/docs/portal-api.md",
     "coverage": "gulp coverage",
-    "preversion": "[ `git rev-parse --abbrev-ref HEAD` == 'master' ] && npm run build"
+    "preversion": "[ `git rev-parse --abbrev-ref HEAD` == 'master' ] && npm run build",
+    "version": "git add -A dist && git add -A docs"
   },
   "repository": {
     "type": "git",
