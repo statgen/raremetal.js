@@ -82,6 +82,14 @@ class SkatTest extends AggregationTest {
     this.label = 'SKAT Test';
     this.key = 'skat';
     this.requiresMaf = true;
+
+    /**
+     * Skat test method. Only used for dev/testing.
+     * Should not be set by user.
+     * @private
+     * @type {string}
+     */
+    this._method = 'davies';
   }
 
   /**
@@ -148,13 +156,16 @@ class SkatTest extends AggregationTest {
     }
 
     // P-value method
-    if (lambdas.length === 1) {
+    if (lambdas.length === 1 || this._method === 'liu') {
       // Davies method does not support 1 lambda
       // This is what raremetal does
       return _skatLiu(lambdas, q);
     }
-    else {
+    else if (this._method === 'davies') {
       return _skatDavies(lambdas, q);
+    }
+    else {
+      throw new Error(`Skat method ${this._method} not implemented`);
     }
   }
 }
