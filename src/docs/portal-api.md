@@ -19,12 +19,16 @@ Backward incompatible changes:
 
 * Rename `results` to `groupResults` in results endpoint.
 
+* Change `grouping` and `type` of groups to be `groupType` universally.
+
+* Remove redundant `type` from `results` in results endpoint.
+
 New additions:
 
 * `singleVariantResults` section of results JSON to allow for also
   returning single variant statistics in one call.
 
-* Include single variant p-values in `scorecov` section of the scores/covariances endpoint
+* Include single variant p-values in `scorecov` section of the scores/covariances endpoint.
 
 ### Version 0.1 (2018-04-27)
 
@@ -73,19 +77,19 @@ For now, a description of the variant filtering and grouping criteria will proba
         {
           "id": "PTV",
           "description": "Protein truncating variants",
-          "grouping": "gene",
+          "groupType": "gene",
           "identifier": "ENSEMBL"
         },
         {
           "id": "PTV & LoF & AF<0.05",
           "description": "Protein truncating variants with AF < 0.05",
-          "grouping": "gene",
+          "groupType": "gene",
           "identifier": "ENSEMBL"
         },
         {
           "id": "PTV & LoF & AF<0.05",
           "description": "Protein truncating and loss-of-function variants with AF < 0.05",
-          "grouping": "gene",
+          "groupType": "gene",
           "identifier": "ENSEMBL"
         }
       ]
@@ -129,6 +133,7 @@ This response is slightly condensed to save space.
       {
         "id": "PTV",
         "label": "Includes only protein truncating variants",
+        "groupType": "gene",
         "groups": {
           "ENSG000001": {
             "variants": [
@@ -243,6 +248,7 @@ Note: the results are not ordered; the order in which groups appear in `groupRes
       {
         "id": "PTV",
         "label": "Includes only protein truncating variants",
+        "groupType": "gene",
         "groups": {
           "ENSG000001": {
             "variants": [
@@ -278,14 +284,12 @@ Note: the results are not ordered; the order in which groups appear in `groupRes
     "groupResults": [
       {
         "group": "ENSG000001",
-        "type": "gene",
         "mask": "PTV",
         "test": "SKAT-O",
         "pvalue": 1.8e-09
       },
       {
         "group": "ENSG000002",
-        "type": "gene",
         "mask": "PTV",
         "test": "SKAT-O",
         "pvalue": 1.7883e-09
