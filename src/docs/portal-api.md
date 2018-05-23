@@ -8,11 +8,29 @@ header-includes:
 
 # Portal/Hail API
 
-| Version   | Date |
-| --------- | ---- |
-| 0.1 | 2018-04-17 |
+## Changes
 
-## Retrieve available datasets/masks
+### Version 1.0 (2018-05-23)
+
+Backward incompatible changes:
+
+* Move `altFreq` and related variant annotations out of masks and into
+  `singleVariantResults` in the results endpoint.
+
+* Rename `results` to `groupResults` in results endpoint.
+
+New additions:
+
+* `singleVariantResults` section of results JSON to allow for also
+  returning single variant statistics in one call.
+
+### Version 0.1 (2018-04-27)
+
+Initial document.
+
+## API specification
+
+### Retrieve available datasets/masks
 
 A dataset is a set of variant genotypes and samples (e.g. a VCF.) 
 
@@ -37,11 +55,11 @@ Masks would be available per dataset.
 
 For now, a description of the variant filtering and grouping criteria will probably just have to be plain text without some type of formal grammar. 
 
-### Request
+#### Request
 
 `GET /api/aggregation/metadata`
 
-### Response
+#### Response
 
 ```json
 {
@@ -74,9 +92,9 @@ For now, a description of the variant filtering and grouping criteria will proba
 }
 ```
 
-## Retrieve covariance in region given dataset/mask(s)
+### Retrieve covariance in region given dataset/mask(s)
 
-### Request
+#### Request
 
 Only requesting scores and covariance for the "PTV" mask just to save some space.
 
@@ -94,7 +112,7 @@ Only requesting scores and covariance for the "PTV" mask just to save some space
 }
 ```
 
-### Response
+#### Response
 
 We want to be able to retrieve as much of the masks/covariance data all at once to minimize round trips to the server. This structure would allow retrieving covariance for multiple masks all at once.
 
@@ -175,13 +193,13 @@ This response is slightly condensed to save space.
 }
 ```
 
-## Retrieving pre-computed aggregation test results
+### Retrieving pre-computed aggregation test results
 
 In the case where aggregation tests have already been pre-computed for some of the datasets server-side, we could use this API to retrieve those results and display them in LZ. 
 
 Note that raremetal.js, after running aggregation tests, will return results formatted in the exact same format as the response below. 
 
-### Request
+#### Request
 
 Looks identical to the same request used to retrieve covariance.
 
@@ -199,11 +217,11 @@ Looks identical to the same request used to retrieve covariance.
 }
 ```
 
-### Response
+#### Response
 
 If results were already available server-side, say if they were pre-computed, we could accept a response of this format and be able to show the results within LZ without performing any aggregation test computations.
 
-This response could contain a little more annotation for the individual variants (for example, allele frequencies below.)
+Note: the results are not ordered; the order in which groups appear in `groupResults` does not necessarily match the order in which groups appear in `data.masks`. Similarly with `singleVariantResults`.
 
 ```json
 {
@@ -220,27 +238,33 @@ This response could contain a little more annotation for the individual variants
               "2:21228642_G/A",
               "2:21230094_AT/A",
               "2:21230336_AT/A"
-            ],
-            "altFreq": [
-              0.033,
-              0.001,
-              0.00045
             ]
           },
           "ENSG000002": {
             "variants": [
               "19:11216264_G/T",
               "19:11218173_AACCCATC/A"
-            ],
-            "altFreq": [
-              0.0025,
-              0.03
             ]
           }
         }
       }
     ],
-    "results": [
+    "singleVariantResults": [
+      {
+        "variant": "2:21228642_G/A",
+        "altFreq": 0.033,
+        "pvalue": 0.01141
+      },
+      {
+        "variant": "2:21230094_AT/A",
+        "altFreq": 0.001,
+        "pvalue": 1e-4
+      },
+      {
+        ...
+      }
+    ],
+    "groupResults": [
       {
         "group": "ENSG000001",
         "type": "gene",
