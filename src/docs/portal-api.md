@@ -24,6 +24,8 @@ New additions:
 * `singleVariantResults` section of results JSON to allow for also
   returning single variant statistics in one call.
 
+* Include single variant p-values in `scorecov` section of the scores/covariances endpoint
+
 ### Version 0.1 (2018-04-27)
 
 Initial document.
@@ -166,6 +168,11 @@ This response is slightly condensed to save space.
           0.001,
           0.00045
         ],
+        "pvalue": [
+          0.000431,
+          0.05,
+          1.23e-06
+        ],
         "sigmaSquared": 0.08,
         "nsamples": 3550
       },
@@ -184,6 +191,10 @@ This response is slightly condensed to save space.
         "altFreq": [
           0.0025,
           0.03
+        ],
+        "pvalue": [
+          0.043,
+          0.0002
         ],
         "sigmaSquared": 0.08,
         "nsamples": 3550
