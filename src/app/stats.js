@@ -110,9 +110,22 @@ class ScoreStatTable {
     this.altFreq = [];
     this.effectAllele = [];
     this.effectAlleleFreq = [];
+    this.pvalue = [];
   }
 
-  appendScore(variant, position, u, v, altFreq, ea, eaFreq) {
+  /**
+   * Add a variant and relevant data on it into the table.
+   *
+   * @param variant {string} Variant (chr:pos_ref/alt)
+   * @param position {number} Integer position of variant
+   * @param u {number} Score statistic
+   * @param v {number} Variance of score statistic
+   * @param altFreq {number} Alternate allele frequency
+   * @param ea {number} Effect allele
+   * @param eaFreq {number} Effect allele frequency
+   * @param pvalue {number} Single variant p-value
+   */
+  appendScore(variant, position, u, v, altFreq, ea, eaFreq, pvalue) {
     this.variants.push(variant);
     this.positions.push(position);
 
@@ -124,6 +137,7 @@ class ScoreStatTable {
     this.altFreq.push(altFreq);
     this.effectAllele.push(ea);
     this.effectAlleleFreq.push(eaFreq);
+    this.pvalue.push(pvalue);
   }
 
   /**

@@ -57,6 +57,7 @@ function parsePortalJson(json) {
       let n = i + 1;
       let variance = scoreBlock.covariance[n * (n + 1) / 2 - 1];
       let altFreq = scoreBlock.altFreq[i];
+      let pvalue = scoreBlock.pvalue[i];
       let score = scoreBlock.scores[i];
 
       if (altFreq > 0.5) {
@@ -68,7 +69,10 @@ function parsePortalJson(json) {
         positions[i],
         score,
         variance,
-        altFreq
+        altFreq,
+        NaN,
+        NaN,
+        pvalue
       );
     }
 
@@ -142,7 +146,8 @@ function runAggregationTests(tests, scoreCov, metaData) {
   let results = {
     data: {
       masks: [],
-      results: []
+      singleVariantResults: [],
+      groupResults: []
     }
   };
 
@@ -184,7 +189,17 @@ function runAggregationTests(tests, scoreCov, metaData) {
       res.pvalue = p;
       res.stat = stat;
 
-      results.data.results.push(res);
+      results.data.groupResults.push(res);
+
+      // Store single-variant results if they exist
+      for (let i = 0; i < scoreBlock.scores.variants.length; i++) {
+        let singleVarResult = {
+          variant: scoreBlock.scores.variants[i],
+          altFreq: scoreBlock.scores.altFreq[i],
+          pvalue: scoreBlock.scores.pvalue[i]
+        };
+        results.data.singleVariantResults.push(singleVarResult);
+      }
     }
   }
 

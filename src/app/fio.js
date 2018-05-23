@@ -125,7 +125,7 @@ async function extractScoreStats(fpath, region, variants) {
   // Figure out format.
   const fileFormat = await detectFormat(fpath);
 
-  let colChrom, colPos, colRef, colAlt, colU, colV, colAltFreq, colEffectAllele;
+  let colChrom, colPos, colRef, colAlt, colU, colV, colAltFreq, colEffectAllele, colPvalue;
   if (fileFormat === STATS_FORMAT.RAREMETAL) {
     colChrom = 0;
     colPos = 1;
@@ -135,6 +135,7 @@ async function extractScoreStats(fpath, region, variants) {
     colU = 13;
     colV = 14;
     colEffectAllele = 3;
+    colPvalue = 16;
   }
   else if (fileFormat === STATS_FORMAT.RVTEST) {
     colChrom = 0;
@@ -145,6 +146,7 @@ async function extractScoreStats(fpath, region, variants) {
     colU = 12;
     colV = 13;
     colEffectAllele = 3;
+    colPvalue = 15;
   }
   else {
     throw new Error("Unrecognized covariance matrix file format");
@@ -180,6 +182,7 @@ async function extractScoreStats(fpath, region, variants) {
       let altFreq = parseFloat(ar[colAltFreq]);
       let ea = ar[colEffectAllele];
       let eaFreq = altFreq;
+      let pvalue = parseFloat(ar[colPvalue]);
 
       // Drop variants that are monomorphic. We can't use them.
       // @todo: Need to log this somehow, research JS logging packages
@@ -204,7 +207,7 @@ async function extractScoreStats(fpath, region, variants) {
       }
 
       if (!given_variants || variants.includes(variant)) {
-        scoreTable.appendScore(variant, position, u, sqrt_v, altFreq, ea, eaFreq);
+        scoreTable.appendScore(variant, position, u, sqrt_v, altFreq, ea, eaFreq, pvalue);
       }
     }
   }

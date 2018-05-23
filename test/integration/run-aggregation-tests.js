@@ -1,6 +1,7 @@
 import { parsePortalJson, runAggregationTests }  from '../../src/app/helpers.js';
 import { testBurden, testSkat, calcSkatWeights } from '../../src/app/stats.js';
 import fs from 'fs';
+import { assert } from 'chai';
 
 describe('Full integration of covariance and aggregation tests', function() {
   describe('runAggregationTests()', function() {
@@ -37,17 +38,17 @@ describe('Full integration of covariance and aggregation tests', function() {
     });
 
     it('should match expected burden p-value for HIC2', function() {
-      let t = results.data.results.filter(x => x.group === 'HIC2' && x.test === 'zegginiBurden')[0];
+      let t = results.data.groupResults.filter(x => x.mask == 'AF01' && x.group === 'ENSG00000169635' && x.test === 'zegginiBurden')[0];
       assert.closeTo(t.pvalue,0.42913956,0.001);
     });
 
     it('should match expected skat liu p-value for HIC2', function() {
-      let t = results.data.results.filter(x => x.group === 'HIC2' && x.test === 'skatLiu')[0];
+      let t = results.data.groupResults.filter(x => x.mask == 'AF01' && x.group === 'ENSG00000169635' && x.test === 'skatLiu')[0];
       assert.closeTo(t.pvalue,0.739,0.001);
     });
 
     it('should match expected skat davies p-value for HIC2', function() {
-      let t = results.data.results.filter(x => x.group === 'HIC2' && x.test === 'skatDavies')[0];
+      let t = results.data.groupResults.filter(x => x.mask == 'AF01' && x.group === 'ENSG00000169635' && x.test === 'skatDavies')[0];
       assert.closeTo(t.pvalue,0.765,0.001);
     });
   });

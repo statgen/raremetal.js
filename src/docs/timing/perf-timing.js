@@ -1,3 +1,4 @@
+require("babel-register");
 const { parsePortalJson } = require("../../app/helpers.js");
 const { testBurden, testSkat, calcSkatWeights } = require("../../app/stats.js");
 const fs = require("fs");
@@ -38,7 +39,7 @@ function loadPortalJson(filename) {
 }
 
 function scoreCovDescriptiveStats(scoreCov) {
-  const mask = scoreCov.masks["MDUP"];
+  const mask = scoreCov.masks["AF01"];
   const nGroups = mask.size();
 
   let avgGroupLength = 0;
@@ -66,7 +67,7 @@ function timeAggregationTests(tests, scoreCov) {
   let results = {
     data: {
       masks: [],
-      results: []
+      groupResults: []
     }
   };
 
@@ -110,7 +111,7 @@ function timeAggregationTests(tests, scoreCov) {
       res.pvalue = p;
       res.stat = stat;
 
-      results.data.results.push(res);
+      results.data.groupResults.push(res);
     }
 
     timerTest.stop();
@@ -186,7 +187,7 @@ function main() {
   });
 
   for (const region of regions) {
-    const filename = `example_portal_${region.chr}-${region.start}-${region.end}.v1.json`;
+    const filename = `example_portal_${region.chr}-${region.start}-${region.end}.v4.json`;
     const portalJson = loadPortalJson(filename);
     const stats = scoreCovDescriptiveStats(portalJson);
     const timings = runTiming(portalJson);
