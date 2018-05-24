@@ -1,7 +1,7 @@
 import { ZegginiBurdenTest } from '../../src/app/stats.js';
 
 describe('stats.js', function() {
-  describe('testBurden', function() {
+  describe('ZegginiBurdenTest', function() {
     it('should return correct p-value for known u/cov (no weights)', function() {
       let u = [ 1.26175, 3.45806, -4.90216, -7.05748 ];
       let cov = [ [ 23.902543, -0.01359241884, -0.01361261692, -0.1976943976 ],
