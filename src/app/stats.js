@@ -89,7 +89,7 @@ class SkatTest extends AggregationTest {
      * @private
      * @type {string}
      */
-    this._method = 'davies';
+    this._method = 'auto';
   }
 
   /**
@@ -156,13 +156,22 @@ class SkatTest extends AggregationTest {
     }
 
     // P-value method
-    if (lambdas.length === 1 || this._method === 'liu') {
-      // Davies method does not support 1 lambda
-      // This is what raremetal does
+    if (this._method === 'liu') {
+      // Only for debug purposes
       return _skatLiu(lambdas, q);
     }
     else if (this._method === 'davies') {
       return _skatDavies(lambdas, q);
+    }
+    else if (this._method === 'auto') {
+      if (lambdas.length === 1) {
+        // Davies method does not support 1 lambda
+        // This is what raremetal does
+        return _skatLiu(lambdas, q);
+      }
+      else {
+        return _skatDavies(lambdas, q);
+      }
     }
     else {
       throw new Error(`Skat method ${this._method} not implemented`);
