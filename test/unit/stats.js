@@ -1,4 +1,5 @@
 import { ZegginiBurdenTest, SkatTest } from '../../src/app/stats.js';
+import { assert } from 'chai';
 
 describe('stats.js', function() {
   describe('ZegginiBurdenTest', function() {
@@ -67,6 +68,21 @@ describe('stats.js', function() {
         pval,
         expectedPval,
         0.001,
+        'SkatTest on known u/cov did not produce close enough p-value to expected'
+      )
+    });
+
+    it('should use liu method when only 1 lambda', function() {
+      let u = [ -1.56617 ];
+      let cov = [[ 23.902543 ]];
+      let mafs = [ 0.000282902 ];
+      let agg = new SkatTest();
+      let [, pval] = agg.test(u, cov, null, mafs);
+      let expectedPval = 0.7487074306833961;
+      assert.closeTo(
+        pval,
+        expectedPval,
+        0.0000001,
         'SkatTest on known u/cov did not produce close enough p-value to expected'
       )
     });
