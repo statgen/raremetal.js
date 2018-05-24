@@ -10,7 +10,7 @@ header-includes:
 
 ## Changes
 
-### Version 1.0 (2018-05-23)
+### Version 1.0 (2018-05-24)
 
 Backward incompatible changes:
 
@@ -22,6 +22,10 @@ Backward incompatible changes:
 * Change `grouping` and `type` of groups to be `groupType` universally.
 
 * Remove redundant `type` from `results` in results endpoint.
+
+* Rename `analysis` to `description` to be consistent.
+
+* Rename `id` to `dataset` to be consistent.
 
 New additions:
 
@@ -72,7 +76,7 @@ For now, a description of the variant filtering and grouping criteria will proba
   "data": [
     {
       "dataset": 42,
-      "analysis": "52K Exomes",
+      "description": "52K Exomes",
       "masks": [
         {
           "id": "PTV",
@@ -241,7 +245,7 @@ Note: the results are not ordered; the order in which groups appear in `groupRes
 
 ```json
 {
-  "id": 42,
+  "dataset": 42,
   "description": "52K Exomes",
   "data": {
     "masks": [
