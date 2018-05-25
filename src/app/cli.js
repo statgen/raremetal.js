@@ -13,7 +13,7 @@ require("babel-register");
 const { ArgumentParser } = require("argparse");
 const { readMaskFileSync, extractScoreStats, extractCovariance } = require("./fio.js");
 const { REGEX_EPACTS } = require("./constants.js");
-const { testBurden, testSkat, calcSkatWeights } = require("./stats.js");
+const { ZegginiBurdenTest, SkatTest } = require("./stats.js");
 const fs = require("fs");
 const yaml = require("js-yaml");
 
@@ -102,16 +102,18 @@ async function single(args) {
     let cov = await extractCovariance(args.cov, region, scores.variants, scores);
 
     if (args.test === 'burden') {
-      let [, p] = testBurden(scores.u, cov.matrix, null);
+      let [, p] = new ZegginiBurdenTest().test(scores.u, cov.matrix, null);
       results.addResult(group, p);
     }
     else if (args.test.startsWith('skat')) {
       // Use default weights for now
-      let w = calcSkatWeights(scores.altFreq.map(x => Math.min(x,1-x)));
+      let mafs = scores.altFreq.map(x => Math.min(x,1-x));
 
       // Method
       let method = args.test.replace('skat-','');
-      let [, p] = testSkat(scores.u, cov.matrix, w, method);
+      let skat = new SkatTest();
+      skat._method = method;
+      let [, p] = skat.test(scores.u, cov.matrix, null, mafs);
       results.addResult(group, p);
     }
 
@@ -197,7 +199,8 @@ async function meta(args) {
     // Now run the tests with the final scores/covariances
     for (let test of spec.settings.tests) {
       if (test === 'burden') {
-        let [, p] = testBurden(finalScores.u, finalCov.matrix, null);
+        let agg = new ZegginiBurdenTest();
+        let [, p] = agg.test(finalScores.u, finalCov.matrix, null);
         results[test].addResult(group, p);
       }
 
