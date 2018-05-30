@@ -10,7 +10,7 @@ header-includes:
 
 ## Changes
 
-### Version 1.0 (2018-05-24)
+### Version 1.0 (2018-05-30)
 
 Backward incompatible changes:
 
@@ -270,35 +270,17 @@ Note: the results are not ordered; the order in which groups appear in `groupRes
         }
       }
     ],
-    "singleVariantResults": [
-      {
-        "variant": "2:21228642_G/A",
-        "altFreq": 0.033,
-        "pvalue": 0.01141
-      },
-      {
-        "variant": "2:21230094_AT/A",
-        "altFreq": 0.001,
-        "pvalue": 1e-4
-      },
-      {
-        ...
-      }
-    ],
-    "groupResults": [
-      {
-        "group": "ENSG000001",
-        "mask": "PTV",
-        "test": "SKAT-O",
-        "pvalue": 1.8e-09
-      },
-      {
-        "group": "ENSG000002",
-        "mask": "PTV",
-        "test": "SKAT-O",
-        "pvalue": 1.7883e-09
-      }
-    ]
+    "singleVariantResults": {
+      "variant": ["2:21228642_G/A", "2:21230094_AT/A", "2:21230336_AT/A"],
+      "altFreq": [0.033, 0.001, 0.04],
+      "pvalue": [0.01141, 1e-4, 1.5e-9]
+    },
+    "groupResults": {
+      "group": ["ENSG000001", "ENSG000002"],
+      "mask": ["PTV", "PTV"],
+      "test": ["SKAT-O", "SKAT-O"],
+      "pvalue": [1.8e-09, 1.7883e-09]
+    }
   }
 }
 ```
