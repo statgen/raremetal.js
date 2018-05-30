@@ -7,12 +7,146 @@
 
 import numeric from 'numeric';
 
-import { VariantMask, ScoreStatTable, GenotypeCovarianceMatrix, AGGREGATION_TESTS } from './stats.js';
 import { REGEX_EPACTS } from './constants.js';
+import { VariantMask, ScoreStatTable, GenotypeCovarianceMatrix,
+  AggregationTest, SkatTest, ZegginiBurdenTest } from './stats.js';
+
+const _all_tests = [ZegginiBurdenTest, SkatTest];
+
+/**
+ * Look up aggregation tests by unique name.
+ *
+ * This is a helper for external libraries; it provides an immutable registry of all available tests.
+ *
+ * {key: {label: String, constructor: Object }
+ * @type {{String: {label: String, constructor: function}}}
+ */
+const AGGREGATION_TESTS = Object.freeze(_all_tests.reduce(function(acc, constructor) {
+  const inst = new constructor();  // Hack- need instance to access attributes
+  acc[inst.key] = { label: inst.label, constructor: constructor };
+  return acc;
+}, {}));
+
+
+/**
+ * A container that stores aggregation tests and provides useful lookup methods on them.
+ */
+class AggregationTestContainer {
+  /**
+   * @constructor
+   * @param {AggregationTest[]} tests An array of aggregation test instances
+   * @param {Object} full_scorecov Parsed portal JSON object
+   */
+  constructor(tests, full_scorecov) {
+    // TODO: Remove the lookup functionality of find a use
+    this.tests = {};
+    this.testKeyToLabel = {};
+
+    this._full_scorecov = full_scorecov;
+
+    for (let t of Object.values(tests)) {
+      this.tests[t.key] = t;
+      this.testKeyToLabel[t.key] = t.label;
+    }
+  }
+
+
+  /**
+   * Retrieve a test object given the test key. A test 'key' is a short identifier
+   * that uniquely identifies which test was performed.
+   * @param key {string} String key for the aggregation test.
+   * @return {AggregationTest} An AggregationTest object.
+   */
+  getTest(key) {
+    return this.tests[key];
+  }
+
+  /**
+   * Run all tests and combine the results into a JSON-serializable payload
+   * @return {Object} Rows of results, one per mask * group.
+   */
+  run() {
+    let results = {
+      data: {
+        masks: [],
+        singleVariantResults: {
+          variant: [],
+          altFreq: [],
+          pvalue: []
+        },
+        groupResults: {
+          group: [],
+          mask: [],
+          test: [],
+          pvalue: [],
+          stat: []
+        }
+      }
+    };
+
+    results.data.masks = Object.values(this._full_scorecov.masks);
+    for (let aggTest of Object.values(this.tests)) {
+      const res = aggTest.run();
+
+      res.forEach(one_result => {
+        ['singleVariantResults', 'groupResults'].forEach(bucket => {
+          // Merge the nested structure together
+          Object.keys(results.data[bucket]).forEach(arr => {
+            results.data[bucket][arr].push(...one_result[bucket][arr]);
+          });
+        });
+      });
+    }
+    return results;
+  }
+}
+
+/**
+ * Make a test runner based on configuration. This is a helper method for using raremetal.js without worrying about
+ *   internal data structures or class names.
+ *
+ *  In particular it can be used as a way to limit what masks are used for a given test.
+ *
+ * @public
+ * @param {String[]|Object[]} options An array specifying the tests to run. If a string is specified, it will run the
+ *  specified test name on all available masks. Alternately, this helper method can be told to run the tests only on a
+ *    limited set of masks, using object with keys {name: String, mask: String, group: String}. `mask`, `group`, or
+ *    both can be omitted to skip filtering on that field.
+ * @param {Object} full_scorecov The full scorecov data in the format returned by `parsePortalJson`
+ */
+function makeTests(options, full_scorecov) {
+  const tests = options.map(spec => {
+    let inst_name;
+    let scorecov;
+
+    if (spec instanceof AggregationTest) {
+      return spec;
+    } else if (typeof spec === "string") {
+      // Then run the specified test on all possible masks and groups
+      inst_name = spec;
+      scorecov = Object.values(full_scorecov.scorecov);
+    } else if (typeof spec === "object") {
+      // This mechanism allows running tests against a limited set of masks/groups. If a filter option is not specified,
+      //   that field is not used as a filter.
+      inst_name = spec.name;
+      scorecov = Object.values(full_scorecov.scorecov)
+        .filter(item => ((spec.mask || item.mask) === item.mask) && ((spec.group || item.group) === item.group));
+    } else {
+      throw new Error("Not implemented");
+    }
+    let inst_class = AGGREGATION_TESTS[inst_name];
+    if (!inst_class) {
+      throw new Error(`Cannot make unknown test type: ${spec}`);
+    }
+    return new inst_class.constructor(scorecov);
+  });
+  return new AggregationTestContainer(tests, full_scorecov);
+}
 
 /**
  * Parse the idealized portal response JSON for requesting covariance matrices.
  * A spec of this format can be found in src/docs/portal-api.md.
+ * @public
  * @param json JSON object from portal API response. An 'example.json' file is included in the root of this project.
  *  The [_example]{@link module:helpers~_example} function shows an example of how to use it.
  */
@@ -139,87 +273,6 @@ function parsePortalJson(json) {
 }
 
 /**
- * Function to run multiple tests and masks.
- *
- * "Tests" means aggregation tests, for example burden or SKAT.
- *
- * A mask is a mapping from a group label to a list of variants. Usually the group is a gene ID or name
- * but in reality it can be anything.
- *
- * @param tests {AggregationTestContainer} Object containing aggregation tests to run.
- * @param scoreCov Object retrieved from parsePortalJson(). Contains masks, score statistics, and covariance matrices.
- * @return {Object} Rows of results, one per mask * group.
- */
-function runAggregationTests(tests, scoreCov) {
-  let results = {
-    data: {
-      masks: [],
-      singleVariantResults: {
-        variant: [],
-        altFreq: [],
-        pvalue: []
-      },
-      groupResults: {
-        group: [],
-        mask: [],
-        test: [],
-        pvalue: [],
-        stat: []
-      }
-    }
-  };
-
-  results.data.masks = Object.values(scoreCov.masks);
-
-  for (let scoreBlock of Object.values(scoreCov.scorecov)) {
-
-    for (let aggTest of tests) {
-      let res = {
-        group: scoreBlock.group,
-        mask: scoreBlock.mask,
-        test: aggTest.key,
-        pvalue: NaN,
-        stat: NaN
-      };
-
-      if (scoreBlock.scores.u.length === 0 || scoreBlock.covariance.matrix.length === 0) {
-        continue;
-      }
-
-      // Minor allele frequencies calculated from alternate allele frequencies
-      let mafs = scoreBlock.scores.altFreq.map(x => Math.min(x, 1 - x));
-
-      /**
-       * Calculate the aggregation test.
-       */
-      let stat, p;
-      if (aggTest.requiresMaf) {
-        [stat, p] = aggTest.test(scoreBlock.scores.u, scoreBlock.covariance.matrix, null, mafs);
-      }
-      else {
-        [stat, p] = aggTest.test(scoreBlock.scores.u, scoreBlock.covariance.matrix);
-      }
-      res.pvalue = p;
-      res.stat = stat;
-
-      // Store results for each group
-      results.data.groupResults.group.push(scoreBlock.group);
-      results.data.groupResults.mask.push(scoreBlock.mask);
-      results.data.groupResults.test.push(aggTest.key);
-      results.data.groupResults.pvalue.push(p);
-      results.data.groupResults.stat.push(stat);
-
-      // Store single-variant results
-      results.data.singleVariantResults.variant = scoreBlock.scores.variants;
-      results.data.singleVariantResults.altFreq = scoreBlock.scores.altFreq;
-      results.data.singleVariantResults.pvalue = scoreBlock.scores.pvalue;
-    }
-  }
-
-  return results;
-}
-
-/**
  * Example of running many aggregation tests + masks at once.
  * @param filename {string} Path to JSON object which contains portal API response for scores/covariance/masks.
  * @return {Promise<Object>} Result object, which matches the format of the "result JSON format"
@@ -232,7 +285,8 @@ async function _example(filename) {
   const scoreCov = parsePortalJson(json);
 
   // Run all tests/masks
-  return runAggregationTests(AGGREGATION_TESTS, scoreCov);
+  const container = makeTests(["zegginiBurden", "skat"], scoreCov);
+  return container.run();
 }
 
-export { parsePortalJson, runAggregationTests, _example };
+export { parsePortalJson, makeTests, AGGREGATION_TESTS, _example };
