@@ -10,16 +10,80 @@ import numeric from 'numeric';
 import { pchisq, dbeta, pnorm } from './rstats.js';
 
 class AggregationTest {
-  constructor() {
+  /**
+   * @param {Array} scorecov An array of scorecov data, one entry for each mask to be used with this test
+   */
+  constructor(scorecov) {
     this.label = '';
     this.key = '';
+
+    this._scorecov = scorecov || [];
+
     this.requiresMaf = false;
+  }
+
+  /**
+   * Run this test for one specific mask
+   */
+  test() {
+    throw new Error("Method must be implemented in a subclass");
+  }
+
+  /**
+   * Run this test over all masks provided
+   */
+  run() {
+    return this._scorecov.map(scoreBlock => {
+      let res = {
+        singleVariantResults: {
+          variant: [],
+          altFreq: [],
+          pvalue: []
+        },
+        groupResults: {
+          group: [],
+          mask: [],
+          test: [],
+          pvalue: [],
+          stat: []
+        }
+      };
+
+      // if (scoreBlock.scores.u.length === 0 || scoreBlock.covariance.matrix.length === 0) {
+      //   continue;  // TODO: should we check for this?
+      // }
+
+      // Minor allele frequencies calculated from alternate allele frequencies
+      let mafs = scoreBlock.scores.altFreq.map(x => Math.min(x, 1 - x));
+
+      /**
+       * Calculate the aggregation test.
+       */
+      let stat, p;
+      if (this.requiresMaf) {
+        [stat, p] = this.test(scoreBlock.scores.u, scoreBlock.covariance.matrix, null, mafs);
+      }
+      else {
+        [stat, p] = this.test(scoreBlock.scores.u, scoreBlock.covariance.matrix);
+      }
+
+      res.groupResults.group.push(scoreBlock.group);
+      res.groupResults.mask.push(scoreBlock.mask);
+      res.groupResults.test.push(this.key);
+      res.groupResults.pvalue.push(p);
+      res.groupResults.stat.push(stat);
+
+      res.singleVariantResults.variant = scoreBlock.scores.variants;
+      res.singleVariantResults.altFreq = scoreBlock.scores.altFreq;
+      res.singleVariantResults.pvalue = scoreBlock.scores.pvalue;
+      return res;
+    });
   }
 }
 
 class ZegginiBurdenTest extends AggregationTest {
   constructor() {
-    super();
+    super(...arguments);
     this.key = 'zegginiBurden';
     this.label = 'Zeggini Collapsing Burden Test';
   }
@@ -78,7 +142,7 @@ class ZegginiBurdenTest extends AggregationTest {
 
 class SkatTest extends AggregationTest {
   constructor() {
-    super();
+    super(...arguments);
     this.label = 'SKAT Test';
     this.key = 'skat';
     this.requiresMaf = true;
@@ -101,7 +165,7 @@ class SkatTest extends AggregationTest {
    * @param b {number} beta defaults to 25.
    */
   static weights(mafs, a = 1, b = 25) {
-    let weights = Array(mafs.length).fill(NaN);
+    let weights = Array(mafs.length).fill(null);
     for (let i = 0; i < mafs.length; i++) {
       let w = dbeta(mafs[i], a, b, false);
       w *= w;
@@ -288,54 +352,6 @@ function _skatLiu(lambdas, qstat) {
   }
 
   return [qstat, p];
-}
-
-/**
- * A container that stores aggregation tests and provides useful lookup methods on them.
- */
-class AggregationTestContainer {
-  /**
-   * @constructor
-   */
-  constructor() {
-    this.tests = {};
-    this.testKeyToLabel = {};
-
-    for (let t of Object.values(arguments)) {
-      this.tests[t.key] = t;
-      this.testKeyToLabel[t.key] = t.label;
-    }
-  }
-
-  /**
-   * Given an aggregation test key, return a suitable label for it.
-   * For example, 'zegginiBurden' -> 'Zeggini collapsing burden test'.
-   *
-   * @param key {string} String key for the aggregation test.
-   * @return {string} Long description label of the test.
-   */
-  getTestLabelFromKey(key) {
-    return this.testKeyToLabel[key];
-  }
-
-  /**
-   * Retrieve a test object given the test key. A test 'key' is a short identifier
-   * that uniquely identifies which test was performed.
-   * @param key {string} String key for the aggregation test.
-   * @return {AggregationTest} An AggregationTest object.
-   */
-  getTest(key) {
-    return this.tests[key];
-  }
-
-  /**
-   * Iterate over all available tests in the container.
-   */
-  *[Symbol.iterator]() {
-    for (let v of Object.values(this.tests)) {
-      yield v;
-    }
-  }
 }
 
 function arraysEqual(a1,a2) {
@@ -683,14 +699,4 @@ class GenotypeCovarianceMatrix {
   // }
 }
 
-/**
- * Export an object containing all possible aggregation tests.
- * @type {AggregationTestContainer}
- */
-const AGGREGATION_TESTS = new AggregationTestContainer(
-  new ZegginiBurdenTest(),
-  new SkatTest()
-);
-
-
-export { ScoreStatTable, GenotypeCovarianceMatrix, VariantMask, AggregationTest, ZegginiBurdenTest, SkatTest, AGGREGATION_TESTS };
+export { ScoreStatTable, GenotypeCovarianceMatrix, VariantMask, AggregationTest, SkatTest, ZegginiBurdenTest };
