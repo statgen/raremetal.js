@@ -38,8 +38,8 @@ function loadPortalJson(filename) {
   return scoreCov;
 }
 
-function scoreCovDescriptiveStats(scoreCov) {
-  const mask = scoreCov.masks["AF01"];
+function scoreCovDescriptiveStats(scoreCov, maskId) {
+  const mask = scoreCov.masks[maskId];
   const nGroups = mask.size();
 
   let avgGroupLength = 0;
@@ -187,9 +187,9 @@ function main() {
   });
 
   for (const region of regions) {
-    const filename = `example_portal_${region.chr}-${region.start}-${region.end}.v4.json`;
+    const filename = `example_portal_${region.chr}-${region.start}-${region.end}.json`;
     const portalJson = loadPortalJson(filename);
-    const stats = scoreCovDescriptiveStats(portalJson);
+    const stats = scoreCovDescriptiveStats(portalJson, 'GENCODE-AF01');
     const timings = runTiming(portalJson);
 
     table.push([
