@@ -146,8 +146,18 @@ function runAggregationTests(tests, scoreCov, metaData) {
   let results = {
     data: {
       masks: [],
-      singleVariantResults: [],
-      groupResults: []
+      singleVariantResults: {
+        variant: [],
+        altFreq: [],
+        pvalue: []
+      },
+      groupResults: {
+        group: [],
+        mask: [],
+        test: [],
+        pvalue: [],
+        stat: []
+      }
     }
   };
 
@@ -166,14 +176,6 @@ function runAggregationTests(tests, scoreCov, metaData) {
         testFunc = testObject.test;
       }
 
-      let res = {
-        group: scoreBlock.group,
-        mask: scoreBlock.mask,
-        test: testLabel,
-        pvalue: NaN,
-        stat: NaN
-      };
-
       if (scoreBlock.scores.u.length === 0 || scoreBlock.covariance.matrix.length === 0) {
         continue;
       }
@@ -186,20 +188,18 @@ function runAggregationTests(tests, scoreCov, metaData) {
       }
 
       let [stat, p] = testFunc(scoreBlock.scores.u, scoreBlock.covariance.matrix, w);
-      res.pvalue = p;
-      res.stat = stat;
 
-      results.data.groupResults.push(res);
+      // Store results for each group
+      results.data.groupResults.group.push(scoreBlock.group);
+      results.data.groupResults.mask.push(scoreBlock.mask);
+      results.data.groupResults.test.push(testLabel);
+      results.data.groupResults.pvalue.push(p);
+      results.data.groupResults.stat.push(stat);
 
-      // Store single-variant results if they exist
-      for (let i = 0; i < scoreBlock.scores.variants.length; i++) {
-        let singleVarResult = {
-          variant: scoreBlock.scores.variants[i],
-          altFreq: scoreBlock.scores.altFreq[i],
-          pvalue: scoreBlock.scores.pvalue[i]
-        };
-        results.data.singleVariantResults.push(singleVarResult);
-      }
+      // Store single-variant results
+      results.data.singleVariantResults.variant = scoreBlock.scores.variants;
+      results.data.singleVariantResults.altFreq = scoreBlock.scores.altFreq;
+      results.data.singleVariantResults.pvalue = scoreBlock.scores.pvalue;
     }
   }
 
