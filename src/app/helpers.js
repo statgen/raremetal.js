@@ -7,6 +7,7 @@
 
 import numeric from 'numeric';
 import { VariantMask, ScoreStatTable, GenotypeCovarianceMatrix, testBurden, testSkat, calcSkatWeights } from './stats.js';
+import { REGEX_EPACTS } from './constants.js';
 
 /**
  * Parse the idealized portal response JSON for requesting covariance matrices.
@@ -47,7 +48,10 @@ function parsePortalJson(json) {
   for (let scoreBlock of data.scorecov) {
     let mask = masks[scoreBlock.mask];
     let variants = mask.getGroup(scoreBlock.group);
-    let positions = variants.map(x => parseInt(x.match(/(chr)?(\w+):(\d+)_([A-Z]+)\/([A-Z]+)/)[3]));
+    let parsedVariants = variants.map(x => x.match(REGEX_EPACTS));
+    let positions = parsedVariants.map(x => parseInt(x[2]));
+    let altAlleles = parsedVariants.map(x => x[4]);
+    let refAlleles = parsedVariants.map(x => x[3]);
 
     // Scores
     let scoreTable = new ScoreStatTable();
@@ -57,11 +61,15 @@ function parsePortalJson(json) {
       let n = i + 1;
       let variance = scoreBlock.covariance[n * (n + 1) / 2 - 1];
       let altFreq = scoreBlock.altFreq[i];
+      let eaFreq = altFreq;
+      let ea = altAlleles[i];
       let pvalue = scoreBlock.pvalue[i];
       let score = scoreBlock.scores[i];
 
       if (altFreq > 0.5) {
         score = -score;
+        ea = refAlleles[i];
+        eaFreq = 1 - altFreq;
       }
 
       scoreTable.appendScore(
@@ -70,8 +78,8 @@ function parsePortalJson(json) {
         score,
         variance,
         altFreq,
-        NaN,
-        NaN,
+        ea,
+        eaFreq,
         pvalue
       );
     }
