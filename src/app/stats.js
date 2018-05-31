@@ -121,7 +121,7 @@ class ScoreStatTable {
    * @param u {number} Score statistic
    * @param v {number} Variance of score statistic
    * @param altFreq {number} Alternate allele frequency
-   * @param ea {number} Effect allele
+   * @param ea {string} Effect allele
    * @param eaFreq {number} Effect allele frequency
    * @param pvalue {number} Single variant p-value
    */
