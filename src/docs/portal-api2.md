@@ -191,7 +191,8 @@ Note: the results are not ordered; the order in which groups appear in `groupRes
         "group": "ENSG000001",
         "mask": "PTV",
         "test": "zegginiBurden",
-        "pvalue": 1.8e-09
+        "pvalue": 1.8e-09,
+        "stat": 0.1
       }
     ]
   }
