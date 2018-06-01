@@ -5,7 +5,7 @@
  */
 import numeric from "numeric";
 import { REGEX_EPACTS } from "./constants";
-import { SkatTest, ZegginiBurdenTest } from "./stats2";
+import { _AggregationTest, SkatTest, ZegginiBurdenTest } from "./stats2";
 
 const _all_tests = [ZegginiBurdenTest, SkatTest];
 
@@ -35,7 +35,7 @@ class PortalVariantsHelper {
     this._variant_lookup = this.parsePortalVariantData(variants_array);
   }
 
-  get variants() {  // Raw unparsed data
+  get data() {  // Raw unparsed data
     return this._variants;
   }
 
@@ -99,13 +99,15 @@ class PortalGroupHelper {
     this._lookup = this._generateLookup(groups);
   }
 
-  get groups() {  // Raw unparsed data
+  get data() {  // Raw unparsed data
     return this._groups;
   }
 
   byMask(mask_name) {
     // Get all groups that identify as a specific category of mask- "limit the analysis to loss of function variants
     // in any gene"
+
+    // TODO: accept multiple mask/ group names?
     const subset = this._groups.filter(group => group.mask === mask_name);
     return new this.constructor(subset);
   }
@@ -134,7 +136,7 @@ class PortalGroupHelper {
     // Get a single group that is fully and uniquely identified by group + mask
     const key = this._getKey(mask_name, group_name);
     const pos = this._lookup[key];
-    return this.groups[pos];
+    return this._groups[pos];
   }
 
   makeCovarianceMatrix(group, alt_freqs) {
@@ -183,15 +185,22 @@ class TestRunner {
     this._results = [];
   }
 
-  addTest(test_name) {
+  addTest(test) {
+    // Add a new test by name, or directly from an instance
     // TODO Find a way to do this without using the registry
-    let type = AGGREGATION_TESTS[test_name];
-    if (!type) {
-      throw new Error(`Cannot make unknown test type: ${test_name}`);
+    if (typeof test === 'string') {
+      let type = AGGREGATION_TESTS[test];
+      if (!type) {
+        throw new Error(`Cannot make unknown test type: ${test}`);
+      }
+      test = new type.constructor();
+    } else if (!(test instanceof _AggregationTest)) {
+      throw new Error('Must specify test as name or instance');
     }
-    const inst = new type.constructor();
-    this._tests.push(inst);
-    return inst;
+
+
+    this._tests.push(test);
+    return test;
   }
 
   run() {
@@ -199,7 +208,7 @@ class TestRunner {
     let results = [];
 
     this._tests.forEach(test => {
-      this.groups.groups.forEach(group => {
+      this.groups.data.forEach(group => {
         results.push(this._runOne(test, group));
       });
     });
@@ -233,8 +242,8 @@ class TestRunner {
     }
     return {
       data: {
-        variants: this.variants.variants,
-        groups: this.groups.groups,
+        variants: this.variants.data,
+        groups: this.groups.data,
         results: this._results
       }
     };
