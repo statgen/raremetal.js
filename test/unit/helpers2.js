@@ -33,9 +33,9 @@ describe('helpers.js', function () {
 
     it('can fetch a subset of scores', function () {
       const inst = new _PortalVariantsHelper(this.json_data.variants);
-      const scores = inst.getScores(['2:21228643_G/A']);
+      const scores = inst.getScores(['22:21581838_G/A']);
       assert.equal(scores.length, 1);
-      assert.deepEqual(scores, [0.2])
+      assert.deepEqual(scores, [-8.70912])
     });
 
     // TODO: test sign flipping and effect allele determination
@@ -51,14 +51,18 @@ describe('helpers.js', function () {
     });
 
     it('can fetch a subset of masks', function () {
-      const groups = this.inst.byMask('PTV');
-      assert.equal(groups.data.length, 2);
+      const groups = this.inst.byMask('GENCODE-AF01');
+      assert.equal(groups.data.length, 17);
     });
 
     describe('covariance test parsing', function () {
       // TODO: important- add tests around covariance matrix generation (and sign flipping if ONE, the OTHER, or BOTH are not the lower freq allele. Also test when certain numbers don't make sense or arrays don't match lengths
       it('can reformat an array into a covariance matrix', function () {
-        const one_group = this.inst.data[2];
+        const one_group =  {
+          variants: ['1', '2', '3'],
+          covariance: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
+          nSamples: 10
+        };
         const covar = this.inst.makeCovarianceMatrix(one_group, [0.1, 0.1, 0.1]);
         assert.deepEqual(
           covar,
