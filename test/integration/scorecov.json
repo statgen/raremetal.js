@@ -1,0 +1,55 @@
+{
+  "data": {
+    "dataset": 42,
+    "description": "52K Exomes",
+    "variants": [
+      {
+        "variant": "2:21228642_G/A",
+        "altFreq": 0.033,
+        "pvalue": 0.000431,
+        "score": 0.1
+      },
+      {
+        "variant": "2:21228643_G/A",
+        "altFreq": 0.033,
+        "pvalue": 0.000431,
+        "score": 0.2
+      },
+      {
+        "variant": "2:21228644_G/A",
+        "altFreq": 0.033,
+        "pvalue": 0.000431,
+        "score": 0.3
+      }
+    ],
+    "groups": [
+      {
+        "groupType": "gene",
+        "group": "ENSG000001",
+        "mask": "PTV",
+        "variants": ["2:21228642_G/A", "2:21228644_G/A"],
+        "covariance": [0.3],
+        "sigmaSquared": 0.08,
+        "nSamples": 3550
+      },
+      {
+        "groupType": "gene",
+        "group": "ENSG000002",
+        "mask": "PTV",
+        "variants": ["2:21228642_G/A", "2:21228644_G/A"],
+        "covariance": [0.3],
+        "sigmaSquared": 0.08,
+        "nSamples": 3550
+      },
+      {
+        "groupType": "gene",
+        "group": "ENSG000002",
+        "mask": "AF05",
+        "variants": ["2:21228642_G/A", "2:21228643_G/A", "2:21228644_G/A"],
+        "covariance": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
+        "sigmaSquared": 0.08,
+        "nSamples": 10
+      }
+    ]
+  }
+}
