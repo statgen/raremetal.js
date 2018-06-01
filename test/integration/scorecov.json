@@ -28,7 +28,7 @@
         "group": "ENSG000001",
         "mask": "PTV",
         "variants": ["2:21228642_G/A", "2:21228644_G/A"],
-        "covariance": [0.3],
+        "covariance": [0.3, 0.4, 0.5],
         "sigmaSquared": 0.08,
         "nSamples": 3550
       },
@@ -37,7 +37,7 @@
         "group": "ENSG000002",
         "mask": "PTV",
         "variants": ["2:21228642_G/A", "2:21228644_G/A"],
-        "covariance": [0.3],
+        "covariance": [0.3, 0.6, 0.9],
         "sigmaSquared": 0.08,
         "nSamples": 3550
       },
