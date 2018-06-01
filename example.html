@@ -12,9 +12,23 @@
   <!-- Try running a few burden tests -->
   <script>
     console.log("Starting burden tests...");
-    let promise = raremetal.helpers._example();
-    promise.then(result => {
-      console.log(result);
+    async function _example(filename) {
+      // Load example JSON of portal response from requesting covariance in a region
+      filename = filename || "test/integration/scorecov.json";
+      const response = await fetch(filename, { credentials: 'include' });
+      const json = await response.json();
+      const [ groups, variants ] = raremetal.helpers.parsePortalJSON(json);
+      const runner = new raremetal.helpers.TestRunner(groups, variants, ['zegginiBurden', 'skat']);
+      return runner;
+    }
+
+
+
+    let promise = _example();
+    let runner;
+    promise.then(res => {
+        runner = res;
+        console.log(runner.run());
     });
   </script>
 

@@ -181,7 +181,6 @@ class TestRunner {
     test_names.forEach(name => this.addTest(name));
 
     this._results = [];
-
   }
 
   addTest(test_name) {
@@ -218,11 +217,26 @@ class TestRunner {
     // TODO: Tests have an extra argument weights that never seems to be used.... consider revising method signature
     let weights;
 
+    const [ stat, pvalue ] = test.run(scores, cov, weights, mafs);
     return {
       'group': group.group,
       'mask': group.mask,
       'test': test.key,
-      'pvalue': test.run(scores, cov, weights, mafs)
+      stat,
+      pvalue
+    };
+  }
+
+  toJSON() { // Output calculation results in a format that matches the "precomputed results" endpoint
+    if (!this._results.length) {
+      this._results = this.run();
+    }
+    return {
+      data: {
+        variants: this.variants.variants,
+        groups: this.groups.groups,
+        results: this._results
+      }
     };
   }
 }

@@ -9,7 +9,7 @@
  * @license MIT
  */
 
-import * as helpers from './helpers.js';
-import * as stats from './stats.js';
+import * as helpers from './helpers2.js';
+import * as stats from './stats2.js';
 
 export { helpers, stats };
