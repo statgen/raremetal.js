@@ -31,13 +31,6 @@ describe('helpers.js', function () {
       assert.deepEqual(inst.data, this.json_data.variants);
     });
 
-    it('can fetch a subset of scores', function () {
-      const inst = new _PortalVariantsHelper(this.json_data.variants);
-      const scores = inst.getScores(['22:21581838_G/A']);
-      assert.equal(scores.length, 1);
-      assert.deepEqual(scores, [-8.70912])
-    });
-
     // TODO: test sign flipping and effect allele determination
   });
 

@@ -125,7 +125,8 @@ This response is slightly condensed to save space.
         "groupType": "gene",
         "group": "ENSG000001",
         "mask": "PTV",
-        "variants": ["2:21228642_G/A"], 
+        "variants": ["2:21228642_G/A"],
+        "scores": [0.1], 
         "covariance": [0.3],
         "sigmaSquared": 0.08,
         "nSamples": 3550
@@ -175,7 +176,6 @@ Note: the results are not ordered; the order in which groups appear in `groupRes
         "variant": "2:21228642_G/A",
         "altFreq": 0.033,
         "pvalue": 0.000431,
-        "score": 0.1
       }
     ],
     "groups": [
