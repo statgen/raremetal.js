@@ -1,7 +1,7 @@
 import fs from 'fs';
 
 import { assert } from 'chai';
-import { _PortalGroupHelper, _PortalVariantsHelper, parsePortalJSON, TestRunner } from '../../src/app/helpers2';
+import { _PortalGroupHelper, _PortalVariantsHelper, parsePortalJSON, PortalTestRunner } from '../../src/app/helpers2';
 
 describe('In-browser calculation workflow', function () {
   before(function () {
@@ -10,9 +10,9 @@ describe('In-browser calculation workflow', function () {
   });
 
   it('can go from covariance JSON to results', function () {
-    // TODO: DRY with TestRunner unit tests
+    // TODO: DRY with PortalTestRunner unit tests
     const [ groups, variants ] = parsePortalJSON(this.json_data);
-    const runner = new TestRunner(groups, variants, ['skat']);
+    const runner = new PortalTestRunner(groups, variants, ['skat']);
 
     const results = runner.run();
 

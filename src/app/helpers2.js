@@ -47,7 +47,7 @@ class PortalVariantsHelper {
       let { variant, altFreq, pvalue, score } = data;
       let [_, chrom, pos, ref, effect, __] = variant.match(REGEX_EPACTS);  // eslint-disable-line no-unused-vars
 
-      let effectFreq;
+      let effectFreq = altFreq;
 
       // All calculations assume that scores and covar terms
       if (altFreq > 0.5) {  // TODO: verify assumption that scores belong to variants, not groups
@@ -182,15 +182,13 @@ class PortalGroupHelper {
 }
 
 // Helper method that coordinates multiple tests on a series of masks
-class TestRunner {
+class PortalTestRunner {
   constructor(groups, variants, test_names=[]) {
     this.groups = groups;
     this.variants = variants;
     this._tests = [];
 
     test_names.forEach(name => this.addTest(name));
-
-    this._results = [];
   }
 
   addTest(test) {
@@ -244,15 +242,17 @@ class TestRunner {
     };
   }
 
-  toJSON() { // Output calculation results in a format that matches the "precomputed results" endpoint
-    if (!this._results.length) {
-      this._results = this.run();
+  toJSON(results) {
+    // Output calculation results in a format that matches the "precomputed results" endpoint
+    // By passing in an argument, user can format any set of results (even combining multiple runs)
+    if (!results) {
+      results = this.run();
     }
     return {
       data: {
         variants: this.variants.data,
         groups: this.groups.data,
-        results: this._results
+        results: results
       }
     };
   }
@@ -268,4 +268,4 @@ function parsePortalJSON(json) {
 
 export { PortalVariantsHelper as _PortalVariantsHelper , PortalGroupHelper as _PortalGroupHelper }; // testing only
 
-export { parsePortalJSON, TestRunner };
+export { parsePortalJSON, PortalTestRunner };
