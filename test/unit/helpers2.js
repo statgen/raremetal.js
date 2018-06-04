@@ -50,9 +50,14 @@ describe('helpers.js', function () {
       assert.deepEqual(this.inst.data, this.json_data.groups);
     });
 
-    it('can fetch a subset of masks', function () {
+    it('can fetch a subset of one mask', function () {
       const groups = this.inst.byMask('GENCODE-AF01');
       assert.equal(groups.data.length, 17);
+    });
+
+    it('can fetch a subset of several masks', function () {
+      const groups = this.inst.byMask(['GENCODE-AF01', 'ISLET-STRETCH-AF05']);
+      assert.equal(groups.data.length, 20);
     });
 
     describe('covariance test parsing', function () {
