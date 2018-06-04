@@ -44,14 +44,14 @@ class PortalVariantsHelper {
     // Return a hash keyed on variant ID for quick lookups.
     let lookup = {};
     variants.forEach(data => {
-      let { variant, altFreq, pvalue, score } = data;
-      let [_, chrom, pos, ref, effect, __] = variant.match(REGEX_EPACTS);  // eslint-disable-line no-unused-vars
+      let { variant, altFreq, pvalue } = data;
+      let [_, chrom, pos, ref, alt, __] = variant.match(REGEX_EPACTS);  // eslint-disable-line no-unused-vars
 
       let effectFreq = altFreq;
+      let effect = alt;
 
       // All calculations assume that scores and covar terms
-      if (altFreq > 0.5) {  // TODO: verify assumption that scores belong to variants, not groups
-        score = -score;
+      if (altFreq > 0.5) {
         effect = ref;
         effectFreq = 1 - altFreq;
       }
@@ -61,7 +61,7 @@ class PortalVariantsHelper {
         chrom,
         pos,
         pvalue,
-        score,
+        altAllele: alt,
         effectAllele: effect,
         altFreq: altFreq,
         effectFreq: effectFreq
@@ -70,20 +70,16 @@ class PortalVariantsHelper {
     return lookup;
   }
 
-  getAltFreq(variant_names) {
-    // Get the raw "alt frequency" reported by the API for the specified variants. This may or may not refer to the
-    //  effect allele. This raw data is useful when deciding how to interpret, eg, covariance terms.
-    return variant_names.map(name => this._variant_lookup[name].effectFreq);
+  isAltEffect(variant_names) {  // Some calculations are sensitive to whether alt is the minor (effect) allele
+    return variant_names.map(name => {
+      const variant_data = this._variant_lookup[name];
+      return variant_data.altAllele === variant_data.effectAllele;
+    });
   }
 
   getEffectFreq(variant_names) {
-    // Get the allele
+    // Get the allele freq for the minor (effect) allele
     return variant_names.map(name => this._variant_lookup[name].effectFreq);
-  }
-
-  getScores(variant_names) {
-    // Get single-variant scores
-    return variant_names.map(name => this._variant_lookup[name].score);
   }
 
   getGroupVariants(variant_names) {
@@ -147,7 +143,7 @@ class PortalGroupHelper {
     return this._groups[pos];
   }
 
-  makeCovarianceMatrix(group, alt_freqs) {
+  makeCovarianceMatrix(group, is_alt_effect) {
     // Helper method that expands the portal covariance format into a full matrix.
     // Load the covariance matrix from the response JSON
     const n_variants = group.variants.length;
@@ -160,11 +156,11 @@ class PortalGroupHelper {
     for (let i = 0; i < n_variants; i++) {
       for (let j = i; j < n_variants; j++) {
         let v = group.covariance[c];
-        let iAltFreq = alt_freqs[i];
-        let jAltFreq = alt_freqs[j];
+        let iAlt = is_alt_effect[i];
+        let jAlt = is_alt_effect[j];
 
         if (i !== j) {
-          if ((iAltFreq > 0.5) ^ (jAltFreq > 0.5)) {
+          if ((!iAlt) ^ (!jAlt)) {
             v = -v;
           }
         }
@@ -225,18 +221,21 @@ class PortalTestRunner {
   _runOne(test, group) {
     // Helper method that translates portal data into the format expected by a test
     const variants = group.variants;
-    const scores = this.variants.getScores(variants);
-    const altFreqs = this.variants.getAltFreq(variants);
-    const cov = this.groups.makeCovarianceMatrix(group, altFreqs);
+    let scores = group.scores;
+
+    // Most calculations will require adjusting API data to ensure that minor allele is the effect allele
+    const isAltEffect = this.variants.isAltEffect(variants);
+    scores = scores.map(function (item, index) { return isAltEffect[index] ? item : -item; });
+
+    const cov = this.groups.makeCovarianceMatrix(group, isAltEffect);
     const mafs = this.variants.getEffectFreq(variants);
-    // TODO: Tests have an extra argument weights that never seems to be used.... consider revising method signature
-    let weights;
+    let weights;  // TODO: The runner never actually uses the weights argument. Should it allow this?
 
     const [ stat, pvalue ] = test.run(scores, cov, weights, mafs);
     return {
-      'group': group.group,
-      'mask': group.mask,
-      'test': test.key,
+      group: group.group,
+      mask: group.mask,
+      test: test.key,
       stat,
       pvalue
     };
