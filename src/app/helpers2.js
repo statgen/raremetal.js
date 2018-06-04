@@ -57,7 +57,7 @@ class PortalVariantsHelper {
       }
 
       lookup[variant] = {
-        name: variant,
+        variant,
         chrom,
         pos,
         pvalue,
@@ -103,19 +103,27 @@ class PortalGroupHelper {
     return this._groups;
   }
 
-  byMask(mask_name) {
+  byMask(selection) {  // str or array
     // Get all groups that identify as a specific category of mask- "limit the analysis to loss of function variants
     // in any gene"
+    if (!Array.isArray(selection)) {
+      selection = [selection]
+    }
+    selection = new Set(selection);
 
-    // TODO: accept multiple mask/ group names?
-    const subset = this._groups.filter(group => group.mask === mask_name);
+    const subset = this._groups.filter(group => selection.has(group.mask));
     return new this.constructor(subset);
   }
 
-  byGroup(group_name) {
+  byGroup(selection) {  // str or array
     // Get all groups based on a specific group name, regardless of mask. Eg, "all the ways to analyze data for a
     // given gene".
-    const subset = this._groups.filter(group => (group.group === group_name));
+    if (!Array.isArray(selection)) {
+      selection = [selection]
+    }
+    selection = new Set(selection);
+
+    const subset = this._groups.filter(group => selection.has(group.group));
     return new this.constructor(subset);
   }
 
