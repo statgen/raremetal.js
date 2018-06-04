@@ -1,7 +1,7 @@
 import fs from 'fs';
 
 import { assert } from 'chai';
-import { _PortalGroupHelper, _PortalVariantsHelper, parsePortalJSON, TestRunner } from '../../src/app/helpers2';
+import { _PortalGroupHelper, _PortalVariantsHelper, parsePortalJSON, PortalTestRunner } from '../../src/app/helpers2';
 import { SkatTest, ZegginiBurdenTest } from '../../src/app/stats2';
 
 
@@ -81,17 +81,17 @@ describe('helpers.js', function () {
     });
   });
 
-  describe('TestRunner', function () {
+  describe('PortalTestRunner', function () {
     before(function () {
       [ this.groups, this.variants ] = parsePortalJSON(this.json_data);
     });
 
     beforeEach(function () {
-      this.inst = new TestRunner(this.groups, this.variants, ['skat']);
+      this.inst = new PortalTestRunner(this.groups, this.variants, ['skat']);
     });
 
     it('creates two test instances when given test names', function () {
-      const inst = new TestRunner(this.groups, this.variants, ['zegginiBurden', 'skat']);
+      const inst = new PortalTestRunner(this.groups, this.variants, ['zegginiBurden', 'skat']);
       assert.equal(inst._tests.length, 2);
 
       assert.instanceOf(inst._tests[0], ZegginiBurdenTest, 'Created a burden test');
@@ -100,7 +100,7 @@ describe('helpers.js', function () {
 
     it('builds tests from either names or instances', function() {
       const skat = new SkatTest();
-      const inst = new TestRunner(this.groups, this.variants, ['zegginiBurden', skat]);
+      const inst = new PortalTestRunner(this.groups, this.variants, ['zegginiBurden', skat]);
       assert.equal(inst._tests.length, 2);
       assert.instanceOf(inst._tests[0], ZegginiBurdenTest, 'Created a burden test');
       assert.instanceOf(inst._tests[1], SkatTest, 'Created a skat test');
@@ -108,13 +108,13 @@ describe('helpers.js', function () {
 
     it('cannot create tests of an unknown type', function () {
       assert.throws(
-        () => { new TestRunner(this.groups, this.variants, ['nonexistent']); },
+        () => { new PortalTestRunner(this.groups, this.variants, ['nonexistent']); },
         /Cannot make unknown test type/,
         'Fails if given invalid test name'
       );
 
       assert.throws(
-        () => { new TestRunner(this.groups, this.variants, [42]); },
+        () => { new PortalTestRunner(this.groups, this.variants, [42]); },
         /Must specify test as name or instance/,
         'Fails if test type can not be resolved'
       );
