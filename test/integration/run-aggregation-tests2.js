@@ -2,6 +2,7 @@ import fs from 'fs';
 
 import { assert } from 'chai';
 import { _PortalGroupHelper, _PortalVariantsHelper, parsePortalJSON, PortalTestRunner } from '../../src/app/helpers2';
+import {SkatTest, ZegginiBurdenTest} from '../../src/app/stats2';
 
 describe('In-browser calculation workflow', function () {
   before(function () {
@@ -19,6 +20,24 @@ describe('In-browser calculation workflow', function () {
     const expected_count = groups.data.length * runner._tests.length;
     assert.equal(results.length, expected_count);
     assert.hasAllKeys(results[0], ['group', 'mask', 'test', 'pvalue', 'stat'] )
+  });
+
+  it('should match expected burden p-value for HIC2', function() {
+    const [ groups, variants ] = parsePortalJSON(this.json_data);
+    const runner = new PortalTestRunner(groups, variants);
+
+    const testGroup = groups.getOne('GENCODE-AF01', 'ENSG00000169635');
+    const results = runner._runOne(new ZegginiBurdenTest(), testGroup);
+    assert.closeTo(results.pvalue, 0.42913956, 0.001);
+  });
+
+  it('should match expected skat p-value for HIC2', function() {
+    const [ groups, variants ] = parsePortalJSON(this.json_data);
+    const runner = new PortalTestRunner(groups, variants);
+
+    const testGroup = groups.getOne('GENCODE-AF01', 'ENSG00000169635');
+    const results = runner._runOne(new SkatTest(), testGroup);
+    assert.closeTo(results.pvalue, 0.765, 0.001);
   });
 });
 
