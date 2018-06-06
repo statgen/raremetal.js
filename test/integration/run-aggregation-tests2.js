@@ -8,34 +8,30 @@ describe('In-browser calculation workflow', function () {
   before(function () {
     let jsonRaw = fs.readFileSync('test/integration/scorecov.json');
     this.json_data = JSON.parse(jsonRaw).data;
+    [ this.groups, this.variants ] = parsePortalJSON(this.json_data);
   });
 
   it('can go from covariance JSON to results', function () {
     // TODO: DRY with PortalTestRunner unit tests
-    const [ groups, variants ] = parsePortalJSON(this.json_data);
-    const runner = new PortalTestRunner(groups, variants, ['skat']);
+    const runner = new PortalTestRunner(this.groups, this.variants, ['skat']);
 
     const results = runner.run();
 
-    const expected_count = groups.data.length * runner._tests.length;
+    const expected_count = this.groups.data.length * runner._tests.length;
     assert.equal(results.length, expected_count);
     assert.hasAllKeys(results[0], ['group', 'mask', 'test', 'pvalue', 'stat'] )
   });
 
   it('should match expected burden p-value for HIC2', function() {
-    const [ groups, variants ] = parsePortalJSON(this.json_data);
-    const runner = new PortalTestRunner(groups, variants);
-
-    const testGroup = groups.getOne('GENCODE-AF01', 'ENSG00000169635');
+    const runner = new PortalTestRunner(this.groups, this.variants);
+    const testGroup = this.groups.getOne('GENCODE-AF01', 'ENSG00000169635');
     const results = runner._runOne(new ZegginiBurdenTest(), testGroup);
     assert.closeTo(results.pvalue, 0.42913956, 0.001);
   });
 
   it('should match expected skat p-value for HIC2', function() {
-    const [ groups, variants ] = parsePortalJSON(this.json_data);
-    const runner = new PortalTestRunner(groups, variants);
-
-    const testGroup = groups.getOne('GENCODE-AF01', 'ENSG00000169635');
+    const runner = new PortalTestRunner(this.groups, this.variants);
+    const testGroup = this.groups.getOne('GENCODE-AF01', 'ENSG00000169635');
     const results = runner._runOne(new SkatTest(), testGroup);
     assert.closeTo(results.pvalue, 0.765, 0.001);
   });
