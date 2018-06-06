@@ -50,9 +50,19 @@ class PortalVariantsHelper {
       let effectFreq = altFreq;
       let effect = alt;
 
-      // All calculations assume that scores and covar terms
+      /**
+       * The variant's score statistic in the API is coded toward the alternate allele.
+       * However, we want the effect coded towards the minor allele, since most rare variant tests assume
+       * you are counting the rare/minor allele.
+       */
       if (altFreq > 0.5) {
+        /**
+         * The effect allele is initially the alt allele. Since we're flipping it,
+         * the "other" allele is the reference allele.
+         */
         effect = ref;
+
+        // This is also now the minor allele frequency.
         effectFreq = 1 - altFreq;
       }
 
@@ -159,6 +169,15 @@ class PortalGroupHelper {
         let iAlt = is_alt_effect[i];
         let jAlt = is_alt_effect[j];
 
+        /**
+         * The API spec codes variant genotypes towards the alt allele. If the alt allele frequency
+         * is > 0.5, that means we're not counting towards the minor (rare) allele, and we need to flip it around.
+         * We don't flip when i == j because that element represents the variance of the variant's score, which is
+         * invariant to which allele we code towards (but covariance is not.)
+         *
+         * We also don't flip when both the i variant and j variant need to be flipped (the ^ is XOR) because it would
+         * just cancel out.
+         */
         if (i !== j) {
           if ((!iAlt) ^ (!jAlt)) {
             v = -v;
