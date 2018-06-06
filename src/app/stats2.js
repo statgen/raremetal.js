@@ -25,8 +25,8 @@ class AggregationTest {
 class ZegginiBurdenTest extends AggregationTest {
   constructor() {
     super(...arguments);
-    this.key = 'zegginiBurden';
-    this.label = 'Zeggini Collapsing Burden Test';
+    this.key = 'burden';
+    this.label = 'Burden Test';
   }
 
   /**
