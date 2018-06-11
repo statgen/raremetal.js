@@ -8,37 +8,14 @@ header-includes:
 
 # Portal/Hail API
 
-## Changes
-
-### Version 1.0 (2018-05-30)
-
-Backward incompatible changes:
-
-* Move `altFreq` and related variant annotations out of masks and into
-  `singleVariantResults` in the results endpoint.
-
-* Rename `results` to `groupResults` in results endpoint.
-
-* Change `grouping` and `type` of groups to be `groupType` universally.
-
-* Remove redundant `type` from `results` in results endpoint.
-
-* Rename `analysis` to `description` to be consistent.
-
-* Rename `id` to `dataset` to be consistent.
-
-New additions:
-
-* `singleVariantResults` section of results JSON to allow for also
-  returning single variant statistics in one call.
-
-* Include single variant p-values in `scorecov` section of the scores/covariances endpoint.
-
-### Version 0.1 (2018-04-27)
-
-Initial document.
-
 ## API specification
+
+We propose a total of three endpoints. The first endpoint provides metadata that can be used to request a calculation.
+
+The second and third endpoints are mutually exclusive: the former provides information needed to perform a calculation 
+in the browser, while the latter provides pre-computed results.  A helper function is provided to format live 
+calculations to look like the final results- this allows both calculation methods to be used interchangeably and 
+processed in the same way.
 
 ### Retrieve available datasets/masks
 
@@ -126,87 +103,35 @@ Only requesting scores and covariance for the "PTV" mask just to save some space
 
 We want to be able to retrieve as much of the masks/covariance data all at once to minimize round trips to the server. This structure would allow retrieving covariance for multiple masks all at once.
 
-Note that all scores and covariances are assumed to be counting towards the **alternate allele**. It is also critical that alternate allele frequencies are included so as to be able to orient scores/covariances towards the minor allele when performing the aggregation tests. 
+Note that all scores and covariances are assumed to be counting towards the **alternate allele**. It is also critical 
+that alternate allele frequencies are included so as to be able to orient scores/covariances towards 
+the minor allele when performing the aggregation tests. 
 
 This response is slightly condensed to save space.
 
 ```json
 {
   "data": {
-    "masks": [
+    "dataset": 42,
+    "description": "52K Exomes",
+    "variants": [
       {
-        "id": "PTV",
-        "label": "Includes only protein truncating variants",
-        "groupType": "gene",
-        "groups": {
-          "ENSG000001": {
-            "variants": [
-              "2:21228642_G/A",
-              "2:21230094_AT/A",
-              "2:21230336_AT/A"
-            ]
-          },
-          "ENSG000002": {
-            "variants": [
-              "19:11216264_G/T",
-              "19:11218173_AACCCATC/A"
-            ]
-          }
-        }
+        "variant": "2:21228642_G/A",
+        "altFreq": 0.033,
+        "pvalue": 0.000431,
+        "score": 0.1
       }
     ],
-    "scorecov": [
+    "groups": [
       {
-        "mask": "PTV",
+        "groupType": "gene",
         "group": "ENSG000001",
-        "scores": [
-          0.1,
-          0.3,
-          0.5
-        ],
-        "covariance": [
-          0.3,
-          0.4,
-          0.65,
-          0.1,
-          0.83,
-          0.99
-        ],
-        "altFreq": [
-          0.033,
-          0.001,
-          0.00045
-        ],
-        "pvalue": [
-          0.000431,
-          0.05,
-          1.23e-06
-        ],
-        "sigmaSquared": 0.08,
-        "nsamples": 3550
-      },
-      {
         "mask": "PTV",
-        "group": "ENSG000002",
-        "scores": [
-          0.443,
-          0.911
-        ],
-        "covariance": [
-          0.291,
-          0.384,
-          0.14
-        ],
-        "altFreq": [
-          0.0025,
-          0.03
-        ],
-        "pvalue": [
-          0.043,
-          0.0002
-        ],
+        "variants": ["2:21228642_G/A"],
+        "scores": [0.1], 
+        "covariance": [0.3],
         "sigmaSquared": 0.08,
-        "nsamples": 3550
+        "nSamples": 3550
       }
     ]
   }
@@ -245,42 +170,33 @@ Note: the results are not ordered; the order in which groups appear in `groupRes
 
 ```json
 {
-  "dataset": 42,
-  "description": "52K Exomes",
   "data": {
-    "masks": [
+    "dataset": 42,
+    "description": "52K Exomes",
+    "variants": [
       {
-        "id": "PTV",
-        "label": "Includes only protein truncating variants",
-        "groupType": "gene",
-        "groups": {
-          "ENSG000001": {
-            "variants": [
-              "2:21228642_G/A",
-              "2:21230094_AT/A",
-              "2:21230336_AT/A"
-            ]
-          },
-          "ENSG000002": {
-            "variants": [
-              "19:11216264_G/T",
-              "19:11218173_AACCCATC/A"
-            ]
-          }
-        }
+        "variant": "2:21228642_G/A",
+        "altFreq": 0.033,
+        "pvalue": 0.000431
       }
     ],
-    "singleVariantResults": {
-      "variant": ["2:21228642_G/A", "2:21230094_AT/A", "2:21230336_AT/A"],
-      "altFreq": [0.033, 0.001, 0.04],
-      "pvalue": [0.01141, 1e-4, 1.5e-9]
-    },
-    "groupResults": {
-      "group": ["ENSG000001", "ENSG000002"],
-      "mask": ["PTV", "PTV"],
-      "test": ["SKAT-O", "SKAT-O"],
-      "pvalue": [1.8e-09, 1.7883e-09]
-    }
+    "groups": [
+      {
+        "groupType": "gene",
+        "group": "ENSG000001",
+        "mask": "PTV",
+        "variants": ["2:21228642_G/A"] 
+      }
+    ],
+    "results": [
+      {
+        "group": "ENSG000001",
+        "mask": "PTV",
+        "test": "burden",
+        "pvalue": 1.8e-09,
+        "stat": 0.1
+      }
+    ]
   }
 }
 ```

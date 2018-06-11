@@ -1,108 +1,129 @@
 import fs from 'fs';
-import { assert } from 'chai';
 
-import { makeTests, AGGREGATION_TESTS, parsePortalJson } from '../../src/app/helpers';
-import { ZegginiBurdenTest } from '../../src/app/stats';
+import { assert } from 'chai';
+import { _PortalGroupHelper, _PortalVariantsHelper, parsePortalJSON, PortalTestRunner } from '../../src/app/helpers';
+import { SkatTest, ZegginiBurdenTest } from '../../src/app/stats';
+
 
 describe('helpers.js', function () {
-  describe('makeTests', function () {
-    before(function () {
-      // Load example JSON of portal response from requesting covariance in a region
-      let jsonRaw = fs.readFileSync('test/integration/example.json');
-      let json = JSON.parse(jsonRaw);
-      this.scoreCov = parsePortalJson(json);
+  before(function () {
+    // Load example JSON of portal response from requesting covariance in a region
+    let jsonRaw = fs.readFileSync('test/integration/scorecov.json');
+    this.json_data = JSON.parse(jsonRaw).data;
+  });
 
+  describe('parsePortalJSON', function () {
+    it('should return helper objects for variants and groups', function () {
+      const [ groups, variants ] = parsePortalJSON({
+        variants: [],
+        groups: []
+      });
+      assert.instanceOf(variants, _PortalVariantsHelper, 'Received a variants helper');
+      assert.instanceOf(groups, _PortalGroupHelper, 'Received a group helper');
+    });
+  });
+
+  describe('PortalVariantsHelper', function () {
+    // TODO: All these tests will break when sample json updated; this is VERY fictional data
+    it('is created from json variants data', function () {
+      const inst = new _PortalVariantsHelper(this.json_data.variants);
+      assert.deepEqual(inst.data, this.json_data.variants);
     });
 
-    it('creates a container from test name', function () {
-      Object.keys(AGGREGATION_TESTS).forEach(name => {
-        const { constructor } = AGGREGATION_TESTS[name];
-        const container = makeTests([name], this.scoreCov);
-        assert.property(container.tests, name);
-        assert.instanceOf(container.tests[name], constructor);
+    // TODO: test sign flipping and effect allele determination
+  });
+
+  describe('PortalGroupHelper', function () {
+    beforeEach(function () {
+      this.inst = new _PortalGroupHelper(this.json_data.groups);
+    });
+
+    it('is created from json groups data', function () {
+      assert.deepEqual(this.inst.data, this.json_data.groups);
+    });
+
+    it('can fetch a subset of one mask', function () {
+      const groups = this.inst.byMask('GENCODE-AF01');
+      assert.equal(groups.data.length, 17);
+    });
+
+    it('can fetch a subset of several masks', function () {
+      const groups = this.inst.byMask(['GENCODE-AF01', 'ISLET-STRETCH-AF05']);
+      assert.equal(groups.data.length, 20);
+    });
+
+    describe('covariance test parsing', function () {
+      // TODO: important- add tests around covariance matrix generation (and sign flipping if ONE, the OTHER, or BOTH are not the lower freq allele. Also test when certain numbers don't make sense or arrays don't match lengths
+      it('can reformat an array into a covariance matrix', function () {
+        const one_group =  {
+          variants: ['1', '2', '3'],
+          covariance: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
+          nSamples: 10
+        };
+        const covar = this.inst.makeCovarianceMatrix(one_group, [0.1, 0.1, 0.1]);
+        assert.deepEqual(
+          covar,
+          [
+            [ 1, 2, 3 ],
+            [ 2, 4, 5 ],
+            [ 3, 5, 6 ]
+          ]
+        );
       });
     });
-
-    it('will throw an error if the specified test is not in the registry', function () {
-      assert.throws(()=> makeTests(['nonexistent'], {}));
-    });
-
-    it('can create a container with multiple tests', function () {
-      // Do we need to address a particular result by name/ID later?
-      const container = makeTests(['zegginiBurden', 'skat'], this.scoreCov);
-      assert.equal(Object.keys(container.tests).length, 2);
-    });
-
-    it('creates a container from class instances', function() {
-      const container = makeTests([new ZegginiBurdenTest()], this.scoreCov);
-      const instance = container.getTest('zegginiBurden');
-      assert.ok(instance);
-      assert.instanceOf(instance, ZegginiBurdenTest)
-    });
-
-    it('will tell each test to run with all masks by default', function () {
-      const container = makeTests(['zegginiBurden', 'skat'], this.scoreCov);
-      const instance = container.getTest('zegginiBurden');
-      assert.equal(instance._scorecov.length, Object.keys(this.scoreCov.scorecov).length);
-    });
-
-    it('has a mechanism to limit what masks are used for a given test', function () {
-      const aMask = this.scoreCov.scorecov[ Object.keys(this.scoreCov.scorecov)[0] ];
-
-      const container = makeTests([{ name: 'zegginiBurden' , mask: aMask.mask }], this.scoreCov);
-      const instance_data = container.getTest('zegginiBurden')._scorecov;
-
-      assert.notEqual(instance_data.length, 0, 'At least one mask was selected');
-      assert.isAtMost(  // The sample data only contains one mask so filtering does not do much
-        instance_data.length,
-        Object.keys(this.scoreCov.scorecov).length,
-        'Uses a limited set of masks'
-      );
-      assert.ok(instance_data.every(item => item.mask === aMask.mask), 'All masks match the specified option');
-    });
-
-    it('has a mechanism to limit what groups are used for a given test', function () {
-      const aMask = this.scoreCov.scorecov[ Object.keys(this.scoreCov.scorecov)[0] ];
-
-      const container = makeTests([{ name: 'zegginiBurden' , group: aMask.group }], this.scoreCov);
-      const instance_data = container.getTest('zegginiBurden')._scorecov;
-
-      assert.notEqual(instance_data.length, 0, 'At least one group was selected');
-
-      assert.isAtMost(  // The sample data only contains one group so filtering does not do much
-        instance_data.length,
-        Object.keys(this.scoreCov).length,
-        'Uses a limited set of groups'
-      );
-      assert.ok(instance_data.every(item => item.group === aMask.group), 'All groups match the specified option');
-    });
-
-    it('can filter by both masks and groups', function () {
-      const aMask = this.scoreCov.scorecov[ Object.keys(this.scoreCov.scorecov)[0] ];
-
-      const container = makeTests(
-        [{ name: 'zegginiBurden' , mask: aMask.mask, group: aMask.group }],
-        this.scoreCov
-      );
-      const instance_data = container.getTest('zegginiBurden')._scorecov;
-
-      assert.equal(instance_data.length, 1, 'Exactly one mask-group combination is used');
-      assert.ok((instance_data[0].mask === aMask.mask) && (instance_data[0].group === aMask.group));
-    });
-
-    it('can create multiple tests that mix filters and no filters', function () {
-      const aMask = this.scoreCov.scorecov[ Object.keys(this.scoreCov.scorecov)[0] ];
-      const container = makeTests(
-        [
-          'skat',
-          { name: 'zegginiBurden' , mask: aMask.mask, group: aMask.group }
-        ],
-        this.scoreCov
-      );
-      assert.equal(Object.keys(container.tests).length, 2, 'Created two tests');
-      assert.equal(container.getTest('skat')._scorecov.length, Object.keys(this.scoreCov.scorecov).length, 'Tests created without filters will run on all masks');
-      assert.equal(container.getTest('zegginiBurden')._scorecov.length, 1, 'Tests created with filters will run on fewer masks');
-    });
-
   });
+
+  describe('PortalTestRunner', function () {
+    before(function () {
+      [ this.groups, this.variants ] = parsePortalJSON(this.json_data);
+    });
+
+    beforeEach(function () {
+      this.inst = new PortalTestRunner(this.groups, this.variants, ['skat']);
+    });
+
+    it('creates two test instances when given test names', function () {
+      const inst = new PortalTestRunner(this.groups, this.variants, ['burden', 'skat']);
+      assert.equal(inst._tests.length, 2);
+
+      assert.instanceOf(inst._tests[0], ZegginiBurdenTest, 'Created a burden test');
+      assert.instanceOf(inst._tests[1], SkatTest, 'Created a skat test');
+    });
+
+    it('builds tests from either names or instances', function() {
+      const skat = new SkatTest();
+      const inst = new PortalTestRunner(this.groups, this.variants, ['burden', skat]);
+      assert.equal(inst._tests.length, 2);
+      assert.instanceOf(inst._tests[0], ZegginiBurdenTest, 'Created a burden test');
+      assert.instanceOf(inst._tests[1], SkatTest, 'Created a skat test');
+    });
+
+    it('cannot create tests of an unknown type', function () {
+      assert.throws(
+        () => { new PortalTestRunner(this.groups, this.variants, ['nonexistent']); },
+        /Cannot make unknown test type/,
+        'Fails if given invalid test name'
+      );
+
+      assert.throws(
+        () => { new PortalTestRunner(this.groups, this.variants, [42]); },
+        /Must specify test as name or instance/,
+        'Fails if test type can not be resolved'
+      );
+
+    });
+
+    it('combines the results from multiple tests', function () {
+      const results = this.inst.run();
+      const expected_count = this.groups.data.length * this.inst._tests.length;
+      assert.equal(results.length, expected_count);
+    });
+
+    it('can represent results payload as portal-format precomputed results JSON', function () {
+      const results = this.inst.toJSON();
+      assert.hasAllKeys(results.data, ['results', 'groups', 'variants'])
+    });
+  });
+
 });
+
