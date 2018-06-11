@@ -1,15 +1,11 @@
 /**
- * Helper methods devoted to running aggregation tests in browser.
+ * Helper methods for running aggregation tests
  *
- * @module helpers
- * @license MIT
+ * This wraps internal functionality and provides utilities for reading and writing expected API formats
  */
-
-import numeric from 'numeric';
-
-import { REGEX_EPACTS } from './constants.js';
-import { VariantMask, ScoreStatTable, GenotypeCovarianceMatrix,
-  AggregationTest, SkatTest, ZegginiBurdenTest } from './stats.js';
+import numeric from "numeric";
+import { REGEX_EPACTS } from "./constants";
+import { _AggregationTest, SkatTest, ZegginiBurdenTest } from "./stats";
 
 const _all_tests = [ZegginiBurdenTest, SkatTest];
 
@@ -17,6 +13,8 @@ const _all_tests = [ZegginiBurdenTest, SkatTest];
  * Look up aggregation tests by unique name.
  *
  * This is a helper for external libraries; it provides an immutable registry of all available tests.
+ * TODO would be nice to get rid of this?
+ *
  *
  * {key: {label: String, constructor: Object }
  * @type {{String: {label: String, constructor: function}}}
@@ -29,220 +27,159 @@ const AGGREGATION_TESTS = Object.freeze(_all_tests.reduce(function(acc, construc
 
 
 /**
- * A container that stores aggregation tests and provides useful lookup methods on them.
+ * Helper object for reading and interpreting variant data
  */
-class AggregationTestContainer {
-  /**
-   * @constructor
-   * @param {AggregationTest[]} tests An array of aggregation test instances
-   * @param {Object} full_scorecov Parsed portal JSON object
-   */
-  constructor(tests, full_scorecov) {
-    // TODO: Remove the lookup functionality of find a use
-    this.tests = {};
-    this.testKeyToLabel = {};
-
-    this._full_scorecov = full_scorecov;
-
-    for (let t of Object.values(tests)) {
-      this.tests[t.key] = t;
-      this.testKeyToLabel[t.key] = t.label;
-    }
+class PortalVariantsHelper {
+  constructor(variants_array) {
+    this._variants = variants_array;
+    this._variant_lookup = this.parsePortalVariantData(variants_array);
   }
 
-
-  /**
-   * Retrieve a test object given the test key. A test 'key' is a short identifier
-   * that uniquely identifies which test was performed.
-   * @param key {string} String key for the aggregation test.
-   * @return {AggregationTest} An AggregationTest object.
-   */
-  getTest(key) {
-    return this.tests[key];
+  get data() {  // Raw unparsed data
+    return this._variants;
   }
 
-  /**
-   * Run all tests and combine the results into a JSON-serializable payload
-   * @return {Object} Rows of results, one per mask * group.
-   */
-  run() {
-    let results = {
-      data: {
-        masks: [],
-        singleVariantResults: {
-          variant: [],
-          altFreq: [],
-          pvalue: []
-        },
-        groupResults: {
-          group: [],
-          mask: [],
-          test: [],
-          pvalue: [],
-          stat: []
-        }
-      }
-    };
+  parsePortalVariantData(variants) {
+    // Read an array of variants. Parse names into position/ref/alt, and assign altFreq to MAF.
+    // Return a hash keyed on variant ID for quick lookups.
+    let lookup = {};
+    variants.forEach(data => {
+      let { variant, altFreq, pvalue } = data;
+      let [_, chrom, pos, ref, alt, __] = variant.match(REGEX_EPACTS);  // eslint-disable-line no-unused-vars
 
-    results.data.masks = Object.values(this._full_scorecov.masks);
-    for (let aggTest of Object.values(this.tests)) {
-      const res = aggTest.run();
+      let effectFreq = altFreq;
+      let effect = alt;
 
-      res.forEach(one_result => {
-        ['singleVariantResults', 'groupResults'].forEach(bucket => {
-          // Merge the nested structure together
-          Object.keys(results.data[bucket]).forEach(arr => {
-            results.data[bucket][arr].push(...one_result[bucket][arr]);
-          });
-        });
-      });
-    }
-    return results;
-  }
-}
-
-/**
- * Make a test runner based on configuration. This is a helper method for using raremetal.js without worrying about
- *   internal data structures or class names.
- *
- *  In particular it can be used as a way to limit what masks are used for a given test.
- *
- * @public
- * @param {String[]|Object[]} options An array specifying the tests to run. If a string is specified, it will run the
- *  specified test name on all available masks. Alternately, this helper method can be told to run the tests only on a
- *    limited set of masks, using object with keys {name: String, mask: String, group: String}. `mask`, `group`, or
- *    both can be omitted to skip filtering on that field.
- * @param {Object} full_scorecov The full scorecov data in the format returned by `parsePortalJson`
- */
-function makeTests(options, full_scorecov) {
-  const tests = options.map(spec => {
-    let inst_name;
-    let scorecov;
-
-    if (spec instanceof AggregationTest) {
-      return spec;
-    } else if (typeof spec === "string") {
-      // Then run the specified test on all possible masks and groups
-      inst_name = spec;
-      scorecov = Object.values(full_scorecov.scorecov);
-    } else if (typeof spec === "object") {
-      // This mechanism allows running tests against a limited set of masks/groups. If a filter option is not specified,
-      //   that field is not used as a filter.
-      inst_name = spec.name;
-      scorecov = Object.values(full_scorecov.scorecov)
-        .filter(item => ((spec.mask || item.mask) === item.mask) && ((spec.group || item.group) === item.group));
-    } else {
-      throw new Error("Not implemented");
-    }
-    let inst_class = AGGREGATION_TESTS[inst_name];
-    if (!inst_class) {
-      throw new Error(`Cannot make unknown test type: ${spec}`);
-    }
-    return new inst_class.constructor(scorecov);
-  });
-  return new AggregationTestContainer(tests, full_scorecov);
-}
-
-/**
- * Parse the idealized portal response JSON for requesting covariance matrices.
- * A spec of this format can be found in src/docs/portal-api.md.
- * @public
- * @param json JSON object from portal API response. An 'example.json' file is included in the root of this project.
- *  The [_example]{@link module:helpers~_example} function shows an example of how to use it.
- */
-function parsePortalJson(json) {
-  // Result storage
-  let loaded = {
-    masks: {},
-    scorecov: {}
-  };
-
-  const data = json.data;
-
-  /**
-   * Store parsed masks to an object that looks like:
-   * masks = { (group id): mask object }
-   */
-  let masks = {};
-  for (let maskData of data.masks) {
-    let mask = new VariantMask();
-    mask.id = maskData.id;
-    mask.label = maskData.label;
-
-    for (let [group, groupData] of Object.entries(maskData.groups)) {
-      mask.createGroup(group, groupData.variants);
-    }
-
-    masks[mask.id] = mask;
-  }
-
-  // Store masks for return
-  loaded["masks"] = masks;
-
-  // Load scores and covariance matrices
-  for (let scoreBlock of data.scorecov) {
-    let mask = masks[scoreBlock.mask];
-    let variants = mask.getGroup(scoreBlock.group);
-    let parsedVariants = variants.map(x => x.match(REGEX_EPACTS));
-    let positions = parsedVariants.map(x => parseInt(x[2]));
-    let altAlleles = parsedVariants.map(x => x[4]);
-    let refAlleles = parsedVariants.map(x => x[3]);
-
-    // Scores
-    let scoreTable = new ScoreStatTable();
-    scoreTable.sampleSize = scoreBlock.nsamples;
-    for (let i = 0; i < scoreBlock.scores.length; i++) {
-      // Diagonal element of linearized (lower triangular) covariance matrix
-      let n = i + 1;
-      let variance = scoreBlock.covariance[n * (n + 1) / 2 - 1];
-      let altFreq = scoreBlock.altFreq[i];
-      let eaFreq = altFreq;
-      let ea = altAlleles[i];
-      let pvalue = scoreBlock.pvalue[i];
-      let score = scoreBlock.scores[i];
-
+      /**
+       * The variant's score statistic in the API is coded toward the alternate allele.
+       * However, we want the effect coded towards the minor allele, since most rare variant tests assume
+       * you are counting the rare/minor allele.
+       */
       if (altFreq > 0.5) {
-        score = -score;
-        ea = refAlleles[i];
-        eaFreq = 1 - altFreq;
+        /**
+         * The effect allele is initially the alt allele. Since we're flipping it,
+         * the "other" allele is the reference allele.
+         */
+        effect = ref;
+
+        // This is also now the minor allele frequency.
+        effectFreq = 1 - altFreq;
       }
 
-      scoreTable.appendScore(
-        variants[i],
-        positions[i],
-        score,
-        variance,
-        altFreq,
-        ea,
-        eaFreq,
-        pvalue
-      );
-    }
+      lookup[variant] = {
+        variant,
+        chrom,
+        pos,
+        pvalue,
+        altAllele: alt,
+        effectAllele: effect,
+        altFreq: altFreq,
+        effectFreq: effectFreq
+      };
+    });
+    return lookup;
+  }
 
-    // Preallocate matrix
-    const n_variants = variants.length;
+  isAltEffect(variant_names) {  // Some calculations are sensitive to whether alt is the minor (effect) allele
+    return variant_names.map(name => {
+      const variant_data = this._variant_lookup[name];
+      return variant_data.altAllele === variant_data.effectAllele;
+    });
+  }
+
+  getEffectFreq(variant_names) {
+    // Get the allele freq for the minor (effect) allele
+    return variant_names.map(name => this._variant_lookup[name].effectFreq);
+  }
+
+  getGroupVariants(variant_names) {
+    // Return all that is known about a given set of variants
+    return variant_names.map(name => this._variant_lookup[name]);
+  }
+}
+
+// Utility class. Provides helper methods to access information about groups and generate subsets
+class PortalGroupHelper {
+  constructor(groups) {
+    this._groups = groups;
+    this._lookup = this._generateLookup(groups);
+  }
+
+  get data() {  // Raw unparsed data
+    return this._groups;
+  }
+
+  byMask(selection) {  // str or array
+    // Get all groups that identify as a specific category of mask- "limit the analysis to loss of function variants
+    // in any gene"
+    if (!Array.isArray(selection)) {
+      selection = [selection]
+    }
+    selection = new Set(selection);
+
+    const subset = this._groups.filter(group => selection.has(group.mask));
+    return new this.constructor(subset);
+  }
+
+  byGroup(selection) {  // str or array
+    // Get all groups based on a specific group name, regardless of mask. Eg, "all the ways to analyze data for a
+    // given gene".
+    if (!Array.isArray(selection)) {
+      selection = [selection]
+    }
+    selection = new Set(selection);
+
+    const subset = this._groups.filter(group => selection.has(group.group));
+    return new this.constructor(subset);
+  }
+
+  _generateLookup(groups) {
+    // We don't transform data, so this is a simple name -> position mapping
+    return groups.reduce((acc, item, idx) => {
+      const key = this._getKey(item.mask, item.group);
+      acc[key] = idx;
+      return acc;
+    }, {});
+  }
+
+  _getKey(mask_name, group_name) {
+    return `${mask_name},${group_name}`;
+  }
+
+  getOne(mask_name, group_name) {
+    // Get a single group that is fully and uniquely identified by group + mask
+    const key = this._getKey(mask_name, group_name);
+    const pos = this._lookup[key];
+    return this._groups[pos];
+  }
+
+  makeCovarianceMatrix(group, is_alt_effect) {
+    // Helper method that expands the portal covariance format into a full matrix.
+    // Load the covariance matrix from the response JSON
+    const n_variants = group.variants.length;
     let covmat = new Array(n_variants);
     for (let i = 0; i < n_variants; i++) {
       covmat[i] = new Array(n_variants).fill(null);
     }
 
-    // Map from variant ID or position => matrix index
-    const posMap = new Map();
-    for (let i = 0; i < n_variants; i++) {
-      let vobj = variants[i];
-      posMap.set(vobj.pos, i);
-    }
-
-    // Load the covariance matrix from the response JSON
     let c = 0;
     for (let i = 0; i < n_variants; i++) {
       for (let j = i; j < n_variants; j++) {
-        let v = scoreBlock.covariance[c];
-        let iAltFreq = scoreTable.altFreq[i];
-        let jAltFreq = scoreTable.altFreq[j];
+        let v = group.covariance[c];
+        let iAlt = is_alt_effect[i];
+        let jAlt = is_alt_effect[j];
 
+        /**
+         * The API spec codes variant genotypes towards the alt allele. If the alt allele frequency
+         * is > 0.5, that means we're not counting towards the minor (rare) allele, and we need to flip it around.
+         * We don't flip when i == j because that element represents the variance of the variant's score, which is
+         * invariant to which allele we code towards (but covariance is not.)
+         *
+         * We also don't flip when both the i variant and j variant need to be flipped (the ^ is XOR) because it would
+         * just cancel out.
+         */
         if (i !== j) {
-          if ((iAltFreq > 0.5) ^ (jAltFreq > 0.5)) {
+          if ((!iAlt) ^ (!jAlt)) {
             v = -v;
           }
         }
@@ -254,39 +191,99 @@ function parsePortalJson(json) {
       }
     }
 
-    covmat = numeric.mul(scoreTable.sampleSize, covmat);
+    covmat = numeric.mul(group.nSamples, covmat);
+    return covmat;
+  }
+}
 
-    // Construct the covariance matrix object and store it
-    let covMatrix = new GenotypeCovarianceMatrix(covmat, variants, posMap);
+// Helper method that coordinates multiple tests on a series of masks
+class PortalTestRunner {
+  constructor(groups, variants, test_names=[]) {
+    this.groups = groups;
+    this.variants = variants;
+    this._tests = [];
 
-    // Store result
-    loaded.scorecov[[scoreBlock.mask, scoreBlock.group]] = {
-      mask: scoreBlock.mask,
-      group: scoreBlock.group,
-      nsamples: scoreBlock.nsamples,
-      scores: scoreTable,
-      covariance: covMatrix
+    test_names.forEach(name => this.addTest(name));
+  }
+
+  addTest(test) {
+    // Add a new test by name, or directly from an instance
+    // TODO Find a way to do this without using the registry
+    if (typeof test === 'string') {
+      let type = AGGREGATION_TESTS[test];
+      if (!type) {
+        throw new Error(`Cannot make unknown test type: ${test}`);
+      }
+      test = new type.constructor();
+    } else if (!(test instanceof _AggregationTest)) {
+      throw new Error('Must specify test as name or instance');
+    }
+
+
+    this._tests.push(test);
+    return test;
+  }
+
+  run() {
+    // Run every test on every group in the container and return results
+    let results = [];
+
+    this._tests.forEach(test => {
+      this.groups.data.forEach(group => {
+        results.push(this._runOne(test, group));
+      });
+    });
+
+    return results;
+  }
+
+  _runOne(test, group) {
+    // Helper method that translates portal data into the format expected by a test
+    const variants = group.variants;
+    let scores = group.scores;
+
+    // Most calculations will require adjusting API data to ensure that minor allele is the effect allele
+    const isAltEffect = this.variants.isAltEffect(variants);
+    scores = scores.map(function (item, index) { return isAltEffect[index] ? item : -item; });
+
+    const cov = this.groups.makeCovarianceMatrix(group, isAltEffect);
+    const mafs = this.variants.getEffectFreq(variants);
+    let weights;  // TODO: The runner never actually uses the weights argument. Should it allow this?
+
+    const [ stat, pvalue ] = test.run(scores, cov, weights, mafs);
+    return {
+      group: group.group,
+      mask: group.mask,
+      test: test.key,
+      stat,
+      pvalue
     };
   }
 
-  return loaded;
+  toJSON(results) {
+    // Output calculation results in a format that matches the "precomputed results" endpoint
+    // By passing in an argument, user can format any set of results (even combining multiple runs)
+    if (!results) {
+      results = this.run();
+    }
+    return {
+      data: {
+        variants: this.variants.data,
+        groups: this.groups.data,
+        results: results
+      }
+    };
+  }
 }
 
-/**
- * Example of running many aggregation tests + masks at once.
- * @param filename {string} Path to JSON object which contains portal API response for scores/covariance/masks.
- * @return {Promise<Object>} Result object, which matches the format of the "result JSON format"
- */
-async function _example(filename) {
-  // Load example JSON of portal response from requesting covariance in a region
-  filename = filename || "example.json";
-  const response = await fetch(filename, { credentials: 'include' });
-  const json = await response.json();
-  const scoreCov = parsePortalJson(json);
 
-  // Run all tests/masks
-  const container = makeTests(["zegginiBurden", "skat"], scoreCov);
-  return container.run();
+function parsePortalJSON(json) {
+  const data = json.data || json;
+  const groups = new PortalGroupHelper(data.groups);
+  const variants = new PortalVariantsHelper(data.variants);
+  return [groups, variants];
 }
 
-export { parsePortalJson, makeTests, AGGREGATION_TESTS, _example };
+export { PortalVariantsHelper as _PortalVariantsHelper , PortalGroupHelper as _PortalGroupHelper }; // testing only
+
+export { parsePortalJSON, PortalTestRunner };

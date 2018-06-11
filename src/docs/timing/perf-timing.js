@@ -159,7 +159,7 @@ function main() {
   { load: '0.069759 ms',
   allTests: '2817.31991 ms',
   perTest:
-   [ zegginiBurden: '10.715852 ms',
+   [ burden: '10.715852 ms',
      skatLiu: '1610.871073 ms',
      skatDavies: '1195.173734 ms' ],
   region: 'Large region, high gene density',

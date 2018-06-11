@@ -18,7 +18,7 @@
       const response = await fetch(filename, { credentials: 'include' });
       const json = await response.json();
       const [ groups, variants ] = raremetal.helpers.parsePortalJSON(json);
-      const runner = new raremetal.helpers.TestRunner(groups, variants, ['zegginiBurden', 'skat']);
+      const runner = new raremetal.helpers.PortalTestRunner(groups, variants, ['burden', 'skat']);
       return runner;
     }
 

@@ -10,82 +10,23 @@ import numeric from 'numeric';
 import { pchisq, dbeta, pnorm } from './rstats.js';
 
 class AggregationTest {
-  /**
-   * @param {Array} scorecov An array of scorecov data, one entry for each mask to be used with this test
-   */
-  constructor(scorecov) {
+  constructor() {
     this.label = '';
     this.key = '';
-
-    this._scorecov = scorecov || [];
 
     this.requiresMaf = false;
   }
 
-  /**
-   * Run this test for one specific mask
-   */
-  test() {
+  run(u, v, w, mafs) { // todo update docstrings and call sigs
     throw new Error("Method must be implemented in a subclass");
-  }
-
-  /**
-   * Run this test over all masks provided
-   */
-  run() {
-    return this._scorecov.map(scoreBlock => {
-      let res = {
-        singleVariantResults: {
-          variant: [],
-          altFreq: [],
-          pvalue: []
-        },
-        groupResults: {
-          group: [],
-          mask: [],
-          test: [],
-          pvalue: [],
-          stat: []
-        }
-      };
-
-      // if (scoreBlock.scores.u.length === 0 || scoreBlock.covariance.matrix.length === 0) {
-      //   continue;  // TODO: should we check for this?
-      // }
-
-      // Minor allele frequencies calculated from alternate allele frequencies
-      let mafs = scoreBlock.scores.altFreq.map(x => Math.min(x, 1 - x));
-
-      /**
-       * Calculate the aggregation test.
-       */
-      let stat, p;
-      if (this.requiresMaf) {
-        [stat, p] = this.test(scoreBlock.scores.u, scoreBlock.covariance.matrix, null, mafs);
-      }
-      else {
-        [stat, p] = this.test(scoreBlock.scores.u, scoreBlock.covariance.matrix);
-      }
-
-      res.groupResults.group.push(scoreBlock.group);
-      res.groupResults.mask.push(scoreBlock.mask);
-      res.groupResults.test.push(this.key);
-      res.groupResults.pvalue.push(p);
-      res.groupResults.stat.push(stat);
-
-      res.singleVariantResults.variant = scoreBlock.scores.variants;
-      res.singleVariantResults.altFreq = scoreBlock.scores.altFreq;
-      res.singleVariantResults.pvalue = scoreBlock.scores.pvalue;
-      return res;
-    });
   }
 }
 
 class ZegginiBurdenTest extends AggregationTest {
   constructor() {
     super(...arguments);
-    this.key = 'zegginiBurden';
-    this.label = 'Zeggini Collapsing Burden Test';
+    this.key = 'burden';
+    this.label = 'Burden Test';
   }
 
   /**
@@ -107,7 +48,7 @@ class ZegginiBurdenTest extends AggregationTest {
    * @param {Number[]} w Weight vector (length m, number of variants)
    * @return {Number[]} Burden test statistic z and p-value
    */
-  test(u, v, w) {
+  run(u, v, w) {
     for (let e of [u, v]) {
       if (!Array.isArray(e) || !e.length) {
         throw 'Please provide all required arrays';
@@ -189,7 +130,7 @@ class SkatTest extends AggregationTest {
    *  they were not provided.
    * @return {Number[]} SKAT p-value.
    */
-  test(u, v, w, mafs) {
+  run(u, v, w, mafs) {
     // Calculate weights (if necessary)
     if (w === undefined || w === null) {
       w = SkatTest.weights(mafs);
@@ -354,349 +295,5 @@ function _skatLiu(lambdas, qstat) {
   return [qstat, p];
 }
 
-function arraysEqual(a1,a2) {
-  for (let i = 0; i < a1.length; i++) {
-    if (a1[i] !== a2[i]) {
-      return false;
-    }
-  }
-  return true;
-}
-
-/**
- * Class for storing a variant mask, which is a mapping from groups to lists of variants.
- * For example, "TCF7L2" -> ["variant1","variant2",...].
- * @class
- * @public
- */
-class VariantMask {
-  /**
-   * @constructor
-   */
-  constructor() {
-    this.groups = new Map();
-    this.label = null;
-    this.id = null;
-  }
-
-  /**
-   * Add a variant to a group.
-   * @function
-   * @param group Group, for example a gene "TCF7L2"
-   * @param variant Variant ID, usually "1:1_A/T"
-   * @public
-   */
-  addVariantForGroup(group,variant) {
-    if (this.groups.has(group)) {
-      this.groups.get(group).push(variant);
-    }
-    else {
-      let ar = [variant];
-      this.groups.set(group,ar);
-    }
-  }
-
-  /**
-   * Create a group from a list of variants
-   * @function
-   * @param group {string} Group name. Usually a gene, for example "TCF7L2" or "ENSG000534311".
-   * @param variants {string[]} Array of variants belonging to the group.
-   *  These should be in EPACTS format, e.g. chr:pos_ref/alt.
-   * @public
-   */
-  createGroup(group,variants) {
-    this.groups.set(group,variants);
-  }
-
-  /**
-   * Get the number of groups
-   * @return {number} Number of groups.
-   */
-  size() { return this.groups.size }
-
-  /**
-   * Iterate over groups with syntax:
-   * <pre>for (let [group, variants] in mask) { ... }</pre>
-   * @return Iterator over entries, yields [group, array of variants]
-   */
-  [Symbol.iterator]() { return this.groups.entries() }
-
-  /**
-   * Retrieve a specific group's variants.
-   * @param group {string} Group to retrieve.
-   * @return {string[]} List of variants belonging to the group.
-   */
-  getGroup(group) {
-    return this.groups.get(group);
-  }
-}
-
-/**
- * Class for storing score statistics. <p>
- *
- * Assumptions:
- * <ul>
- *   <li> This class assumes you are only storing statistics on a per-chromosome basis, and not genome wide.
- *   <li> Score statistic direction is towards the minor allele.
- * </ul>
- */
-class ScoreStatTable {
-  /**
-   * @constructor
-   */
-  constructor() {
-    this.variants = [];
-    this.positions = [];
-    this.variantMap = new Map();
-    this.positionMap = new Map();
-    this.u = [];
-    this.v = [];
-    this.sampleSize = 0;
-    this.altFreq = [];
-    this.effectAllele = [];
-    this.effectAlleleFreq = [];
-    this.pvalue = [];
-  }
-
-  /**
-   * Add a variant and relevant data on it into the table.
-   *
-   * @param variant {string} Variant (chr:pos_ref/alt)
-   * @param position {number} Integer position of variant
-   * @param u {number} Score statistic
-   * @param v {number} Variance of score statistic
-   * @param altFreq {number} Alternate allele frequency
-   * @param ea {string} Effect allele
-   * @param eaFreq {number} Effect allele frequency
-   * @param pvalue {number} Single variant p-value
-   */
-  appendScore(variant, position, u, v, altFreq, ea, eaFreq, pvalue) {
-    this.variants.push(variant);
-    this.positions.push(position);
-
-    this.variantMap.set(variant,this.variants.length-1);
-    this.positionMap.set(position,this.positions.length-1);
-
-    this.u.push(u);
-    this.v.push(v);
-    this.altFreq.push(altFreq);
-    this.effectAllele.push(ea);
-    this.effectAlleleFreq.push(eaFreq);
-    this.pvalue.push(pvalue);
-  }
-
-  /**
-   * Return the alternate allele frequency for a variant
-   * @param variant
-   * @return {number} Alt allele frequency
-   */
-  getAltFreqForVariant(variant) {
-    let freq = this.altFreq[this.variantMap.get(variant)];
-    if (freq == null) {
-      throw new Error("Variant did not exist when looking up alt allele freq: " + variant);
-    }
-
-    return freq;
-  }
-
-  /**
-   * Return the alternate allele frequency for a variant
-   * @param position Variant position
-   * @return {number} Alt allele frequency
-   */
-  getAltFreqForPosition(position) {
-    let freq = this.altFreq[this.positionMap.get(position)];
-    if (freq == null) {
-      throw new Error("Position did not exist when looking up alt allele freq: " + position);
-    }
-
-    return freq;
-  }
-
-  /**
-   * Retrieve the variant at a given position.
-   * @param position Variant position
-   */
-  getVariantAtPosition(position) {
-    let variant = this.variants(this.positionMap.get(position));
-    if (variant == null) {
-      throw new Error("Variant did not exist at position: " + position);
-    }
-
-    return variant;
-  }
-
-  /**
-   * Combine this set of score statistics with another. See also {@link https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#SINGLE_VARIANT_META_ANALYSIS}
-   * for information on how statistics are combined.
-   *
-   * @param other {ScoreStatTable} Another set of score statistics with which to combine this object for the purposes
-   *  of meta-analysis.
-   * @return {*} No object is returned; this method runs in-place.
-   */
-  add(other) {
-    // First confirm both matrices are the same shape
-    let dimThis = this.dim();
-    let dimOther = other.dim();
-    if (!arraysEqual(dimThis,dimOther)) {
-      throw "Scores cannot be added, dimensions are unequal";
-    }
-
-    // To combine the score stats, we only need to add each element
-    // Same with sample sizes
-    // Frequencies need to be added taking into account the differing sample sizes
-    for (let i = 0; i < dimThis[0]; i++) {
-      this.u[i] = this.u[i] + other.u[i];
-      this.v[i] = this.v[i] + other.v[i];
-
-      let sampleSizeThis = this.sampleSize[i];
-      let sampleSizeOther = other.sampleSize[i];
-      let sampleSizeTotal = sampleSizeThis + sampleSizeOther;
-
-      this.sampleSize[i] = sampleSizeTotal;
-      this.altFreq[i] = ((this.altFreq[i] * sampleSizeThis) + (other.altFreq[i] * sampleSizeOther)) / sampleSizeTotal;
-    }
-  }
-
-  dim() {
-    return this.u.length;
-  }
-
-  /**
-   * Subset the score stats down to a subset of variants, in this exact ordering
-   * @param variantList List of variants
-   * @return {ScoreStatTable} Score statistics after subsetting (not in-place, returns a new copy)
-   */
-  subsetToVariants(variantList) {
-    if (typeof variantList === "undefined") {
-      throw new Error("Must specify list of variants when subsetting");
-    }
-
-    // First figure out which variants supplied are actually in this set of score stats
-    variantList = variantList.filter(x => this.variantMap.has(x));
-
-    // Subset each member to only those variants
-    let idx = variantList.map(x => this.variantMap.get(x));
-    let variants = idx.map(i => this.variants[i]);
-    let positions = idx.map(i => this.positions[i]);
-    let u = idx.map(i => this.u[i]);
-    let v = idx.map(i => this.v[i]);
-    let altFreq = idx.map(i => this.altFreq[i]);
-
-    let variantMap = new Map(variants.map((element,index) => [element,index]));
-    let positionMap = new Map(variants.map((element,index) => [element,index]));
-
-    // Assemble new score table object
-    let newTable = new ScoreStatTable();
-    newTable.variants = variants;
-    newTable.positions = positions;
-    newTable.variantMap = variantMap;
-    newTable.positionMap = positionMap;
-    newTable.u = u;
-    newTable.v = v;
-    newTable.altFreq = altFreq;
-
-    return newTable;
-  }
-}
-
-/**
- * Class for storing genotype covariance matrices. <br/><br/>
- *
- * Assumptions:
- * <ul>
- *  <li> Covariances should be oriented towards the minor allele.
- *  <li> Variances on the diagonal are absolute values (they are not directional.)
- * </ul>
- *
- * @class
- */
-class GenotypeCovarianceMatrix {
-  /**
-   * @constructor
-   * @param matrix {number[][]} Pre-constructed matrix. Usually generated by the
-   *  [extractCovariance]{@link module:fio~extractCovariance} function in fio.
-   * @param variants {Map} Map of variants -> matrix position. Variants should be chr:pos_ref/alt format.
-   * @param positions {Map} Map of variant position -> matrix position. Both positions should be integers.
-   */
-  constructor(matrix, variants, positions) {
-    this.matrix = matrix;
-    this.variants = variants;
-    this.positions = positions;
-  }
-
-  /**
-   * Determine whether matrix is complete.
-   * Can specify i, j which are actual indices, or positions pos_i, pos_j which represent the positions of the variants.
-   * @function
-   * @public
-   */
-  isComplete(i, j, pos_i, pos_j) {
-    if (typeof pos_i !== 'undefined') {
-      i = this.positions.get(pos_i);
-    }
-    if (typeof pos_j !== 'undefined') {
-      j = this.positions.get(pos_j);
-    }
-
-    let v;
-    for (let m = 0; m < i; m++) {
-      for (let n = 0; n < j; n++) {
-        v = this.matrix[m][n];
-        if (v == null || isNaN(v)) {
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
-
-  /**
-   * Return dimensions of matrix
-   * @function
-   * @public
-   */
-  dim() {
-    let nrows = this.matrix.length;
-    let ncols = this.matrix[0].length;
-    return [nrows, ncols];
-  }
-
-  /**
-   * Combine this covariance matrix with another.
-   * This operation happens in place; this matrix will be overwritten with the new one.
-   * Used in meta-analysis, see {@link https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#SINGLE_VARIANT_META_ANALYSIS|our wiki}
-   * for more information.
-   * @function
-   * @param other {GenotypeCovarianceMatrix} Another covariance matrix
-   * @public
-   */
-  add(other) {
-    // First confirm both matrices are the same shape
-    let dimThis = this.dim();
-    let dimOther = other.dim();
-    if (!arraysEqual(dimThis,dimOther)) {
-      throw "Covariance matrices cannot be added, dimensions are unequal";
-    }
-
-    // To combine the covariance matrices, we only need to add each element
-    for (let i = 0; i < dimThis[0]; i++) {
-      for (let j = 0; j < dimThis[1]; j++) {
-        this.matrix[i][j] = this.matrix[i][j] + other.matrix[i][j];
-      }
-    }
-  }
-
-  /**
-   * Subset the covariance matrix down to a subset of variants, in this exact ordering
-   * @todo Implement
-   * @param variants List of variants
-   * @return New GenotypeCovarianceMatrix after subsetting (not in-place)
-   */
-  // subsetToVariants(variants) {
-  //
-  // }
-}
-
-export { ScoreStatTable, GenotypeCovarianceMatrix, VariantMask, AggregationTest, SkatTest, ZegginiBurdenTest };
+export { AggregationTest as _AggregationTest };  // for unit testing only
+export { SkatTest, ZegginiBurdenTest };

@@ -1,17 +1,8 @@
-import fs from 'fs';
+import { assert } from 'chai';
 
 import { ZegginiBurdenTest, SkatTest } from '../../src/app/stats.js';
-import { assert } from 'chai';
-import { parsePortalJson } from '../../src/app/helpers';
 
 describe('stats.js', function() {
-  before(function () {
-    // Load example JSON of portal response from requesting covariance in a region
-    let jsonRaw = fs.readFileSync('test/integration/example.json');
-    let json = JSON.parse(jsonRaw);
-    this.scoreCov = parsePortalJson(json);
-  });
-
   describe('ZegginiBurdenTest', function() {
     it('should return correct p-value for known u/cov (no weights)', function() {
       // Verify correctness of results
@@ -21,7 +12,7 @@ describe('stats.js', function() {
         [ -0.01361261692, -0.01371627432, 23.9075214, -0.1996334844 ],
         [ -0.1976943976, -0.1992892636, -0.1996334844, 320.2882088 ] ];
       let agg = new ZegginiBurdenTest();
-      let [, pval] = agg.test(u,cov,null);
+      let [, pval] = agg.run(u,cov,null);
       let expectedPval = 0.7141;
       assert.closeTo(
         pval,
@@ -29,17 +20,6 @@ describe('stats.js', function() {
         0.001,
         'testBurden on known u/cov did not produce close enough p-value to expected'
       )
-    });
-
-    it('should return multiple result sets for multiple masks', function () {
-      // Test the "high level" interface that coordinates sets of tests
-      const onemask = this.scoreCov.scorecov[ Object.keys(this.scoreCov.scorecov)[0] ];
-      const instance = new ZegginiBurdenTest([onemask, onemask]);
-      const result = instance.run();
-
-      assert.isArray(result);
-      assert.equal(result.length, 2, 'Ran on two masks');
-      assert.deepEqual(result[0], result[1], 'Same mask should give same results')
     });
   });
 
@@ -84,7 +64,7 @@ describe('stats.js', function() {
         0.00412922
       ];
       let agg = new SkatTest();
-      let [, pval] = agg.test(u, cov, null, mafs);
+      let [, pval] = agg.run(u, cov, null, mafs);
       let expectedPval = 0.8110;
       assert.closeTo(
         pval,
@@ -99,7 +79,7 @@ describe('stats.js', function() {
       let cov = [[ 23.902543 ]];
       let mafs = [ 0.000282902 ];
       let agg = new SkatTest();
-      let [, pval] = agg.test(u, cov, null, mafs);
+      let [, pval] = agg.run(u, cov, null, mafs);
       let expectedPval = 0.7487074306833961;
       assert.closeTo(
         pval,
