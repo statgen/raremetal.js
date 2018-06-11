@@ -121,7 +121,7 @@ describe('helpers.js', function () {
 
     it('can represent results payload as portal-format precomputed results JSON', function () {
       const results = this.inst.toJSON();
-      assert.hasAllKeys(results.data, ['results', 'groups', 'variants'])
+      assert.hasAllKeys(results.data, ['groups', 'variants']);
     });
   });
 

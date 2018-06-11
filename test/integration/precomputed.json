@@ -6,14 +6,12 @@
       {
         "variant": "2:21228642_G/A",
         "altFreq": 0.033,
-        "pvalue": 0.000431,
-        "score": 0.1
+        "pvalue": 0.000431
       },
       {
         "variant": "2:21228643_G/A",
         "altFreq": 0.034,
-        "pvalue": 0.000432,
-        "score": 0.2
+        "pvalue": 0.000432
       }
     ],
     "groups": [
@@ -21,13 +19,8 @@
         "groupType": "gene",
         "group": "ENSG000001",
         "mask": "PTV",
-        "variants": ["2:21228642_G/A"]
-      }
-    ],
-    "results": [
-      {
-        "group": "ENSG000001",
-        "mask": "PTV",
+        "variants": ["2:21228642_G/A"],
+
         "test": "burden",
         "pvalue": 1.8e-09,
         "stat": 0.1
