@@ -238,7 +238,7 @@ class PortalTestRunner {
   }
 
   _runOne(test, group) {
-    // Helper method that translates portal data into the format expected by a test
+    // Helper method that translates portal data into the format expected by a test.
     const variants = group.variants;
     let scores = group.scores;
 
@@ -251,9 +251,14 @@ class PortalTestRunner {
     let weights;  // TODO: The runner never actually uses the weights argument. Should it allow this?
 
     const [ stat, pvalue ] = test.run(scores, cov, weights, mafs);
+
+    // The results describe the group + several new fields for calculation results.
     return {
+      groupType: group.groupType,
       group: group.group,
       mask: group.mask,
+      variants: group.variants,
+
       test: test.key,
       stat,
       pvalue
@@ -266,11 +271,11 @@ class PortalTestRunner {
     if (!results) {
       results = this.run();
     }
+
     return {
       data: {
         variants: this.variants.data,
-        groups: this.groups.data,
-        results: results
+        groups: results,
       }
     };
   }

@@ -19,7 +19,7 @@ describe('In-browser calculation workflow', function () {
 
     const expected_count = this.groups.data.length * runner._tests.length;
     assert.equal(results.length, expected_count);
-    assert.hasAllKeys(results[0], ['group', 'mask', 'test', 'pvalue', 'stat'] )
+    assert.hasAllKeys(results[0], ['groupType', 'group', 'mask', 'variants', 'test', 'pvalue', 'stat'] )
   });
 
   it('should match expected burden p-value for HIC2', function() {
@@ -38,7 +38,7 @@ describe('In-browser calculation workflow', function () {
 });
 
 describe('Precomputed results workflow', function () {
-  before(function () {
+  beforeEach(function () {
     let jsonRaw = fs.readFileSync('test/integration/precomputed.json');
     this.json_data = JSON.parse(jsonRaw).data;
   });
@@ -55,11 +55,10 @@ describe('Precomputed results workflow', function () {
   it('can use helpers to explore results', function () {
     // At the moment, there is no helper for results- we just read the parsed data directly. Helpers can be used to
     //  connect back to the mask and variant data.
-    const results = this.json_data.results;
-    const [ groups, variants ] = parsePortalJSON(this.json_data);
+    const [ groupResults, variants ] = parsePortalJSON(this.json_data);
 
-    const one_result = results[0];
-    const one_group = groups.getOne(one_result.mask, one_result.group);
+    const one_result = groupResults.data[0];
+    const one_group = groupResults.getOne(one_result.mask, one_result.group);
     const variant_data = variants.getGroupVariants(one_group.variants);
 
     assert.equal(one_group.variants.length, variant_data.length, 'Fetched variant subset appropriate to this group');

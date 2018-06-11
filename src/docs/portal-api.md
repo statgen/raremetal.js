@@ -101,13 +101,23 @@ Only requesting scores and covariance for the "PTV" mask just to save some space
 
 #### Response
 
-We want to be able to retrieve as much of the masks/covariance data all at once to minimize round trips to the server. This structure would allow retrieving covariance for multiple masks all at once.
+We want to be able to retrieve as much of the masks/covariance data all at once to minimize round trips to the server. 
+This structure would allow retrieving covariance for multiple masks/groups all at once.
 
 Note that all scores and covariances are assumed to be counting towards the **alternate allele**. It is also critical 
 that alternate allele frequencies are included so as to be able to orient scores/covariances towards 
 the minor allele when performing the aggregation tests. 
 
-This response is slightly condensed to save space.
+The data section of this payload contains two distinct kinds of entities:
+
+- **groups** represent the information required to perform analysis on one or more sets of variants. Often, these 
+variants are based on a particular region (such as `groupType: 'interval'` or `groupType: 'gene'`), 
+filtered according to a specific mask. In the example below, only one set is specified: all protein 
+truncating variantsa (PTV) that lie within the region that defines a gene with ENSEMBL ID `ENSG000001`.
+ 
+- **variants** contains basic information about individual variants. Some information (such as `altFreq`) is needed 
+for calculations. Optionally, this section may present additional information that can be used to analyze and 
+interpret the calculation results. The same variant may appear in many groups, but is only listed here once.
 
 ```json
 {
@@ -118,8 +128,7 @@ This response is slightly condensed to save space.
       {
         "variant": "2:21228642_G/A",
         "altFreq": 0.033,
-        "pvalue": 0.000431,
-        "score": 0.1
+        "pvalue": 0.000431
       }
     ],
     "groups": [
@@ -128,6 +137,7 @@ This response is slightly condensed to save space.
         "group": "ENSG000001",
         "mask": "PTV",
         "variants": ["2:21228642_G/A"],
+
         "scores": [0.1], 
         "covariance": [0.3],
         "sigmaSquared": 0.08,
@@ -140,9 +150,15 @@ This response is slightly condensed to save space.
 
 ### Retrieving pre-computed aggregation test results
 
-In the case where aggregation tests have already been pre-computed for some of the datasets server-side, we could use this API to retrieve those results and display them in LZ. 
+In the case where aggregation tests have already been pre-computed for some of the datasets server-side, this endpoint
+provides access to calculation results (and associated information). This endpoint is mutually exclusive with the one
+above: if results have already been computed, then there is no need to retrieve the raw data (such as covariance) used 
+as input to the calculation.
 
-Note that raremetal.js, after running aggregation tests, will return results formatted in the exact same format as the response below. 
+Otherwise, the payloads are superficially similar, so that the same visualization experience can work with both 
+on-the-fly and precomputed results. `raremetal.js` has a helper function that will format in-browser calculations 
+as the response below.
+ 
 
 #### Request
 
@@ -164,9 +180,11 @@ Looks identical to the same request used to retrieve covariance.
 
 #### Response
 
-If results were already available server-side, say if they were pre-computed, we could accept a response of this format and be able to show the results within LZ without performing any aggregation test computations.
+If results were already available server-side, say if they were pre-computed, we could accept a response of this 
+format and be able to show the results within LZ without performing any aggregation test computations. 
 
-Note: the results are not ordered; the order in which groups appear in `groupResults` does not necessarily match the order in which groups appear in `data.masks`. Similarly with `singleVariantResults`.
+The two types of data in this endpoint are similar to those described in the `covariance` endpoint above. Instead of 
+covariance data, `groups` in this endpoint provide calculation results.
 
 ```json
 {
@@ -185,16 +203,11 @@ Note: the results are not ordered; the order in which groups appear in `groupRes
         "groupType": "gene",
         "group": "ENSG000001",
         "mask": "PTV",
-        "variants": ["2:21228642_G/A"] 
-      }
-    ],
-    "results": [
-      {
-        "group": "ENSG000001",
-        "mask": "PTV",
+        "variants": ["2:21228642_G/A"],
+        
         "test": "burden",
         "pvalue": 1.8e-09,
-        "stat": 0.1
+        "stat": 0.1        
       }
     ]
   }
