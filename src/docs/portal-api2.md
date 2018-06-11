@@ -103,7 +103,9 @@ Only requesting scores and covariance for the "PTV" mask just to save some space
 
 We want to be able to retrieve as much of the masks/covariance data all at once to minimize round trips to the server. This structure would allow retrieving covariance for multiple masks all at once.
 
-Note that all scores and covariances are assumed to be counting towards the **alternate allele**. It is also critical that alternate allele frequencies are included so as to be able to orient scores/covariances towards the minor allele when performing the aggregation tests. 
+Note that all scores and covariances are assumed to be counting towards the **alternate allele**. It is also critical 
+that alternate allele frequencies are included so as to be able to orient scores/covariances towards 
+the minor allele when performing the aggregation tests. 
 
 This response is slightly condensed to save space.
 
@@ -175,7 +177,7 @@ Note: the results are not ordered; the order in which groups appear in `groupRes
       {
         "variant": "2:21228642_G/A",
         "altFreq": 0.033,
-        "pvalue": 0.000431,
+        "pvalue": 0.000431
       }
     ],
     "groups": [
