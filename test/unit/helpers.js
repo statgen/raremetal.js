@@ -24,13 +24,39 @@ describe('helpers.js', function () {
   });
 
   describe('PortalVariantsHelper', function () {
-    // TODO: All these tests will break when sample json updated; this is VERY fictional data
     it('is created from json variants data', function () {
       const inst = new _PortalVariantsHelper(this.json_data.variants);
       assert.deepEqual(inst.data, this.json_data.variants);
     });
 
-    // TODO: test sign flipping and effect allele determination
+    it('handles the case where altFreq > 0.5', function () {
+      const variants = [{
+        variant: '22:21576208_G/A',
+        altFreq: 0.1,
+        pvalue: 0.279888
+      },
+      {
+        variant: '22:21581760_G/A',
+        altFreq: 0.8,
+        pvalue: 0.477434
+      }];
+      const variant_names = ['22:21576208_G/A', '22:21581760_G/A'];
+
+      const helper = new _PortalVariantsHelper(variants);
+      const parsed = helper.getGroupVariants(variant_names);
+
+      assert.propertyVal(parsed[0], 'effectAllele', 'A');
+      assert.propertyVal(parsed[0], 'effectFreq', 0.1, 'Alt allele is  minor allele');
+
+      assert.propertyVal(parsed[1], 'effectAllele', 'G', 'Ref allele is  minor allele');
+      assert.approximately(parsed[1]['effectFreq'], 0.2, 0.000001);
+
+      assert.deepEqual(
+        helper.isAltEffect(variant_names),
+        [true, false],
+        'Correctly identifies whether alt is effect allele'
+      );
+    });
   });
 
   describe('PortalGroupHelper', function () {
@@ -52,15 +78,17 @@ describe('helpers.js', function () {
       assert.equal(groups.data.length, 20);
     });
 
-    describe('covariance test parsing', function () {
-      // TODO: important- add tests around covariance matrix generation (and sign flipping if ONE, the OTHER, or BOTH are not the lower freq allele. Also test when certain numbers don't make sense or arrays don't match lengths
-      it('can reformat an array into a covariance matrix', function () {
-        const one_group =  {
+    describe('covariance matrix parsing', function () {
+      beforeEach(function () {
+        this.one_group =  {
           variants: ['1', '2', '3'],
           covariance: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
           nSamples: 10
         };
-        const covar = this.inst.makeCovarianceMatrix(one_group, [0.1, 0.1, 0.1]);
+      });
+
+      it('can reformat an array into a covariance matrix', function () {
+        const covar = this.inst.makeCovarianceMatrix(this.one_group, [true, true, true]);
         assert.deepEqual(
           covar,
           [
@@ -68,6 +96,33 @@ describe('helpers.js', function () {
             [ 2, 4, 5 ],
             [ 3, 5, 6 ]
           ]
+        );
+      });
+
+      it('correctly handles sign flips on covariance elements', function () {
+        const one_flip = [false, true, true];
+
+        let covar = this.inst.makeCovarianceMatrix(this.one_group, one_flip);
+        assert.deepEqual(
+          covar,
+          [
+            [ 1, -2, -3 ],
+            [ -2, 4, 5 ],
+            [ -3, 5, 6 ]
+          ],
+          'Correctly handles a single variant sign flip'
+        );
+
+        const two_flips = [false, false, true];
+        covar = this.inst.makeCovarianceMatrix(this.one_group, two_flips);
+        assert.deepEqual(
+          covar,
+          [
+            [ 1, 2, -3 ],
+            [ 2, 4, -5 ],
+            [ -3, -5, 6 ]
+          ],
+          'Correctly handles the case where two signs are flipped'
         );
       });
     });
@@ -110,7 +165,6 @@ describe('helpers.js', function () {
         /Must specify test as name or instance/,
         'Fails if test type can not be resolved'
       );
-
     });
 
     it('combines the results from multiple tests', function () {
