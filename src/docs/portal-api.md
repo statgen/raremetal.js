@@ -128,7 +128,9 @@ interpret the calculation results. The same variant may appear in many groups, b
       {
         "variant": "2:21228642_G/A",
         "altFreq": 0.033,
-        "pvalue": 0.000431
+        "pvalue": 0.000431,
+
+        "score": 0.1
       }
     ],
     "groups": [
@@ -138,7 +140,6 @@ interpret the calculation results. The same variant may appear in many groups, b
         "mask": "PTV",
         "variants": ["2:21228642_G/A"],
 
-        "scores": [0.1], 
         "covariance": [0.3],
         "sigmaSquared": 0.08,
         "nSamples": 3550

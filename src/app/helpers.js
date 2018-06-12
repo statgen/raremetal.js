@@ -44,7 +44,7 @@ class PortalVariantsHelper {
     // Return a hash keyed on variant ID for quick lookups.
     let lookup = {};
     variants.forEach(data => {
-      let { variant, altFreq, pvalue } = data;
+      let { variant, altFreq, pvalue, score } = data;
       let [_, chrom, pos, ref, alt, __] = variant.match(REGEX_EPACTS);  // eslint-disable-line no-unused-vars
 
       let effectFreq = altFreq;
@@ -60,6 +60,7 @@ class PortalVariantsHelper {
          * The effect allele is initially the alt allele. Since we're flipping it,
          * the "other" allele is the reference allele.
          */
+        score = -score;
         effect = ref;
 
         // This is also now the minor allele frequency.
@@ -71,6 +72,7 @@ class PortalVariantsHelper {
         chrom,
         pos,
         pvalue,
+        score,
         altAllele: alt,
         effectAllele: effect,
         altFreq: altFreq,
@@ -90,6 +92,11 @@ class PortalVariantsHelper {
   getEffectFreq(variant_names) {
     // Get the allele freq for the minor (effect) allele
     return variant_names.map(name => this._variant_lookup[name].effectFreq);
+  }
+
+  getScores(variant_names) {
+    // Get single-variant scores
+    return variant_names.map(name => this._variant_lookup[name].score);
   }
 
   getGroupVariants(variant_names) {
@@ -240,11 +247,10 @@ class PortalTestRunner {
   _runOne(test, group) {
     // Helper method that translates portal data into the format expected by a test.
     const variants = group.variants;
-    let scores = group.scores;
+    const scores = this.variants.getScores(variants);
 
     // Most calculations will require adjusting API data to ensure that minor allele is the effect allele
     const isAltEffect = this.variants.isAltEffect(variants);
-    scores = scores.map(function (item, index) { return isAltEffect[index] ? item : -item; });
 
     const cov = this.groups.makeCovarianceMatrix(group, isAltEffect);
     const mafs = this.variants.getEffectFreq(variants);
