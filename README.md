@@ -6,6 +6,8 @@
 
 A package for performing rare variant aggregation tests and meta-analysis using score covariance matrices.
 
+For a general overview of these types of tests and study design issues, refer to ["Rare-Variant Association Analysis: Study Designs and Statistical Tests". Lee et al, 2014.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4085641/)
+
 The methods implemented in this package are described across a number of papers and websites.
 
 **Collapsing burden test (specifically the Morris-Zeggini test)**:
