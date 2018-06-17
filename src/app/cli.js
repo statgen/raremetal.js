@@ -102,7 +102,7 @@ async function single(args) {
     let cov = await extractCovariance(args.cov, region, scores.variants, scores);
 
     if (args.test === 'burden') {
-      let [, p] = new ZegginiBurdenTest().test(scores.u, cov.matrix, null);
+      let [, p] = new ZegginiBurdenTest().run(scores.u, cov.matrix, null);
       results.addResult(group, p);
     }
     else if (args.test.startsWith('skat')) {
@@ -113,7 +113,7 @@ async function single(args) {
       let method = args.test.replace('skat-','');
       let skat = new SkatTest();
       skat._method = method;
-      let [, p] = skat.test(scores.u, cov.matrix, null, mafs);
+      let [, p] = skat.run(scores.u, cov.matrix, null, mafs);
       results.addResult(group, p);
     }
 
@@ -243,3 +243,5 @@ if (typeof require !== 'undefined' && require.main === module) {
     console.log(error);
   })
 }
+
+module.exports = { single, meta } ;
