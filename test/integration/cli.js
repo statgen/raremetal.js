@@ -8,7 +8,8 @@ describe('cli.js', function() {
       score: 'test/integration/data/gene.DUXAP8.scores.assoc.gz',
       mask: 'test/integration/data/gene.DUXAP8.mask.tab',
       test: 'skat-davies',
-      group: null
+      group: null,
+      silent: true
     };
 
     const result = await single(args);
