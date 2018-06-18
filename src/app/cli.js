@@ -36,6 +36,7 @@ function getSettings() {
   single.addArgument(["-c", "--cov"], { help: "File containing covariance statistics across windows of variants" });
   single.addArgument(["-g", "--group"], { help: "Only analyze 1 group/gene." });
   single.addArgument(["-o", "--out"], { help: "File to write results to." });
+  single.addArgument(["--silent"], { help: "Silence console output.", default: false });
 
   let meta = subParsers.addParser("meta", { addHelp: true });
   meta.addArgument(["--spec"], { help: "YAML file specifying studies & their files." });
@@ -85,8 +86,8 @@ async function single(args) {
       continue;
     }
 
-    console.log(`Testing [${i}/${total}]: ${group} | nvariants: ${groupVars.length}`);
-    console.time("  Total time");
+    if (!args.silent) console.log(`Testing [${i}/${total}]: ${group} | nvariants: ${groupVars.length}`);
+    if (!args.silent) console.time("  Total time");
     let chrom = groupVars[0].match(REGEX_EPACTS)[1];
     let start = groupVars[0].match(REGEX_EPACTS)[2];
     let end = groupVars[groupVars.length - 1].match(REGEX_EPACTS)[2];
@@ -117,7 +118,7 @@ async function single(args) {
       results.addResult(group, p);
     }
 
-    console.timeEnd("  Total time");
+    if (!args.silent) console.timeEnd("  Total time");
     i += 1;
   }
 
@@ -125,7 +126,7 @@ async function single(args) {
     // @todo should compress this
     fs.writeFileSync(args.out, results.toString(), { encoding: "utf8" });
   } else {
-    console.log(results.toString());
+    if (!args.silent) console.log(results.toString());
   }
 
   return results;
