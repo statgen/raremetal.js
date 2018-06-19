@@ -4511,16 +4511,13 @@ numeric.svd= function svd(A) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ScoreStatTable", function() { return ScoreStatTable; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GenotypeCovarianceMatrix", function() { return GenotypeCovarianceMatrix; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "VariantMask", function() { return VariantMask; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "testBurden", function() { return testBurden; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "testSkat", function() { return testSkat; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "calcSkatWeights", function() { return calcSkatWeights; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__qfc_js__ = __webpack_require__(5);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_AggregationTest", function() { return AggregationTest; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "SkatTest", function() { return SkatTest; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ZegginiBurdenTest", function() { return ZegginiBurdenTest; });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__qfc_js__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_numeric__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_numeric___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_numeric__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__rstats_js__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__rstats_js__ = __webpack_require__(7);
 /**
  * Calculate group-based tests from score statistics.
  *
@@ -4532,456 +4529,198 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-function arraysEqual(a1,a2) {
-  for (let i = 0; i < a1.length; i++) {
-    if (a1[i] !== a2[i]) {
-      return false;
-    }
+/**
+ * Base class for all aggregation tests.
+ */
+class AggregationTest {
+  constructor() {
+    this.label = '';
+    this.key = '';
+
+    this.requiresMaf = false;
   }
-  return true;
+
+  run(u, v, w, mafs) { // todo update docstrings and call sigs
+    throw new Error("Method must be implemented in a subclass");
+  }
 }
 
 /**
- * Class for storing a variant mask, which is a mapping from groups to lists of variants.
- * For example, "TCF7L2" -> ["variant1","variant2",...].
- * @class
- * @public
+ * Standard burden test that collapses rare variants into a total count of rare alleles observed per sample
+ * in a group (e.g. gene). <p>
+ *
+ * See {@link https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#BURDEN_META_ANALYSIS|our wiki page} for more information.
+ * Also see the {@link https://www.ncbi.nlm.nih.gov/pubmed/19810025|paper} describing the method.
+ *
+ * @extends AggregationTest
  */
-class VariantMask {
-  /**
-   * @constructor
-   */
+class ZegginiBurdenTest extends AggregationTest {
   constructor() {
-    this.groups = new Map();
-    this.label = null;
-    this.id = null;
+    super(...arguments);
+    this.key = 'burden';
+    this.label = 'Burden Test';
   }
 
   /**
-   * Add a variant to a group.
-   * @function
-   * @param group Group, for example a gene "TCF7L2"
-   * @param variant Variant ID, usually "1:1_A/T"
-   * @public
+   * Default weight function for burden test. All variants weighted equally. Only requires the number of variants
+   * since they are all given the same weight value.
+   * @param n {number} Number of variants.
+   * @return {number[]} An array of weights, one per variant.
    */
-  addVariantForGroup(group,variant) {
-    if (this.groups.has(group)) {
-      this.groups.get(group).push(variant);
+  static weights(n) {
+    return new Array(n).fill(1 / n);
+  }
+
+  /**
+   * Calculate burden test from vector of score statistics and variances.
+   *
+   * @param {Number[]} u Vector of score statistics (length m, number of variants)
+   * @param {Number[]} v Covariance matrix of score statistics
+   * @param {Number[]} w Weight vector (length m, number of variants)
+   * @return {Number[]} Burden test statistic z and p-value
+   */
+  run(u, v, w) {
+    for (let e of [u, v]) {
+      if (!Array.isArray(e) || !e.length) {
+        throw 'Please provide all required arrays';
+      }
+    }
+
+    if (!(u.length === v.length)) {
+      throw 'u and v must be same length';
+    }
+
+    if (w != null) {
+      if (w.length !== u.length) {
+        throw 'w vector must be same length as score vector u';
+      }
     }
     else {
-      let ar = [variant];
-      this.groups.set(group,ar);
+      w = ZegginiBurdenTest.weights(u.length);
     }
-  }
 
-  /**
-   * Create a group from a list of variants
-   * @function
-   * @param group {string} Group name. Usually a gene, for example "TCF7L2" or "ENSG000534311".
-   * @param variants {string[]} Array of variants belonging to the group.
-   *  These should be in EPACTS format, e.g. chr:pos_ref/alt.
-   * @public
-   */
-  createGroup(group,variants) {
-    this.groups.set(group,variants);
-  }
+    // This is taken from:
+    // https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#BURDEN_META_ANALYSIS
+    let over = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(w, u);
+    let under = Math.sqrt(__WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(__WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(w, v), w));
+    let z = over / under;
 
-  /**
-   * Get the number of groups
-   * @return {number} Number of groups.
-   */
-  size() { return this.groups.size }
-
-  /**
-   * Iterate over groups with syntax:
-   * <pre>for (let [group, variants] in mask) { ... }</pre>
-   * @return Iterator over entries, yields [group, array of variants]
-   */
-  [Symbol.iterator]() { return this.groups.entries() }
-
-  /**
-   * Retrieve a specific group's variants.
-   * @param group {string} Group to retrieve.
-   * @return {string[]} List of variants belonging to the group.
-   */
-  getGroup(group) {
-    return this.groups.get(group);
+    // The -Math.abs(z) is because pnorm returns the lower tail probability from the normal dist
+    // The * 2 is for a two-sided p-value.
+    let p = Object(__WEBPACK_IMPORTED_MODULE_2__rstats_js__["c" /* pnorm */])(-Math.abs(z), 0, 1) * 2;
+    return [z, p];
   }
 }
 
 /**
- * Class for storing score statistics. <p>
+ * Sequence kernel association test (SKAT). <p>
  *
- * Assumptions:
- * <ul>
- *   <li> This class assumes you are only storing statistics on a per-chromosome basis, and not genome wide.
- *   <li> Score statistic direction is towards the minor allele.
- * </ul>
+ * See the {@link https://www.cell.com/ajhg/fulltext/S0002-9297%2811%2900222-9|original paper} for details on the
+ * method, and {@link https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#SKAT_META_ANALYSIS|our wiki} for information
+ * on how the test is calculated using scores/covariances. <p>
+ *
+ * @extends AggregationTest
  */
-class ScoreStatTable {
-  /**
-   * @constructor
-   */
+class SkatTest extends AggregationTest {
   constructor() {
-    this.variants = [];
-    this.positions = [];
-    this.variantMap = new Map();
-    this.positionMap = new Map();
-    this.u = [];
-    this.v = [];
-    this.sampleSize = 0;
-    this.altFreq = [];
-    this.effectAllele = [];
-    this.effectAlleleFreq = [];
-  }
+    super(...arguments);
+    this.label = 'SKAT Test';
+    this.key = 'skat';
+    this.requiresMaf = true;
 
-  appendScore(variant, position, u, v, altFreq, ea, eaFreq) {
-    this.variants.push(variant);
-    this.positions.push(position);
-
-    this.variantMap.set(variant,this.variants.length-1);
-    this.positionMap.set(position,this.positions.length-1);
-
-    this.u.push(u);
-    this.v.push(v);
-    this.altFreq.push(altFreq);
-    this.effectAllele.push(ea);
-    this.effectAlleleFreq.push(eaFreq);
+    /**
+     * Skat test method. Only used for dev/testing.
+     * Should not be set by user.
+     * @private
+     * @type {string}
+     */
+    this._method = 'auto';
   }
 
   /**
-   * Return the alternate allele frequency for a variant
-   * @param variant
-   * @return {number} Alt allele frequency
-   */
-  getAltFreqForVariant(variant) {
-    let freq = this.altFreq[this.variantMap.get(variant)];
-    if (freq == null) {
-      throw new Error("Variant did not exist when looking up alt allele freq: " + variant);
-    }
-
-    return freq;
-  }
-
-  /**
-   * Return the alternate allele frequency for a variant
-   * @param position Variant position
-   * @return {number} Alt allele frequency
-   */
-  getAltFreqForPosition(position) {
-    let freq = this.altFreq[this.positionMap.get(position)];
-    if (freq == null) {
-      throw new Error("Position did not exist when looking up alt allele freq: " + position);
-    }
-
-    return freq;
-  }
-
-  /**
-   * Retrieve the variant at a given position.
-   * @param position Variant position
-   */
-  getVariantAtPosition(position) {
-    let variant = this.variants(this.positionMap.get(position));
-    if (variant == null) {
-      throw new Error("Variant did not exist at position: " + position);
-    }
-
-    return variant;
-  }
-
-  /**
-   * Combine this set of score statistics with another. See also {@link https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#SINGLE_VARIANT_META_ANALYSIS}
-   * for information on how statistics are combined.
+   * Calculate typical SKAT weights using beta density function.
    *
-   * @param other {ScoreStatTable} Another set of score statistics with which to combine this object for the purposes
-   *  of meta-analysis.
-   * @return {*} No object is returned; this method runs in-place.
-   */
-  add(other) {
-    // First confirm both matrices are the same shape
-    let dimThis = this.dim();
-    let dimOther = other.dim();
-    if (!arraysEqual(dimThis,dimOther)) {
-      throw "Scores cannot be added, dimensions are unequal";
-    }
-
-    // To combine the score stats, we only need to add each element
-    // Same with sample sizes
-    // Frequencies need to be added taking into account the differing sample sizes
-    for (let i = 0; i < dimThis[0]; i++) {
-      this.u[i] = this.u[i] + other.u[i];
-      this.v[i] = this.v[i] + other.v[i];
-
-      let sampleSizeThis = this.sampleSize[i];
-      let sampleSizeOther = other.sampleSize[i];
-      let sampleSizeTotal = sampleSizeThis + sampleSizeOther;
-
-      this.sampleSize[i] = sampleSizeTotal;
-      this.altFreq[i] = ((this.altFreq[i] * sampleSizeThis) + (other.altFreq[i] * sampleSizeOther)) / sampleSizeTotal;
-    }
-  }
-
-  dim() {
-    return this.u.length;
-  }
-
-  /**
-   * Subset the score stats down to a subset of variants, in this exact ordering
-   * @param variantList List of variants
-   * @return {ScoreStatTable} Score statistics after subsetting (not in-place, returns a new copy)
-   */
-  subsetToVariants(variantList) {
-    if (typeof variantList === "undefined") {
-      throw new Error("Must specify list of variants when subsetting");
-    }
-
-    // First figure out which variants supplied are actually in this set of score stats
-    variantList = variantList.filter(x => this.variantMap.has(x));
-
-    // Subset each member to only those variants
-    let idx = variantList.map(x => this.variantMap.get(x));
-    let variants = idx.map(i => this.variants[i]);
-    let positions = idx.map(i => this.positions[i]);
-    let u = idx.map(i => this.u[i]);
-    let v = idx.map(i => this.v[i]);
-    let altFreq = idx.map(i => this.altFreq[i]);
-
-    let variantMap = new Map(variants.map((element,index) => [element,index]));
-    let positionMap = new Map(variants.map((element,index) => [element,index]));
-
-    // Assemble new score table object
-    let newTable = new ScoreStatTable();
-    newTable.variants = variants;
-    newTable.positions = positions;
-    newTable.variantMap = variantMap;
-    newTable.positionMap = positionMap;
-    newTable.u = u;
-    newTable.v = v;
-    newTable.altFreq = altFreq;
-
-    return newTable;
-  }
-}
-
-/**
- * Class for storing genotype covariance matrices. <br/><br/>
- *
- * Assumptions:
- * <ul>
- *  <li> Covariances should be oriented towards the minor allele.
- *  <li> Variances on the diagonal are absolute values (they are not directional.)
- * </ul>
- *
- * @class
- */
-class GenotypeCovarianceMatrix {
-  /**
-   * @constructor
-   * @param matrix {number[][]} Pre-constructed matrix. Usually generated by the
-   *  [extractCovariance]{@link module:fio~extractCovariance} function in fio.
-   * @param variants {Map} Map of variants -> matrix position. Variants should be chr:pos_ref/alt format.
-   * @param positions {Map} Map of variant position -> matrix position. Both positions should be integers.
-   */
-  constructor(matrix, variants, positions) {
-    this.matrix = matrix;
-    this.variants = variants;
-    this.positions = positions;
-  }
-
-  /**
-   * Determine whether matrix is complete.
-   * Can specify i, j which are actual indices, or positions pos_i, pos_j which represent the positions of the variants.
    * @function
-   * @public
+   * @param mafs {number[]} Array of minor allele frequencies.
+   * @param a {number} alpha defaults to 1.
+   * @param b {number} beta defaults to 25.
    */
-  isComplete(i, j, pos_i, pos_j) {
-    if (typeof pos_i !== 'undefined') {
-      i = this.positions.get(pos_i);
+  static weights(mafs, a = 1, b = 25) {
+    let weights = Array(mafs.length).fill(null);
+    for (let i = 0; i < mafs.length; i++) {
+      let w = Object(__WEBPACK_IMPORTED_MODULE_2__rstats_js__["a" /* dbeta */])(mafs[i], a, b, false);
+      w *= w;
+      weights[i] = w;
     }
-    if (typeof pos_j !== 'undefined') {
-      j = this.positions.get(pos_j);
-    }
-
-    let v;
-    for (let m = 0; m < i; m++) {
-      for (let n = 0; n < j; n++) {
-        v = this.matrix[m][n];
-        if (v == null || isNaN(v)) {
-          return false;
-        }
-      }
-    }
-
-    return true;
+    return weights;
   }
 
   /**
-   * Return dimensions of matrix
+   * Calculate SKAT test. <p>
+   *
+   * The distribution function of the SKAT test statistic is evaluated using Davies' method by default.
+   * In the special case where there is only 1 lambda, the Liu moment matching approximation method is used. <p>
+   *
    * @function
-   * @public
+   * @param {Number[]} u Vector of score statistics (length m, number of variants).
+   * @param {Number[]} v Covariance matrix of score statistics (m x m).
+   * @param {Number[]} w Weight vector (length m, number of variants). If weights are not provided, they will
+   *  be calculated using the default weights() method of this object.
+   * @param {Number[]} mafs A vector of minor allele frequencies. These will be used to calculate weights if
+   *  they were not provided.
+   * @return {Number[]} SKAT p-value.
    */
-  dim() {
-    let nrows = this.matrix.length;
-    let ncols = this.matrix[0].length;
-    return [nrows, ncols];
-  }
-
-  /**
-   * Combine this covariance matrix with another.
-   * This operation happens in place; this matrix will be overwritten with the new one.
-   * Used in meta-analysis, see {@link https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#SINGLE_VARIANT_META_ANALYSIS|our wiki}
-   * for more information.
-   * @function
-   * @param other {GenotypeCovarianceMatrix} Another covariance matrix
-   * @public
-   */
-  add(other) {
-    // First confirm both matrices are the same shape
-    let dimThis = this.dim();
-    let dimOther = other.dim();
-    if (!arraysEqual(dimThis,dimOther)) {
-      throw "Covariance matrices cannot be added, dimensions are unequal";
+  run(u, v, w, mafs) {
+    // Calculate weights (if necessary)
+    if (w === undefined || w === null) {
+      w = SkatTest.weights(mafs);
     }
 
-    // To combine the covariance matrices, we only need to add each element
-    for (let i = 0; i < dimThis[0]; i++) {
-      for (let j = 0; j < dimThis[1]; j++) {
-        this.matrix[i][j] = this.matrix[i][j] + other.matrix[i][j];
-      }
+    // Calculate Q
+    let q = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(__WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(u,__WEBPACK_IMPORTED_MODULE_1_numeric___default.a.diag(w)),u);
+
+    // Calculate lambdas
+    let lambdas;
+    try {
+      let svd = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.svd(v);
+      let sqrtS = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.sqrt(svd.S);
+      let uT = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.transpose(svd.U);
+      let eigenRhs = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(__WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(svd.U, __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.diag(sqrtS)), uT);
+      let eigenLhs = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(eigenRhs, __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.diag(w));
+      let eigen = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(eigenLhs, eigenRhs);
+      let finalSvd = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.svd(eigen);
+      lambdas = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.abs(finalSvd.S);
+    } catch(error) {
+      console.log(error);
+      return [NaN, NaN];
     }
-  }
 
-  /**
-   * Subset the covariance matrix down to a subset of variants, in this exact ordering
-   * @todo Implement
-   * @param variants List of variants
-   * @return New GenotypeCovarianceMatrix after subsetting (not in-place)
-   */
-  // subsetToVariants(variants) {
-  //
-  // }
-}
-
-/**
- * Calculate burden test from vector of score statistics and variances.
- * See {@link https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#BURDEN_META_ANALYSIS|our wiki page} for more information.
- *
- * @param {Number[]} u Vector of score statistics (length m, number of variants)
- * @param {Number[]} v Covariance matrix of score statistics
- * @param {Number[]} w Weight vector (length m, number of variants)
- * @return {Number[]} Burden test statistic z and p-value
- */
-function testBurden(u, v, w) {
-  for (let e of [u, v]) {
-    if (!Array.isArray(e) || !e.length) {
-      throw 'Please provide all required arrays';
+    if (__WEBPACK_IMPORTED_MODULE_1_numeric___default.a.sum(lambdas) < 0.0000000001) {
+      console.error("Sum of lambda values for SKAT test is essentially zero");
+      return [NaN, NaN];
     }
-  }
 
-  if (!(u.length === v.length)) {
-    throw 'u and v must be same length';
-  }
-
-  if (w != null) {
-    if (w.length !== u.length) {
-      throw 'w vector must be same length as score vector u';
-    }
-  }
-  else {
-    w = new Array(u.length).fill(1 / u.length);
-  }
-
-  // This is taken from:
-  // https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#BURDEN_META_ANALYSIS
-  let over = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(w, u);
-  let under = Math.sqrt(__WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(__WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(w, v), w));
-  let z = over / under;
-
-  // The -Math.abs(z) is because pnorm returns the lower tail probability from the normal dist
-  // The * 2 is for a two-sided p-value.
-  let p = Object(__WEBPACK_IMPORTED_MODULE_2__rstats_js__["c" /* pnorm */])(-Math.abs(z), 0, 1) * 2;
-  return [z, p];
-}
-
-/**
- * Calculate typical SKAT weights using beta density function.
- * @function
- * @param mafs {number[]} Array of minor allele frequencies.
- * @param a {number} alpha defaults to 1.
- * @param b {number} beta defaults to 25.
- */
-function calcSkatWeights(mafs, a = 1, b = 25) {
-  let weights = Array(mafs.length).fill(NaN);
-  for (let i = 0; i < mafs.length; i++) {
-    let w = Object(__WEBPACK_IMPORTED_MODULE_2__rstats_js__["a" /* dbeta */])(mafs[i], a, b);
-    w *= w;
-    weights[i] = w;
-  }
-  return weights;
-}
-
-/**
- * Calculate SKAT test. <p>
- *
- * This function implements two methods for calculating the p-value from the SKAT test statistic:
- * <ul>
- *   <li> Davies' approximation (method = davies). This method is a more exact approach, at the cost of performance.
- *   <li> Liu approximation (method = liu). This method matches the first 3 moments of the mixture chi-square distribution.
- *        It is faster, but has inflated type 1 error in the tails. It can also be used in the special edge case where
- *        the Davies' approximation yields a p-value of 0.
- * </ul>
- *
- * @function
- * @param {Number[]} u Vector of score statistics (length m, number of variants).
- * @param {Number[]} v Covariance matrix of score statistics (m x m).
- * @param {Number[]} w Weight vector (length m, number of variants).
- * @param {String} method Can be "davies", or "liu".
- *   Davies is the method used in the original Wu et al. SKAT paper.
- * @return {Number[]} SKAT p-value.
- */
-function testSkat(u, v, w, method = "davies") {
-  // Calculate Q
-  let q = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(__WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(u,__WEBPACK_IMPORTED_MODULE_1_numeric___default.a.diag(w)),u);
-
-  // Calculate lambdas
-  let lambdas;
-  try {
-    let svd = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.svd(v);
-    let sqrtS = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.sqrt(svd.S);
-    let uT = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.transpose(svd.U);
-    let eigenRhs = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(__WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(svd.U, __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.diag(sqrtS)), uT);
-    let eigenLhs = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(eigenRhs, __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.diag(w));
-    let eigen = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(eigenLhs, eigenRhs);
-    let finalSvd = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.svd(eigen);
-    lambdas = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.abs(finalSvd.S);
-  } catch(error) {
-    console.log(error);
-    return [NaN, NaN];
-  }
-
-  if (__WEBPACK_IMPORTED_MODULE_1_numeric___default.a.sum(lambdas) < 0.0000000001) {
-    console.error("Sum of lambda values for SKAT test is essentially zero");
-    return [NaN, NaN];
-  }
-
-  // P-value method
-  if (method === "satterthwaite") {
-    throw 'Not implemented';
-    //return _skatSatterthwaite(lambdas, q);
-  } else if (method === "davies") {
-    if (lambdas.length == 1) {
-      // Davies method does not support 1 lambda
-      // This is what raremetal does
+    // P-value method
+    if (this._method === 'liu') {
+      // Only for debug purposes
       return _skatLiu(lambdas, q);
     }
-    else {
+    else if (this._method === 'davies') {
       return _skatDavies(lambdas, q);
     }
-  } else if (method === "liu") {
-    return _skatLiu(lambdas, q);
-  } else {
-    throw 'Not implemented';
+    else if (this._method === 'auto') {
+      if (lambdas.length === 1) {
+        // Davies method does not support 1 lambda
+        // This is what raremetal does
+        return _skatLiu(lambdas, q);
+      }
+      else {
+        return _skatDavies(lambdas, q);
+      }
+    }
+    else {
+      throw new Error(`Skat method ${this._method} not implemented`);
+    }
   }
 }
 
@@ -5096,24 +4835,7 @@ function _skatLiu(lambdas, qstat) {
   return [qstat, p];
 }
 
-/**
- * Calculate SKAT p-value using Satterthwaite approximation
- */
-/*
-function _skatSatterthwaite(lambdas, qstat) {
-
-}
-/*
-
-/**
- * Calculate VT test meta-analysis
- */
-/*
-function testVt(u, v, w) {
-
-}
-*/
-
+  // for unit testing only
 
 
 
@@ -5143,116 +4865,210 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
+
 /***/ }),
 /* 3 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "parsePortalJson", function() { return parsePortalJson; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runAggregationTests", function() { return runAggregationTests; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_example", function() { return _example; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_PortalVariantsHelper", function() { return PortalVariantsHelper; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_PortalGroupHelper", function() { return PortalGroupHelper; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "parsePortalJSON", function() { return parsePortalJSON; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "PortalTestRunner", function() { return PortalTestRunner; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_numeric__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_numeric___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_numeric__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stats_js__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__constants__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stats__ = __webpack_require__(1);
 /**
- * Helper methods devoted to running aggregation tests in browser.
+ * Helper methods for running aggregation tests
  *
- * @module helpers
- * @license MIT
+ * This wraps internal functionality and provides utilities for reading and writing expected API formats
  */
 
 
+
+
+const _all_tests = [__WEBPACK_IMPORTED_MODULE_2__stats__["ZegginiBurdenTest"], __WEBPACK_IMPORTED_MODULE_2__stats__["SkatTest"]];
+
+/**
+ * Look up aggregation tests by unique name.
+ *
+ * This is a helper for external libraries; it provides an immutable registry of all available tests.
+ * TODO would be nice to get rid of this?
+ *
+ *
+ * {key: {label: String, constructor: Object }
+ * @type {{String: {label: String, constructor: function}}}
+ */
+const AGGREGATION_TESTS = Object.freeze(_all_tests.reduce(function(acc, constructor) {
+  const inst = new constructor();  // Hack- need instance to access attributes
+  acc[inst.key] = { label: inst.label, constructor: constructor };
+  return acc;
+}, {}));
 
 
 /**
- * Parse the idealized portal response JSON for requesting covariance matrices.
- * A spec of this format can be found in src/docs/portal-api.md.
- * @param json JSON object from portal API response. An 'example.json' file is included in the root of this project.
- *  The [_example]{@link module:helpers~_example} function shows an example of how to use it.
+ * Helper object for reading and interpreting variant data
  */
-function parsePortalJson(json) {
-  // Result storage
-  let loaded = {
-    masks: {},
-    scorecov: {}
-  };
-
-  const data = json.data;
-
-  /**
-   * Store parsed masks to an object that looks like:
-   * masks = { (group id): mask object }
-   */
-  let masks = {};
-  for (let maskData of data.masks) {
-    let mask = new __WEBPACK_IMPORTED_MODULE_1__stats_js__["VariantMask"]();
-    mask.id = maskData.id;
-    mask.label = maskData.label;
-
-    for (let [group, groupData] of Object.entries(maskData.groups)) {
-      mask.createGroup(group, groupData.variants);
-    }
-
-    masks[mask.id] = mask;
+class PortalVariantsHelper {
+  constructor(variants_array) {
+    this._variants = variants_array;
+    this._variant_lookup = this.parsePortalVariantData(variants_array);
   }
 
-  // Store masks for return
-  loaded["masks"] = masks;
+  get data() {  // Raw unparsed data
+    return this._variants;
+  }
 
-  // Load scores and covariance matrices
-  for (let scoreBlock of data.scorecov) {
-    let mask = masks[scoreBlock.mask];
-    let variants = mask.getGroup(scoreBlock.group);
-    let positions = variants.map(x => parseInt(x.match(/(chr)?(\w+):(\d+)_([A-Z]+)\/([A-Z]+)/)[3]));
+  parsePortalVariantData(variants) {
+    // Read an array of variants. Parse names into position/ref/alt, and assign altFreq to MAF.
+    // Return a hash keyed on variant ID for quick lookups.
+    let lookup = {};
+    variants.forEach(data => {
+      let { variant, altFreq, pvalue, score } = data;
+      let [_, chrom, pos, ref, alt, __] = variant.match(__WEBPACK_IMPORTED_MODULE_1__constants__["a" /* REGEX_EPACTS */]);  // eslint-disable-line no-unused-vars
 
-    // Scores
-    let scoreTable = new __WEBPACK_IMPORTED_MODULE_1__stats_js__["ScoreStatTable"]();
-    scoreTable.sampleSize = scoreBlock.nsamples;
-    for (let i = 0; i < scoreBlock.scores.length; i++) {
-      // Diagonal element of linearized (lower triangular) covariance matrix
-      let n = i + 1;
-      let variance = scoreBlock.covariance[n * (n + 1) / 2 - 1];
-      let altFreq = scoreBlock.altFreq[i];
-      let score = scoreBlock.scores[i];
+      let effectFreq = altFreq;
+      let effect = alt;
 
+      /**
+       * The variant's score statistic in the API is coded toward the alternate allele.
+       * However, we want the effect coded towards the minor allele, since most rare variant tests assume
+       * you are counting the rare/minor allele.
+       */
       if (altFreq > 0.5) {
+        /**
+         * The effect allele is initially the alt allele. Since we're flipping it,
+         * the "other" allele is the reference allele.
+         */
         score = -score;
+        effect = ref;
+
+        // This is also now the minor allele frequency.
+        effectFreq = 1 - altFreq;
       }
 
-      scoreTable.appendScore(
-        variants[i],
-        positions[i],
+      lookup[variant] = {
+        variant,
+        chrom,
+        pos,
+        pvalue,
         score,
-        variance,
-        altFreq
-      );
-    }
+        altAllele: alt,
+        effectAllele: effect,
+        altFreq: altFreq,
+        effectFreq: effectFreq
+      };
+    });
+    return lookup;
+  }
 
-    // Preallocate matrix
-    const n_variants = variants.length;
+  isAltEffect(variant_names) {  // Some calculations are sensitive to whether alt is the minor (effect) allele
+    return variant_names.map(name => {
+      const variant_data = this._variant_lookup[name];
+      return variant_data.altAllele === variant_data.effectAllele;
+    });
+  }
+
+  getEffectFreq(variant_names) {
+    // Get the allele freq for the minor (effect) allele
+    return variant_names.map(name => this._variant_lookup[name].effectFreq);
+  }
+
+  getScores(variant_names) {
+    // Get single-variant scores
+    return variant_names.map(name => this._variant_lookup[name].score);
+  }
+
+  getGroupVariants(variant_names) {
+    // Return all that is known about a given set of variants
+    return variant_names.map(name => this._variant_lookup[name]);
+  }
+}
+
+// Utility class. Provides helper methods to access information about groups and generate subsets
+class PortalGroupHelper {
+  constructor(groups) {
+    this._groups = groups;
+    this._lookup = this._generateLookup(groups);
+  }
+
+  get data() {  // Raw unparsed data
+    return this._groups;
+  }
+
+  byMask(selection) {  // str or array
+    // Get all groups that identify as a specific category of mask- "limit the analysis to loss of function variants
+    // in any gene"
+    if (!Array.isArray(selection)) {
+      selection = [selection]
+    }
+    selection = new Set(selection);
+
+    const subset = this._groups.filter(group => selection.has(group.mask));
+    return new this.constructor(subset);
+  }
+
+  byGroup(selection) {  // str or array
+    // Get all groups based on a specific group name, regardless of mask. Eg, "all the ways to analyze data for a
+    // given gene".
+    if (!Array.isArray(selection)) {
+      selection = [selection]
+    }
+    selection = new Set(selection);
+
+    const subset = this._groups.filter(group => selection.has(group.group));
+    return new this.constructor(subset);
+  }
+
+  _generateLookup(groups) {
+    // We don't transform data, so this is a simple name -> position mapping
+    return groups.reduce((acc, item, idx) => {
+      const key = this._getKey(item.mask, item.group);
+      acc[key] = idx;
+      return acc;
+    }, {});
+  }
+
+  _getKey(mask_name, group_name) {
+    return `${mask_name},${group_name}`;
+  }
+
+  getOne(mask_name, group_name) {
+    // Get a single group that is fully and uniquely identified by group + mask
+    const key = this._getKey(mask_name, group_name);
+    const pos = this._lookup[key];
+    return this._groups[pos];
+  }
+
+  makeCovarianceMatrix(group, is_alt_effect) {
+    // Helper method that expands the portal covariance format into a full matrix.
+    // Load the covariance matrix from the response JSON
+    const n_variants = group.variants.length;
     let covmat = new Array(n_variants);
     for (let i = 0; i < n_variants; i++) {
       covmat[i] = new Array(n_variants).fill(null);
     }
 
-    // Map from variant ID or position => matrix index
-    const posMap = new Map();
-    for (let i = 0; i < n_variants; i++) {
-      let vobj = variants[i];
-      posMap.set(vobj.pos, i);
-    }
-
-    // Load the covariance matrix from the response JSON
     let c = 0;
     for (let i = 0; i < n_variants; i++) {
       for (let j = i; j < n_variants; j++) {
-        let v = scoreBlock.covariance[c];
-        let iAltFreq = scoreTable.altFreq[i];
-        let jAltFreq = scoreTable.altFreq[j];
+        let v = group.covariance[c];
+        let iAlt = is_alt_effect[i];
+        let jAlt = is_alt_effect[j];
 
+        /**
+         * The API spec codes variant genotypes towards the alt allele. If the alt allele frequency
+         * is > 0.5, that means we're not counting towards the minor (rare) allele, and we need to flip it around.
+         * We don't flip when i == j because that element represents the variance of the variant's score, which is
+         * invariant to which allele we code towards (but covariance is not.)
+         *
+         * We also don't flip when both the i variant and j variant need to be flipped (the ^ is XOR) because it would
+         * just cancel out.
+         */
         if (i !== j) {
-          if ((iAltFreq > 0.5) ^ (jAltFreq > 0.5)) {
+          if ((!iAlt) ^ (!jAlt)) {
             v = -v;
           }
         }
@@ -5264,126 +5080,104 @@ function parsePortalJson(json) {
       }
     }
 
-    covmat = __WEBPACK_IMPORTED_MODULE_0_numeric___default.a.mul(scoreTable.sampleSize, covmat);
+    covmat = __WEBPACK_IMPORTED_MODULE_0_numeric___default.a.mul(group.nSamples, covmat);
+    return covmat;
+  }
+}
 
-    // Construct the covariance matrix object and store it
-    let covMatrix = new __WEBPACK_IMPORTED_MODULE_1__stats_js__["GenotypeCovarianceMatrix"](covmat, variants, posMap);
+// Helper method that coordinates multiple tests on a series of masks
+class PortalTestRunner {
+  constructor(groups, variants, test_names=[]) {
+    this.groups = groups;
+    this.variants = variants;
+    this._tests = [];
 
-    // Store result
-    loaded.scorecov[[scoreBlock.mask, scoreBlock.group]] = {
-      mask: scoreBlock.mask,
-      group: scoreBlock.group,
-      nsamples: scoreBlock.nsamples,
-      scores: scoreTable,
-      covariance: covMatrix
+    test_names.forEach(name => this.addTest(name));
+  }
+
+  addTest(test) {
+    // Add a new test by name, or directly from an instance
+    // TODO Find a way to do this without using the registry
+    if (typeof test === 'string') {
+      let type = AGGREGATION_TESTS[test];
+      if (!type) {
+        throw new Error(`Cannot make unknown test type: ${test}`);
+      }
+      test = new type.constructor();
+    } else if (!(test instanceof __WEBPACK_IMPORTED_MODULE_2__stats__["_AggregationTest"])) {
+      throw new Error('Must specify test as name or instance');
+    }
+
+
+    this._tests.push(test);
+    return test;
+  }
+
+  run() {
+    // Run every test on every group in the container and return results
+    let results = [];
+
+    this._tests.forEach(test => {
+      this.groups.data.forEach(group => {
+        results.push(this._runOne(test, group));
+      });
+    });
+
+    return results;
+  }
+
+  _runOne(test, group) {
+    // Helper method that translates portal data into the format expected by a test.
+    const variants = group.variants;
+    const scores = this.variants.getScores(variants);
+
+    // Most calculations will require adjusting API data to ensure that minor allele is the effect allele
+    const isAltEffect = this.variants.isAltEffect(variants);
+
+    const cov = this.groups.makeCovarianceMatrix(group, isAltEffect);
+    const mafs = this.variants.getEffectFreq(variants);
+    let weights;  // TODO: The runner never actually uses the weights argument. Should it allow this?
+
+    const [ stat, pvalue ] = test.run(scores, cov, weights, mafs);
+
+    // The results describe the group + several new fields for calculation results.
+    return {
+      groupType: group.groupType,
+      group: group.group,
+      mask: group.mask,
+      variants: group.variants,
+
+      test: test.key,
+      stat,
+      pvalue
     };
   }
 
-  return loaded;
-}
-
-/**
- * Function to run multiple tests and masks.
- *
- * "Tests" means aggregation tests, for example burden or SKAT.
- *
- * A mask is a mapping from a group label to a list of variants. Usually the group is a gene ID or name
- * but in reality it can be anything.
- *
- * @param tests A mapping of test labels -> test functions.
- * @param scoreCov Object retrieved from parsePortalJson(). Contains masks, score statistics, and covariance matrices.
- * @param metaData An object that will be returned with the results. It could have an ID or description of what was tested.
- * @return {Promise<Object>} Rows of results, one per mask * group.
- */
-function runAggregationTests(tests, scoreCov, metaData) {
-  let results = {
-    data: {
-      masks: [],
-      results: []
+  toJSON(results) {
+    // Output calculation results in a format that matches the "precomputed results" endpoint
+    // By passing in an argument, user can format any set of results (even combining multiple runs)
+    if (!results) {
+      results = this.run();
     }
-  };
 
-  Object.assign(results, metaData);
-  results.data.masks = Object.values(scoreCov.masks);
-
-  for (let scoreBlock of Object.values(scoreCov.scorecov)) {
-    for (let [testLabel, testObject] of Object.entries(tests)) {
-      let testFunc;
-      let weightFunc;
-      if (typeof testObject === 'function') {
-        testFunc = testObject;
+    return {
+      data: {
+        variants: this.variants.data,
+        groups: results,
       }
-      else if (typeof testObject === 'object') {
-        weightFunc = testObject.weights;
-        testFunc = testObject.test;
-      }
-
-      let res = {
-        group: scoreBlock.group,
-        mask: scoreBlock.mask,
-        test: testLabel,
-        pvalue: NaN,
-        stat: NaN
-      };
-
-      if (scoreBlock.scores.u.length === 0 || scoreBlock.covariance.matrix.length === 0) {
-        continue;
-      }
-
-      // Calculate weights if necessary
-      let w;
-      if (weightFunc) {
-        // Use default weights for now, will offer option to specify later
-        w = weightFunc(scoreBlock.scores.altFreq.map(x => Math.min(x, 1 - x)));
-      }
-
-      let [stat, p] = testFunc(scoreBlock.scores.u, scoreBlock.covariance.matrix, w);
-      res.pvalue = p;
-      res.stat = stat;
-
-      results.data.results.push(res);
-    }
+    };
   }
-
-  return results;
 }
 
-/**
- * Example of running many aggregation tests + masks at once.
- * @param filename {string} Path to JSON object which contains portal API response for scores/covariance/masks.
- * @return {Promise<Object>} Result object, which matches the format of the "result JSON format"
- */
-async function _example(filename) {
-  // Load example JSON of portal response from requesting covariance in a region
-  filename = filename || "example.json";
-  const response = await fetch(filename, { credentials: 'include' });
-  const json = await response.json();
-  const scoreCov = parsePortalJson(json);
 
-  const tests = {
-    "zegginiBurden": __WEBPACK_IMPORTED_MODULE_1__stats_js__["testBurden"],
-    "skatLiu": {
-      test: (u, v, w) => Object(__WEBPACK_IMPORTED_MODULE_1__stats_js__["testSkat"])(u, v, w, "liu"),
-      weights: __WEBPACK_IMPORTED_MODULE_1__stats_js__["calcSkatWeights"]
-    },
-    "skatDavies": {
-      test: (u, v, w) => Object(__WEBPACK_IMPORTED_MODULE_1__stats_js__["testSkat"])(u, v, w, "davies"),
-      weights: __WEBPACK_IMPORTED_MODULE_1__stats_js__["calcSkatWeights"]
-    }
-  };
-
-  /**
-   * Example metadata to merge into the aggregation test result object.
-   * Can be left undefined if not desired.
-   */
-  const metadata = {
-    id: 100,
-    description: "This is an example of running multiple tests and masks at once"
-  };
-
-  // Run all tests/masks
-  return runAggregationTests(tests, scoreCov, metadata);
+function parsePortalJSON(json) {
+  const data = json.data || json;
+  const groups = new PortalGroupHelper(data.groups);
+  const variants = new PortalVariantsHelper(data.variants);
+  return [groups, variants];
 }
+
+ // testing only
 
 
 
@@ -5417,6 +5211,18 @@ module.exports = g;
 
 /***/ }),
 /* 5 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return REGEX_EPACTS; });
+/* unused harmony export REGEX_REGION */
+const REGEX_EPACTS = new RegExp("(?:chr)?(.+):(\\d+)_?(\\w+)?/?([^_]+)?_?(.*)?");
+const REGEX_REGION = new RegExp("(?:chr)?(.+):(\\d+)-(\\d+)");
+
+
+
+/***/ }),
+/* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5902,7 +5708,7 @@ function qf(lb1, nc1, n1, r1, sigma, c1, lim1, acc)  {
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6930,8 +6736,8 @@ function pgamma(x, alph, scale, lower_tail, log_p) {
  * @param x {number} Value.
  * @param df {number} Degrees of freedom.
  * @param ncp {number} Non-centrality parameter.
- * @param lower_tail {bool} Return cumulative probability from lower tail?
- * @param log_p {bool} Return log probability
+ * @param lower_tail {boolean} Return cumulative probability from lower tail?
+ * @param log_p {boolean} Return log probability
  */
 function pchisq(x, df, ncp = 0, lower_tail = true, log_p = false) {
   x = parseNumeric(x);
@@ -7250,8 +7056,8 @@ function pnorm(x, mu, sigma, lower_tail, log_p) {
  * @param x {number} Value.
  * @param mu {number} Mean of the normal distribution.
  * @param sigma {number} Standard deviation of the normal distribution.
- * @param lower_tail {bool} Should the cumulative probability returned be calculated as the lower tail?
- * @param give_log {bool} Return log probability
+ * @param lower_tail {boolean} Should the cumulative probability returned be calculated as the lower tail?
+ * @param give_log {boolean} Return log probability
  */
 function _pnorm(x, mu, sigma, lower_tail, give_log) {
   x = parseNumeric(x);
@@ -7395,7 +7201,7 @@ function dbeta(x, a, b, give_log) {
  * @param x {number} Value.
  * @param shape1 {number} The first shape parameter, or "alpha."
  * @param shape2 {number} The second shape parameter, or "beta."
- * @param log {bool} Should the result be returned in log scale.
+ * @param log {boolean} Should the result be returned in log scale.
  * @return {number} Probability density evaluated at x.
  */
 function _dbeta(x, shape1, shape2, log) {

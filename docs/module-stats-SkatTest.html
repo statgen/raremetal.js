@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Module: qfc</title>
+    <title>JSDoc: Class: SkatTest</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Module: qfc</h1>
+    <h1 class="page-title">Class: SkatTest</h1>
 
     
 
@@ -28,8 +28,14 @@
 
 <header>
     
+        <h2><span class="attribs"><span class="type-signature"></span></span>
+            <span class="ancestors"><a href="module-stats.html">stats</a>~</span>SkatTest<span class="signature">()</span><span class="type-signature"></span></h2>
         
-            
+            <div class="class-description">Sequence kernel association test (SKAT). <p>
+
+See the <a href="https://www.cell.com/ajhg/fulltext/S0002-9297%252811%252900222-9">original paper</a> for details on the
+method, and <a href="https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#SKAT_META_ANALYSIS">our wiki</a> for information
+on how the test is calculated using scores/covariances. <p></div>
         
     
 </header>
@@ -38,22 +44,16 @@
     <div class="container-overview">
     
         
-            <div class="description">A port of Robert Davies' method for computing the distribution
-of a linear combination of chi-squared random variables.
 
-<p>
+    
+    <h2>Constructor</h2>
+    
 
-Publication: 
-<a href="https://www.jstor.org/stable/2346911">The distribution of a linear combination of chi‐squared random variables. Applied Statistics 29 323‐333.</a>
+    
+    <h4 class="name" id="SkatTest"><span class="type-signature"></span>new SkatTest<span class="signature">()</span><span class="type-signature"></span></h4>
+    
 
-<p>
-
-Original C code:
-<a href="http://www.robertnz.net/QF.htm">http://www.robertnz.net/QF.htm</a></div>
-        
-
-        
-            
+    
 
 
 
@@ -92,16 +92,13 @@ Original C code:
     
 
     
-    <dt class="tag-license">License:</dt>
-    <dd class="tag-license"><ul class="dummy"><li>MIT</li></ul></dd>
-    
 
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="qfc.js.html">qfc.js</a>, <a href="qfc.js.html#line1">line 1</a>
+        <a href="stats.js.html">stats.js</a>, <a href="stats.js.html#line104">line 104</a>
     </li></ul></dd>
     
 
@@ -129,9 +126,19 @@ Original C code:
 
 
 
-        
     
     </div>
+
+    
+        <h3 class="subsection-title">Extends</h3>
+
+        
+
+
+    <ul>
+        <li>AggregationTest</li>
+    </ul>
+
 
     
 
@@ -156,7 +163,7 @@ Original C code:
     
 
     
-    <h4 class="name" id="~qf"><span class="type-signature">(inner) </span>qf<span class="signature">(lb1, nc1, n1, r1, sigma, c1, lim1, acc)</span><span class="type-signature"> &rarr; {number}</span></h4>
+    <h4 class="name" id=".weights"><span class="type-signature">(static) </span>weights<span class="signature">(mafs, a, b)</span><span class="type-signature"></span></h4>
     
 
     
@@ -164,12 +171,7 @@ Original C code:
 
 
 <div class="description">
-    Mixture chi-square distribution function. <p>
-
-This is the cumulative distribution for a linear mixture of chi-squared random variables, each having
-its own degrees of freedom and non-centrality parameter: <p>
-
-c1 = sum(lb1[j] * x_j) + sigma * X0, where each x_j is non-central chi-squared, and X0 is a standard normal variable.
+    Calculate typical SKAT weights using beta density function.
 </div>
 
 
@@ -195,6 +197,8 @@ c1 = sum(lb1[j] * x_j) + sigma * X0, where each x_j is non-central chi-squared, 
         
 
         
+        <th>Default</th>
+        
 
         <th class="last">Description</th>
     </tr>
@@ -205,7 +209,7 @@ c1 = sum(lb1[j] * x_j) + sigma * X0, where each x_j is non-central chi-squared, 
 
         <tr>
             
-                <td class="name"><code>lb1</code></td>
+                <td class="name"><code>mafs</code></td>
             
 
             <td class="type">
@@ -220,61 +224,19 @@ c1 = sum(lb1[j] * x_j) + sigma * X0, where each x_j is non-central chi-squared, 
             
 
             
-
-            <td class="description last">Coefficient of each chi-squared variable.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>nc1</code></td>
-            
-
-            <td class="type">
-            
+                <td class="default">
                 
-<span class="param-type">Array.&lt;number></span>
-
-
-            
-            </td>
-
+                </td>
             
 
-            
-
-            <td class="description last">Non-centrality parameter for each chi-squared variable x_j.</td>
+            <td class="description last">Array of minor allele frequencies.</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>n1</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Array.&lt;number></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Degrees of freedom for each chi-squared variable x_j.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>r1</code></td>
+                <td class="name"><code>a</code></td>
             
 
             <td class="type">
@@ -289,15 +251,21 @@ c1 = sum(lb1[j] * x_j) + sigma * X0, where each x_j is non-central chi-squared, 
             
 
             
+                <td class="default">
+                
+                    1
+                
+                </td>
+            
 
-            <td class="description last">Number of chi-squared variables.</td>
+            <td class="description last">alpha defaults to 1.</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>sigma</code></td>
+                <td class="name"><code>b</code></td>
             
 
             <td class="type">
@@ -312,77 +280,14 @@ c1 = sum(lb1[j] * x_j) + sigma * X0, where each x_j is non-central chi-squared, 
             
 
             
-
-            <td class="description last">Coefficient of standard normal variable.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>c1</code></td>
-            
-
-            <td class="type">
-            
+                <td class="default">
                 
-<span class="param-type">Array.&lt;number></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Mixture chi-squared statistic value (point at which function should be evaluated).</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>lim1</code></td>
-            
-
-            <td class="type">
-            
+                    25
                 
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
+                </td>
             
 
-            
-
-            <td class="description last">Maximum number of terms in integrations.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>acc</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Maximum error.</td>
+            <td class="description last">beta defaults to 25.</td>
         </tr>
 
     
@@ -423,7 +328,216 @@ c1 = sum(lb1[j] * x_j) + sigma * X0, where each x_j is non-central chi-squared, 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="qfc.js.html">qfc.js</a>, <a href="qfc.js.html#line270">line 270</a>
+        <a href="stats.js.html">stats.js</a>, <a href="stats.js.html#line128">line 128</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="run"><span class="type-signature"></span>run<span class="signature">(u, v, w, mafs)</span><span class="type-signature"> &rarr; {Array.&lt;Number>}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Calculate SKAT test. <p>
+
+The distribution function of the SKAT test statistic is evaluated using Davies' method by default.
+In the special case where there is only 1 lambda, the Liu moment matching approximation method is used. <p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>u</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;Number></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Vector of score statistics (length m, number of variants).</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>v</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;Number></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Covariance matrix of score statistics (m x m).</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>w</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;Number></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Weight vector (length m, number of variants). If weights are not provided, they will
+ be calculated using the default weights() method of this object.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>mafs</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;Number></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">A vector of minor allele frequencies. These will be used to calculate weights if
+ they were not provided.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="stats.js.html">stats.js</a>, <a href="stats.js.html#line153">line 153</a>
     </li></ul></dd>
     
 
@@ -450,7 +564,7 @@ c1 = sum(lb1[j] * x_j) + sigma * X0, where each x_j is non-central chi-squared, 
 
         
 <div class="param-desc">
-    Cumulative lower-tail probability.
+    SKAT p-value.
 </div>
 
 
@@ -461,7 +575,7 @@ c1 = sum(lb1[j] * x_j) + sigma * X0, where each x_j is non-central chi-squared, 
     </dt>
     <dd>
         
-<span class="param-type">number</span>
+<span class="param-type">Array.&lt;Number></span>
 
 
     </dd>

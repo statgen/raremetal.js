@@ -41,7 +41,7 @@ require("babel-register");
 const { ArgumentParser } = require("argparse");
 const { readMaskFileSync, extractScoreStats, extractCovariance } = require("./fio.js");
 const { REGEX_EPACTS } = require("./constants.js");
-const { testBurden, testSkat, calcSkatWeights } = require("./stats.js");
+const { ZegginiBurdenTest, SkatTest } = require("./stats.js");
 const fs = require("fs");
 const yaml = require("js-yaml");
 
@@ -64,6 +64,7 @@ function getSettings() {
   single.addArgument(["-c", "--cov"], { help: "File containing covariance statistics across windows of variants" });
   single.addArgument(["-g", "--group"], { help: "Only analyze 1 group/gene." });
   single.addArgument(["-o", "--out"], { help: "File to write results to." });
+  single.addArgument(["--silent"], { help: "Silence console output.", default: false });
 
   let meta = subParsers.addParser("meta", { addHelp: true });
   meta.addArgument(["--spec"], { help: "YAML file specifying studies &amp; their files." });
@@ -113,8 +114,8 @@ async function single(args) {
       continue;
     }
 
-    console.log(`Testing [${i}/${total}]: ${group} | nvariants: ${groupVars.length}`);
-    console.time("  Total time");
+    if (!args.silent) console.log(`Testing [${i}/${total}]: ${group} | nvariants: ${groupVars.length}`);
+    if (!args.silent) console.time("  Total time");
     let chrom = groupVars[0].match(REGEX_EPACTS)[1];
     let start = groupVars[0].match(REGEX_EPACTS)[2];
     let end = groupVars[groupVars.length - 1].match(REGEX_EPACTS)[2];
@@ -130,20 +131,22 @@ async function single(args) {
     let cov = await extractCovariance(args.cov, region, scores.variants, scores);
 
     if (args.test === 'burden') {
-      let [, p] = testBurden(scores.u, cov.matrix, null);
+      let [, p] = new ZegginiBurdenTest().run(scores.u, cov.matrix, null);
       results.addResult(group, p);
     }
     else if (args.test.startsWith('skat')) {
       // Use default weights for now
-      let w = calcSkatWeights(scores.altFreq.map(x => Math.min(x,1-x)));
+      let mafs = scores.altFreq.map(x => Math.min(x,1-x));
 
       // Method
       let method = args.test.replace('skat-','');
-      let [, p] = testSkat(scores.u, cov.matrix, w, method);
+      let skat = new SkatTest();
+      skat._method = method;
+      let [, p] = skat.run(scores.u, cov.matrix, null, mafs);
       results.addResult(group, p);
     }
 
-    console.timeEnd("  Total time");
+    if (!args.silent) console.timeEnd("  Total time");
     i += 1;
   }
 
@@ -151,7 +154,7 @@ async function single(args) {
     // @todo should compress this
     fs.writeFileSync(args.out, results.toString(), { encoding: "utf8" });
   } else {
-    console.log(results.toString());
+    if (!args.silent) console.log(results.toString());
   }
 
   return results;
@@ -225,7 +228,8 @@ async function meta(args) {
     // Now run the tests with the final scores/covariances
     for (let test of spec.settings.tests) {
       if (test === 'burden') {
-        let [, p] = testBurden(finalScores.u, finalCov.matrix, null);
+        let agg = new ZegginiBurdenTest();
+        let [, p] = agg.test(finalScores.u, finalCov.matrix, null);
         results[test].addResult(group, p);
       }
 
@@ -268,7 +272,8 @@ if (typeof require !== 'undefined' &amp;&amp; require.main === module) {
     console.log(error);
   })
 }
-</code></pre>
+
+module.exports = { single, meta } ;</code></pre>
         </article>
     </section>
 
@@ -278,13 +283,13 @@ if (typeof require !== 'undefined' &amp;&amp; require.main === module) {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-browser.html">browser</a></li><li><a href="module-cli.html">cli</a></li><li><a href="module-fio.html">fio</a></li><li><a href="module-helpers.html">helpers</a></li><li><a href="module-print.html">print</a></li><li><a href="module-qfc.html">qfc</a></li><li><a href="module-rstats.html">rstats</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="module-stats-GenotypeCovarianceMatrix.html">GenotypeCovarianceMatrix</a></li><li><a href="module-stats-ScoreStatTable.html">ScoreStatTable</a></li><li><a href="module-stats-VariantMask.html">VariantMask</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-browser.html">browser</a></li><li><a href="module-cli.html">cli</a></li><li><a href="module-fio.html">fio</a></li><li><a href="module-print.html">print</a></li><li><a href="module-qfc.html">qfc</a></li><li><a href="module-rstats.html">rstats</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="module-fio-GenotypeCovarianceMatrix.html">GenotypeCovarianceMatrix</a></li><li><a href="module-fio-ScoreStatTable.html">ScoreStatTable</a></li><li><a href="module-fio-VariantMask.html">VariantMask</a></li><li><a href="module-stats-AggregationTest.html">AggregationTest</a></li><li><a href="module-stats-SkatTest.html">SkatTest</a></li><li><a href="module-stats-ZegginiBurdenTest.html">ZegginiBurdenTest</a></li><li><a href="PortalVariantsHelper.html">PortalVariantsHelper</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AGGREGATION_TESTS">AGGREGATION_TESTS</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue May 22 2018 13:44:17 GMT-0400 (EDT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Jun 19 2018 16:21:11 GMT-0400 (EDT)
 </footer>
 
 <script> prettyPrint(); </script>
