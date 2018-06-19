@@ -9,6 +9,9 @@ import * as qfc from './qfc.js';
 import numeric from 'numeric';
 import { pchisq, dbeta, pnorm } from './rstats.js';
 
+/**
+ * Base class for all aggregation tests.
+ */
 class AggregationTest {
   constructor() {
     this.label = '';
@@ -22,6 +25,15 @@ class AggregationTest {
   }
 }
 
+/**
+ * Standard burden test that collapses rare variants into a total count of rare alleles observed per sample
+ * in a group (e.g. gene). <p>
+ *
+ * See {@link https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#BURDEN_META_ANALYSIS|our wiki page} for more information.
+ * Also see the {@link https://www.ncbi.nlm.nih.gov/pubmed/19810025|paper} describing the method.
+ *
+ * @extends AggregationTest
+ */
 class ZegginiBurdenTest extends AggregationTest {
   constructor() {
     super(...arguments);
@@ -41,7 +53,6 @@ class ZegginiBurdenTest extends AggregationTest {
 
   /**
    * Calculate burden test from vector of score statistics and variances.
-   * See {@link https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#BURDEN_META_ANALYSIS|our wiki page} for more information.
    *
    * @param {Number[]} u Vector of score statistics (length m, number of variants)
    * @param {Number[]} v Covariance matrix of score statistics
@@ -81,6 +92,15 @@ class ZegginiBurdenTest extends AggregationTest {
   }
 }
 
+/**
+ * Sequence kernel association test (SKAT). <p>
+ *
+ * See the {@link https://www.cell.com/ajhg/fulltext/S0002-9297%2811%2900222-9|original paper} for details on the
+ * method, and {@link https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#SKAT_META_ANALYSIS|our wiki} for information
+ * on how the test is calculated using scores/covariances.
+ *
+ * @extends AggregationTest
+ */
 class SkatTest extends AggregationTest {
   constructor() {
     super(...arguments);
