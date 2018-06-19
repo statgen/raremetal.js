@@ -129,7 +129,6 @@ interpret the calculation results. The same variant may appear in many groups, b
         "variant": "2:21228642_G/A",
         "altFreq": 0.033,
         "pvalue": 0.000431,
-
         "score": 0.1
       }
     ],
@@ -139,7 +138,6 @@ interpret the calculation results. The same variant may appear in many groups, b
         "group": "ENSG000001",
         "mask": "PTV",
         "variants": ["2:21228642_G/A"],
-
         "covariance": [0.3],
         "sigmaSquared": 0.08,
         "nSamples": 3550
@@ -159,7 +157,6 @@ as input to the calculation.
 Otherwise, the payloads are superficially similar, so that the same visualization experience can work with both 
 on-the-fly and precomputed results. `raremetal.js` has a helper function that will format in-browser calculations 
 as the response below.
- 
 
 #### Request
 
@@ -205,7 +202,6 @@ covariance data, `groups` in this endpoint provide calculation results.
         "group": "ENSG000001",
         "mask": "PTV",
         "variants": ["2:21228642_G/A"],
-        
         "test": "burden",
         "pvalue": 1.8e-09,
         "stat": 0.1        
