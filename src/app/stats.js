@@ -97,7 +97,7 @@ class ZegginiBurdenTest extends AggregationTest {
  *
  * See the {@link https://www.cell.com/ajhg/fulltext/S0002-9297%2811%2900222-9|original paper} for details on the
  * method, and {@link https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#SKAT_META_ANALYSIS|our wiki} for information
- * on how the test is calculated using scores/covariances.
+ * on how the test is calculated using scores/covariances. <p>
  *
  * @extends AggregationTest
  */

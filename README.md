@@ -63,11 +63,16 @@ const stats = raremetal.stats;
 
 ### Examples
 
-A full example of the typical lifecycle is provided in the `_example` function of [src/app/helpers.js](helpers.js.html#line193), which is:
+The best working example of how to use the library can be found in LocusZoom. The [aggregation test example](http://statgen.github.io/locuszoom/examples/aggregation_tests.html) shows how LocusZoom uses the functions in [src/app/helpers.js](helpers.js.html) to: 
 
 * Load score statistics and covariance matrices for genes within a genomic region.
-* Load variant masks defining which variants belong to which genes.
 * Calculate aggregation tests (burden, SKAT) for each gene in the region.
+
+Functions in [src/app/helpers.js](helpers.js.html) are designed to load data in JSON format from an API (or a static JSON file.) The API format is specified [this PDF](portal-api.pdf). 
+
+For examples of loading data and running tests using the command-line (CLI) version of this package, see 
+[src/app/cli.js](cli.js.html). Scores and covariances are loaded from rvtest or RAREMETAL formatted files. When installing
+this package, an executable script `raremetal.js` should be installed, which corresponds to [src/app/cli.js](cli.js.html). 
 
 ## Development
 
