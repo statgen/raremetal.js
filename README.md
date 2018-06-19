@@ -51,13 +51,13 @@ Or alternatively via CDN:
 Alternatively, the module can be loaded via node.js:
 
 ```javascript
-# In node.js
+// In node.js
 const raremetal = require("raremetal.js");
 
-# Helper functions for browser, such as loading JSON defining covariance/masks.
+// Helper functions for browser, such as loading JSON defining covariance/masks.
 const helpers = raremetal.helpers;
 
-# Statistical functions for calculating tests. Data structures for storing score statistics and covariances.
+// Statistical functions for calculating tests. Data structures for storing score statistics and covariances.
 const stats = raremetal.stats;
 ```
 
