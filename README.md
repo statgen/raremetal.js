@@ -1,6 +1,6 @@
 ## raremetal.js
 
-[![Travis build status](http://img.shields.io/travis/statgen/raremetal.js.svg?style=flat)](https://travis-ci.com/statgen/raremetal.js)
+[![Build Status](https://travis-ci.com/statgen/raremetal.js.svg?branch=master)](https://travis-ci.com/statgen/raremetal.js)
 [![Dependency Status](https://david-dm.org/statgen/raremetal.js.svg)](https://david-dm.org/statgen/raremetal.js)
 [![devDependency Status](https://david-dm.org/statgen/raremetal.js/dev-status.svg)](https://david-dm.org/statgen/raremetal.js#info=devDependencies)
 
