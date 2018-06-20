@@ -78,7 +78,7 @@ this package, an executable script `raremetal.js` should be installed, which cor
 
 ### Requirements
 
-This package has been developed and tested using Node.js 8 LTS (Carbon).
+This package has been developed and tested using Node.js 8 LTS (Carbon). It currently does not work with the latest version of Node.js, though we aim to patch that eventually. You can manage multiple Node.js versions using [nvm](https://github.com/creationix/nvm), and this package includes a `.nvmrc` file that specifies which version we are currently testing against. 
 
 If you would like to make changes to the core functionality within this module for development, the best method would be
 to [fork the repository on Github](https://github.com/statgen/raremetal.js#fork-destination-box), and then clone your fork locally:
