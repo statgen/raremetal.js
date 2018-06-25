@@ -253,7 +253,7 @@ function _skatDavies(lambdas, qstat) {
   if (pval <= 0 || pval === 2.0) {
     // Routine adapted from raremetal
     let iter = 0;
-    while ((iter < 10000) && (pval <= 0 || pval === 2.0)) {
+    while ((iter < 100000) && (pval <= 0 || pval === 2.0)) {
       qstat *= 0.9999;
       res = qfc.qf(lambdas, nc1, n1, n, sigma, qstat, lim1, acc);
       qfval = res[0];
@@ -316,4 +316,4 @@ function _skatLiu(lambdas, qstat) {
 }
 
 export { AggregationTest as _AggregationTest };  // for unit testing only
-export { SkatTest, ZegginiBurdenTest };
+export { SkatTest, ZegginiBurdenTest, _skatDavies, _skatLiu };

@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 
-import { ZegginiBurdenTest, SkatTest } from '../../src/app/stats.js';
+import { ZegginiBurdenTest, SkatTest, _skatDavies } from '../../src/app/stats.js';
 
 describe('stats.js', function() {
   describe('ZegginiBurdenTest', function() {
@@ -20,6 +20,15 @@ describe('stats.js', function() {
         0.001,
         'testBurden on known u/cov did not produce close enough p-value to expected'
       )
+    });
+  });
+
+  describe('_skatDavies', function() {
+    it('should return p-value > 0 for known extreme case', function() {
+      let lambdas = [80966.14538109652, 33190.79877635288, 4893.311364910298, 1860.05790041185, 1243.4042974219005, 623.3896381571287];
+      let qstat = 7836295.2889415305;
+      let [_, pval] = _skatDavies(lambdas, qstat); // eslint-disable-line no-unused-vars
+      assert.isAbove(pval, 0);
     });
   });
 
