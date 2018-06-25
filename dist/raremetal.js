@@ -4514,6 +4514,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_AggregationTest", function() { return AggregationTest; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "SkatTest", function() { return SkatTest; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ZegginiBurdenTest", function() { return ZegginiBurdenTest; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_skatDavies", function() { return _skatDavies; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_skatLiu", function() { return _skatLiu; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__qfc_js__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_numeric__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_numeric___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_numeric__);
@@ -4773,7 +4775,7 @@ function _skatDavies(lambdas, qstat) {
   if (pval <= 0 || pval === 2.0) {
     // Routine adapted from raremetal
     let iter = 0;
-    while ((iter < 10000) && (pval <= 0 || pval === 2.0)) {
+    while ((iter < 100000) && (pval <= 0 || pval === 2.0)) {
       qstat *= 0.9999;
       res = __WEBPACK_IMPORTED_MODULE_0__qfc_js__["a" /* qf */](lambdas, nc1, n1, n, sigma, qstat, lim1, acc);
       qfval = res[0];
