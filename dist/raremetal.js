@@ -4717,7 +4717,13 @@ class SkatTest extends AggregationTest {
         return _skatLiu(lambdas, q);
       }
       else {
-        return _skatDavies(lambdas, q);
+        let daviesResult = _skatDavies(lambdas, q);
+        if (isNaN(daviesResult[1])) {
+          // Davies' method could not converge. Use R-SKAT's approach instead.
+          return _skatLiu(lambdas, q);
+        } else {
+          return daviesResult;
+        }
       }
     }
     else {
@@ -4769,19 +4775,11 @@ function _skatDavies(lambdas, qstat) {
   let acc = 0.0001;
   let res = __WEBPACK_IMPORTED_MODULE_0__qfc_js__["a" /* qf */](lambdas, nc1, n1, n, sigma, qstat, lim1, acc);
   let qfval = res[0];
-
   let pval = 1.0 - qfval;
 
-  if (pval <= 0 || pval === 2.0) {
-    // Routine adapted from raremetal
-    let iter = 0;
-    while ((iter < 100000) && (pval <= 0 || pval === 2.0)) {
-      qstat *= 0.9999;
-      res = __WEBPACK_IMPORTED_MODULE_0__qfc_js__["a" /* qf */](lambdas, nc1, n1, n, sigma, qstat, lim1, acc);
-      qfval = res[0];
-      pval = 1 - qfval;
-      iter += 1;
-    }
+  let converged = (res[1] === 0) && (pval > 0) && (pval <= 1);
+  if (!converged) {
+    pval = NaN;
   }
 
   return [qstat, pval];
