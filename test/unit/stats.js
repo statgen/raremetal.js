@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 
-import { ZegginiBurdenTest, SkatTest, _skatDavies } from '../../src/app/stats.js';
+import { ZegginiBurdenTest, SkatTest } from '../../src/app/stats.js';
 
 describe('stats.js', function() {
   describe('ZegginiBurdenTest', function() {
@@ -23,16 +23,24 @@ describe('stats.js', function() {
     });
   });
 
-  describe('_skatDavies', function() {
-    it('should return p-value > 0 for known extreme case', function() {
-      let lambdas = [80966.14538109652, 33190.79877635288, 4893.311364910298, 1860.05790041185, 1243.4042974219005, 623.3896381571287];
-      let qstat = 7836295.2889415305;
-      let [_, pval] = _skatDavies(lambdas, qstat); // eslint-disable-line no-unused-vars
-      assert.isAbove(pval, 0);
-    });
-  });
-
   describe('SkatTest', function() {
+    it('should return correct p-value for edge case where Davies p-value is 0', function() {
+      let scores = [1.78855, 39.5782, -0.87731, 4.04614, -0.75007, 146.723];
+      let cov = [
+        [7.994158379999999,-0.0546119717,-0.0017337170499999999,-0.00260057096,-0.000866857602,-0.216713939],
+        [-0.0546119717,62.5785693,-0.013653016,-0.020479524,-0.00682649877,-0.7064881980000001],
+        [-0.0017337170499999999, -0.013653016,1.9998364100000001,-0.00065014274,-0.000216713939,-0.054178623200000005],
+        [-0.00260057096,-0.020479524,-0.00065014274,2.99943618,-0.00032507137,-0.0812678425],
+        [-0.000866857602,-0.00682649877,-0.000216713939,-0.00032507137,1.00002435,-0.027089311600000002],
+        [-0.216713939,-0.7064881980000001,-0.054178623200000005,-0.0812678425,-0.027089311600000002,249.262611]
+      ];
+      let mafs = [0.000433369, 0.00341278, 0.000108342, 0.000162514, 0.0000541712, 0.0135428];
+      let agg = new SkatTest();
+      let [, pval] = agg.run(scores, cov, null, mafs);
+      let expectedPval = 2.4240441146275055e-24;
+      assert.closeTo(pval, expectedPval, 0.001);
+    });
+
     it('should return correct p-value for known u/cov (standard weights)', function () {
       let u = [
         1.26175,
