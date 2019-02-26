@@ -19,7 +19,10 @@ processed in the same way.
 
 ### Retrieve available datasets/masks
 
-A dataset is a set of variant genotypes and samples (e.g. a VCF.) 
+A genotype dataset is a set of variant genotypes and samples (e.g. a VCF.)
+
+A phenotype dataset is a set of phenotypes and samples (PED or tab-delimited file). These phenotypes are linked to
+one or more genotype datasets.
 
 A mask is defined by:
 
@@ -38,9 +41,9 @@ Grouping:
 * KEGG pathways (variants within genes that belong to the pathway)
 * Gene ontology terms (similar to KEGG)
 
-Masks would be available per dataset. 
+Masks would be available per genotype dataset.
 
-For now, a description of the variant filtering and grouping criteria will probably just have to be plain text without some type of formal grammar. 
+For now, a description of the variant filtering and grouping criteria will probably just have to be plain text without some type of formal grammar.
 
 #### Request
 
@@ -52,26 +55,47 @@ For now, a description of the variant filtering and grouping criteria will proba
 {
   "data": [
     {
-      "dataset": 42,
+      "genotypeDataset": 1,
       "description": "52K Exomes",
+      "genomeBuild": "GRCh37",
       "masks": [
         {
           "id": "PTV",
           "description": "Protein truncating variants",
-          "groupType": "gene",
-          "identifier": "ENSEMBL"
+          "groupType": "GENE",
+          "identifierType": "ENSEMBL"
         },
         {
           "id": "PTV & LoF & AF<0.05",
           "description": "Protein truncating variants with AF < 0.05",
-          "groupType": "gene",
-          "identifier": "ENSEMBL"
+          "groupType": "GENE",
+          "identifierType": "ENSEMBL"
         },
         {
           "id": "PTV & LoF & AF<0.05",
           "description": "Protein truncating and loss-of-function variants with AF < 0.05",
-          "groupType": "gene",
-          "identifier": "ENSEMBL"
+          "groupType": "GENE",
+          "identifierType": "ENSEMBL"
+        }
+      ],
+      "phenotypeDatasets": [
+        {
+          "phenotypeDataset": 1,
+          "description": "52K Exomes - Cardiovascular Traits",
+          "phenotypes": [
+            "ldl",
+            "hdl",
+            "bmi"
+          ]
+        },
+        {
+          "phenotypeDataset": 2,
+          "description": "52K Exomes - Diabetes-related Traits",
+          "phenotypes": [
+            "t2d",
+            "fg",
+            "fins"
+          ]
         }
       ]
     }
@@ -92,7 +116,11 @@ Only requesting scores and covariance for the "PTV" mask just to save some space
   "chrom": "6",
   "start": 1,
   "end": 100000,
-  "dataset": 42,
+  "genotypeDataset": 1,
+  "phenotypeDataset": 1,
+  "phenotype": "rand_qt",
+  "samples": "ALL",
+  "genomeBuild": "GRCh37",
   "masks": [
     "PTV"
   ]
@@ -122,8 +150,12 @@ interpret the calculation results. The same variant may appear in many groups, b
 ```json
 {
   "data": {
-    "dataset": 42,
+    "genotypeDataset": 42,
     "description": "52K Exomes",
+    "phenotypeDataset": 8,
+    "phenotype": "T2D",
+    "sigmaSquared": 0.08,
+    "nSamples": 3550,
     "variants": [
       {
         "variant": "2:21228642_G/A",
@@ -139,8 +171,6 @@ interpret the calculation results. The same variant may appear in many groups, b
         "mask": "PTV",
         "variants": ["2:21228642_G/A"],
         "covariance": [0.3],
-        "sigmaSquared": 0.08,
-        "nSamples": 3550
       }
     ]
   }
@@ -169,7 +199,11 @@ Looks identical to the same request used to retrieve covariance.
   "chrom": "6",
   "start": 1,
   "end": 100000,
-  "dataset": 42,
+  "genotypeDataset": 1,
+  "phenotypeDataset": 1,
+  "phenotype": "rand_qt",
+  "samples": "ALL",
+  "genomeBuild": "GRCh37",
   "masks": [
     "PTV"
   ]
@@ -187,8 +221,10 @@ covariance data, `groups` in this endpoint provide calculation results.
 ```json
 {
   "data": {
-    "dataset": 42,
+    "genotypeDataset": 42,
     "description": "52K Exomes",
+    "phenotypeDataset": 1,
+    "phenotype": "T2D",
     "variants": [
       {
         "variant": "2:21228642_G/A",
