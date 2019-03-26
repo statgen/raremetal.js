@@ -128,7 +128,7 @@ Only requesting scores and covariance for the "PTV" mask just to save some space
 {
   "chrom": "6",
   "start": 1,
-  "end": 100000,
+  "stop": 100000,
   "genotypeDataset": 1,
   "phenotypeDataset": 1,
   "phenotype": "rand_qt",
@@ -211,7 +211,7 @@ Looks identical to the same request used to retrieve covariance.
 {
   "chrom": "6",
   "start": 1,
-  "end": 100000,
+  "stop": 100000,
   "genotypeDataset": 1,
   "phenotypeDataset": 1,
   "phenotype": "rand_qt",
