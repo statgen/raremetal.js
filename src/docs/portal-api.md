@@ -179,7 +179,7 @@ interpret the calculation results. The same variant may appear in many groups, b
     ],
     "groups": [
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG000001",
         "mask": 1,
         "variants": ["2:21228642_G/A"],
@@ -247,7 +247,7 @@ covariance data, `groups` in this endpoint provide calculation results.
     ],
     "groups": [
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG000001",
         "mask": "PTV",
         "variants": ["2:21228642_G/A"],
