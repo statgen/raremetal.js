@@ -24,14 +24,14 @@ describe('In-browser calculation workflow', function () {
 
   it('should match expected burden p-value for HIC2', function() {
     const runner = new PortalTestRunner(this.groups, this.variants);
-    const testGroup = this.groups.getOne('GENCODE-AF01', 'ENSG00000169635');
+    const testGroup = this.groups.getOne(1, 'ENSG00000169635');
     const results = runner._runOne(new ZegginiBurdenTest(), testGroup);
     assert.closeTo(results.pvalue, 0.42913956, 0.001);
   });
 
   it('should match expected skat p-value for HIC2', function() {
     const runner = new PortalTestRunner(this.groups, this.variants);
-    const testGroup = this.groups.getOne('GENCODE-AF01', 'ENSG00000169635');
+    const testGroup = this.groups.getOne(1, 'ENSG00000169635');
     const results = runner._runOne(new SkatTest(), testGroup);
     assert.closeTo(results.pvalue, 0.765, 0.001);
   });

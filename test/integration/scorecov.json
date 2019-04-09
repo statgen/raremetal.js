@@ -1,7 +1,11 @@
 {
   "data": {
-    "dataset": 42,
+    "genotypeDataset": 42,
     "description": "Highly original analysis",
+    "phenotypeDataset": 6,
+    "phenotype": "fishy",
+    "nSamples": 3556,
+    "sigmaSquared": 0.0836496,
     "variants": [
       {
         "variant": "22:21576208_G/A",
@@ -2310,9 +2314,9 @@
     ],
     "groups": [
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000133475",
-        "mask": "GENCODE-AF01",
+        "mask": 1,
         "variants": [
           "22:21576208_G/A",
           "22:21581760_G/A",
@@ -2325,14 +2329,12 @@
           0.00673938,
           -4.5565e-06,
           0.00673503
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000206142",
-        "mask": "GENCODE-AF01",
+        "mask": 1,
         "variants": [
           "22:21660829_G/A",
           "22:21664347_C/T",
@@ -2345,14 +2347,12 @@
           0.0100795,
           -6.76628e-06,
           0.0067995
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000232771",
-        "mask": "GENCODE-AF01",
+        "mask": 1,
         "variants": [
           "22:21695956_C/A",
           "22:21697745_C/T"
@@ -2361,14 +2361,12 @@
           0.0405157,
           -6.86783e-05,
           0.0154256
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000169635",
-        "mask": "GENCODE-AF01",
+        "mask": 1,
         "variants": [
           "22:21797094_C/G",
           "22:21797099_CCCG/C",
@@ -4999,14 +4997,12 @@
           0.0235223,
           -1.35234e-05,
           0.00672192
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000206140",
-        "mask": "GENCODE-AF01",
+        "mask": 1,
         "variants": [
           "22:21821916_C/T",
           "22:21822666_G/C",
@@ -5045,14 +5041,12 @@
           0.00672174,
           -3.99897e-06,
           0.00673947
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000183506",
-        "mask": "GENCODE-AF01",
+        "mask": 1,
         "variants": [
           "22:21829010_G/A",
           "22:21829039_G/A",
@@ -5146,27 +5140,23 @@
           0.00804853,
           -1.55659e-05,
           0.00821278
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000252143",
-        "mask": "GENCODE-AF01",
+        "mask": 1,
         "variants": [
           "22:21899201_T/C"
         ],
         "covariance": [
           0.0661306
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000185651",
-        "mask": "GENCODE-AF01",
+        "mask": 1,
         "variants": [
           "22:21921864_A/G",
           "22:21921873_C/T",
@@ -5445,14 +5435,12 @@
           0.00336182,
           -1.95669e-06,
           0.00672232
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000161179",
-        "mask": "GENCODE-AF01",
+        "mask": 1,
         "variants": [
           "22:21982385_GAC/G",
           "22:21982726_A/T",
@@ -5560,14 +5548,12 @@
           0.00672185,
           -3.96005e-06,
           0.00672304
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000161180",
-        "mask": "GENCODE-AF01",
+        "mask": 1,
         "variants": [
           "22:21988382_A/C",
           "22:21988641_C/T",
@@ -5895,14 +5881,12 @@
           0.0235235,
           -1.36765e-05,
           0.00672186
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000273342",
-        "mask": "GENCODE-AF01",
+        "mask": 1,
         "variants": [
           "22:21995314_A/G",
           "22:21995531_A/C"
@@ -5911,14 +5895,12 @@
           0.00336185,
           0.0033607,
           0.00682171
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000128228",
-        "mask": "GENCODE-AF01",
+        "mask": 1,
         "variants": [
           "22:21996599_C/T",
           "22:21996615_G/A",
@@ -5987,14 +5969,12 @@
           0.0247273,
           -0.000215697,
           0.0933933
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000100023",
-        "mask": "GENCODE-AF01",
+        "mask": 1,
         "variants": [
           "22:22006619_G/A",
           "22:22007634_G/T",
@@ -7827,27 +7807,23 @@
           0.00672203,
           -1.9287e-06,
           0.00336184
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000212102",
-        "mask": "GENCODE-AF01",
+        "mask": 1,
         "variants": [
           "22:22007319_C/CAATG"
         ],
         "covariance": [
           0.00336255
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000207751",
-        "mask": "GENCODE-AF01",
+        "mask": 1,
         "variants": [
           "22:22007634_G/T",
           "22:22007659_G/C"
@@ -7856,14 +7832,12 @@
           0.0374059,
           -2.34038e-05,
           0.00672724
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000272954",
-        "mask": "GENCODE-AF01",
+        "mask": 1,
         "variants": [
           "22:22016386_C/CGG",
           "22:22016497_G/T",
@@ -7876,14 +7850,12 @@
           0.00672186,
           4.08444e-05,
           0.110388
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000100027",
-        "mask": "GENCODE-AF01",
+        "mask": 1,
         "variants": [
           "22:22051976_G/A",
           "22:22052153_C/T",
@@ -8117,14 +8089,12 @@
           0.133144,
           -1.97922e-05,
           0.00672437
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000133475",
-        "mask": "GENCODE-AF05",
+        "mask": 2,
         "variants": [
           "22:21576208_G/A",
           "22:21581760_G/A",
@@ -8137,14 +8107,12 @@
           0.00673938,
           -4.5565e-06,
           0.00673503
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000206142",
-        "mask": "GENCODE-AF05",
+        "mask": 2,
         "variants": [
           "22:21660829_G/A",
           "22:21664347_C/T",
@@ -8157,14 +8125,12 @@
           0.0100795,
           -6.76628e-06,
           0.0067995
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000232771",
-        "mask": "GENCODE-AF05",
+        "mask": 2,
         "variants": [
           "22:21695956_C/A",
           "22:21697745_C/T"
@@ -8173,14 +8139,12 @@
           0.0405157,
           -6.86783e-05,
           0.0154256
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000169635",
-        "mask": "GENCODE-AF05",
+        "mask": 2,
         "variants": [
           "22:21797094_C/G",
           "22:21797099_CCCG/C",
@@ -11186,14 +11150,12 @@
           0.0235223,
           -1.35234e-05,
           0.00672192
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000206140",
-        "mask": "GENCODE-AF05",
+        "mask": 2,
         "variants": [
           "22:21821916_C/T",
           "22:21822666_G/C",
@@ -11241,14 +11203,12 @@
           0.00672174,
           -3.99897e-06,
           0.00673947
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000183506",
-        "mask": "GENCODE-AF05",
+        "mask": 2,
         "variants": [
           "22:21829010_G/A",
           "22:21829039_G/A",
@@ -11342,27 +11302,23 @@
           0.00804853,
           -1.55659e-05,
           0.00821278
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000252143",
-        "mask": "GENCODE-AF05",
+        "mask": 2,
         "variants": [
           "22:21899201_T/C"
         ],
         "covariance": [
           0.0661306
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000185651",
-        "mask": "GENCODE-AF05",
+        "mask": 2,
         "variants": [
           "22:21921864_A/G",
           "22:21921873_C/T",
@@ -11690,14 +11646,12 @@
           0.00336182,
           -1.95669e-06,
           0.00672232
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000161179",
-        "mask": "GENCODE-AF05",
+        "mask": 2,
         "variants": [
           "22:21982385_GAC/G",
           "22:21982726_A/T",
@@ -11805,14 +11759,12 @@
           0.00672185,
           -3.96005e-06,
           0.00672304
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000161180",
-        "mask": "GENCODE-AF05",
+        "mask": 2,
         "variants": [
           "22:21988382_A/C",
           "22:21988641_C/T",
@@ -12376,14 +12328,12 @@
           0.0235235,
           -1.36765e-05,
           0.00672186
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000273342",
-        "mask": "GENCODE-AF05",
+        "mask": 2,
         "variants": [
           "22:21995314_A/G",
           "22:21995531_A/C"
@@ -12392,14 +12342,12 @@
           0.00336185,
           0.0033607,
           0.00682171
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000128228",
-        "mask": "GENCODE-AF05",
+        "mask": 2,
         "variants": [
           "22:21996599_C/T",
           "22:21996615_G/A",
@@ -12507,14 +12455,12 @@
           0.0933933,
           -0.00560227,
           0.669342
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000100023",
-        "mask": "GENCODE-AF05",
+        "mask": 2,
         "variants": [
           "22:22006619_G/A",
           "22:22007634_G/T",
@@ -15218,27 +15164,23 @@
           0.67325,
           -0.0179295,
           0.352334
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000212102",
-        "mask": "GENCODE-AF05",
+        "mask": 2,
         "variants": [
           "22:22007319_C/CAATG"
         ],
         "covariance": [
           0.00336255
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000207751",
-        "mask": "GENCODE-AF05",
+        "mask": 2,
         "variants": [
           "22:22007634_G/T",
           "22:22007659_G/C"
@@ -15247,14 +15189,12 @@
           0.0374059,
           -2.34038e-05,
           0.00672724
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000272954",
-        "mask": "GENCODE-AF05",
+        "mask": 2,
         "variants": [
           "22:22016386_C/CGG",
           "22:22016390_C/G",
@@ -15278,14 +15218,12 @@
           0.00672186,
           4.08444e-05,
           0.110388
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG00000100027",
-        "mask": "GENCODE-AF05",
+        "mask": 2,
         "variants": [
           "22:22051976_G/A",
           "22:22052153_C/T",
@@ -15753,14 +15691,12 @@
           0.133144,
           -1.97922e-05,
           0.00672437
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "chr22:21923600-21929800",
-        "mask": "ISLET-STRETCH-AF01",
+        "mask": 3,
         "variants": [
           "22:21923719_A/G",
           "22:21923908_C/T",
@@ -17038,14 +16974,12 @@
           0.117867,
           3.46819e-05,
           0.00672182
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "chr22:21931800-21934800",
-        "mask": "ISLET-STRETCH-AF01",
+        "mask": 3,
         "variants": [
           "22:21931827_A/T",
           "22:21931840_C/T",
@@ -17454,14 +17388,12 @@
           0.00336189,
           -1.94409e-06,
           0.00672182
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "chr22:21943800-21946800",
-        "mask": "ISLET-STRETCH-AF01",
+        "mask": 3,
         "variants": [
           "22:21944074_A/G",
           "22:21944196_A/G",
@@ -17695,14 +17627,12 @@
           0.00336185,
           -2.92942e-06,
           0.010081
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "chr22:21923600-21929800",
-        "mask": "ISLET-STRETCH-AF05",
+        "mask": 4,
         "variants": [
           "22:21923719_A/G",
           "22:21923908_C/T",
@@ -19245,14 +19175,12 @@
           0.117867,
           3.46819e-05,
           0.00672182
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "chr22:21931800-21934800",
-        "mask": "ISLET-STRETCH-AF05",
+        "mask": 4,
         "variants": [
           "22:21931827_A/T",
           "22:21931840_C/T",
@@ -19690,14 +19618,12 @@
           0.00336189,
           -1.94409e-06,
           0.00672182
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       },
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "chr22:21943800-21946800",
-        "mask": "ISLET-STRETCH-AF05",
+        "mask": 4,
         "variants": [
           "22:21944074_A/G",
           "22:21944196_A/G",
@@ -19931,9 +19857,7 @@
           0.00336185,
           -2.92942e-06,
           0.010081
-        ],
-        "sigmaSquared": 0.0836496,
-        "nSamples": 3556
+        ]
       }
     ]
   }

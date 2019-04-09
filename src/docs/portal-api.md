@@ -183,7 +183,7 @@ interpret the calculation results. The same variant may appear in many groups, b
         "group": "ENSG000001",
         "mask": 1,
         "variants": ["2:21228642_G/A"],
-        "covariance": [0.3],
+        "covariance": [0.3]
       }
     ]
   }

@@ -290,7 +290,12 @@ class PortalTestRunner {
 
 function parsePortalJSON(json) {
   const data = json.data || json;
-  const groups = new PortalGroupHelper(data.groups);
+  const groups = new PortalGroupHelper(data.groups.map(item => {
+    // Each group should have access to fields that, in portal json, are defined once globally
+    item.nSamples = data.nSamples;
+    item.sigmaSquared = data.sigmaSquared;
+    return item;
+  }));
   const variants = new PortalVariantsHelper(data.variants);
   return [groups, variants];
 }
