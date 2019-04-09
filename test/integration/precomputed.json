@@ -1,6 +1,8 @@
 {
   "data": {
-    "dataset": 42,
+    "genotypeDataset": 42,
+    "phenotypeDataset": 6,
+    "phenotype": "fishy",
     "description": "52K Exomes",
     "variants": [
       {
@@ -16,7 +18,7 @@
     ],
     "groups": [
       {
-        "groupType": "gene",
+        "groupType": "GENE",
         "group": "ENSG000001",
         "mask": "PTV",
         "variants": ["2:21228642_G/A"],

@@ -69,12 +69,12 @@ describe('helpers.js', function () {
     });
 
     it('can fetch a subset of one mask', function () {
-      const groups = this.inst.byMask('GENCODE-AF01');
+      const groups = this.inst.byMask(1);
       assert.equal(groups.data.length, 17);
     });
 
     it('can fetch a subset of several masks', function () {
-      const groups = this.inst.byMask(['GENCODE-AF01', 'ISLET-STRETCH-AF05']);
+      const groups = this.inst.byMask([1, 4]);
       assert.equal(groups.data.length, 20);
     });
 
