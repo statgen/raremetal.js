@@ -164,7 +164,6 @@ interpret the calculation results. The same variant may appear in many groups, b
 {
   "data": {
     "genotypeDataset": 42,
-    "description": "52K Exomes",
     "phenotypeDataset": 8,
     "phenotype": "T2D",
     "sigmaSquared": 0.08,
