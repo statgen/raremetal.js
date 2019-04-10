@@ -1,7 +1,6 @@
 {
   "data": {
     "genotypeDataset": 42,
-    "description": "Highly original analysis",
     "phenotypeDataset": 6,
     "phenotype": "fishy",
     "nSamples": 3556,
