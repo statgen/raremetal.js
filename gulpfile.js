@@ -65,6 +65,11 @@ function build() {
             test: /\.js$/,
             exclude: /node_modules/,
             loader: 'babel-loader'
+          },
+          {
+            test: /\.wasm$/,
+            type: "javascript/auto",
+            loader: "file-loader"
           }
         ]
       },
