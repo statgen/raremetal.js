@@ -68,7 +68,6 @@ function build() {
           },
           {
             test: /\.wasm$/,
-            type: "javascript/auto",
             loader: "file-loader"
           }
         ]
