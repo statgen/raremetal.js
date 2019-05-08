@@ -9,7 +9,7 @@
  * @license MIT
  */
 
-require("babel-register");
+require("@babel/register");
 const { ArgumentParser } = require("argparse");
 const { readMaskFileSync, extractScoreStats, extractCovariance } = require("./fio.js");
 const { REGEX_EPACTS } = require("./constants.js");
