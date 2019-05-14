@@ -1,8 +1,27 @@
 import { assert } from 'chai';
 
-import { ZegginiBurdenTest, SkatTest } from '../../src/app/stats.js';
+import { ZegginiBurdenTest, SkatTest, pmvnorm } from '../../src/app/stats.js';
 
 describe('stats.js', function() {
+  describe('pmvnorm', function() {
+    it('should return correct value for simple case', function() {
+      const lower = Array(4).fill(-0.68280434415179325);
+      const upper = Array(4).fill(0.68280434415179325);
+      const mean = Array(4).fill(0);
+      const sigma = [
+        [1.000,0.707,0.577,0.245],
+        [0.707,1.000,0.816,0.347],
+        [0.577,0.816,1.000,0.425],
+        [0.245,0.347,0.425,1.000]
+      ];
+
+      const result = pmvnorm(lower, upper, mean, sigma);
+      assert.closeTo(result.value, 0.12163363705851155, 0.001);
+      assert.closeTo(result.error, 0.000020666222108512638, 0.001);
+      assert.equal(result.inform, 0);
+    });
+  });
+
   describe('ZegginiBurdenTest', function() {
     it('should return correct p-value for known u/cov (no weights)', function() {
       // Verify correctness of results

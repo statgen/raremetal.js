@@ -8,6 +8,152 @@
 import * as qfc from './qfc.js';
 import numeric from 'numeric';
 import { pchisq, dbeta, pnorm } from './rstats.js';
+import * as mvtdstpack from './mvtdstpack.js';
+const { DoubleVec, IntVec, mvtdst } = mvtdstpack;
+
+function makeDoubleVec(size) {
+  const v = new DoubleVec();
+  v.resize(size, NaN);
+  return v;
+}
+
+function makeIntVec(size) {
+  const v = new IntVec();
+  v.resize(size, NaN);
+  return v;
+}
+
+function copyToDoubleVec(arr) {
+  const v = new DoubleVec();
+  for (let i = 0; i < arr.length; i++) {
+    v.push_back(arr[i]);
+  }
+  return v;
+}
+
+function emptyRowMatrix(nrows, ncols) {
+  let m = new Array(nrows);
+  for (let i = 0; i < nrows; i++) {
+    m[i] = new Array(ncols).fill(NaN);
+  }
+  return m;
+}
+
+function cov2cor(sigma, corr) {
+  for (let i = 0; i < sigma.length; i++) {
+    for (let j = i; j < sigma[0].length; j++) {
+      if (i === j) {
+        corr[i][j] = 1.0;
+      }
+      else {
+        corr[i][j] = corr[j][i] = sigma[i][j] / (Math.sqrt(sigma[i][i]) * Math.sqrt(sigma[j][j]));
+      }
+    }
+  }
+}
+
+function pmvnorm(lower, upper, mean, sigma) {
+  const n = sigma.length;
+  const infin = makeIntVec(n);
+  const delta = makeDoubleVec(n);
+  const corrF = makeDoubleVec(n * (n-1) / 2);
+
+  let corr = new Array(n);
+  for (let i = 0; i < n; i++) {
+    corr[i] = new Array(n).fill(NaN);
+  }
+
+  cov2cor(sigma, corr);
+
+  // Populate corrF
+  for (let j = 0; j < n; j++) {
+    for (let i = j + 1; i < n; i++) {
+      let k = j + 1 + ((i - 1) * i) / 2 - 1;
+      corrF.set(k, corr[i][j]);
+    }
+  }
+
+  // Calculate limits
+  for (let i = 0; i < n; i++) {
+    delta.set(i, 0.0);
+
+    if (lower[i] !== Infinity && lower[i] !== -Infinity) {
+      lower[i] = (lower[i] - mean[i]) / Math.sqrt(sigma[i][i]);
+    }
+
+    if (upper[i] !== Infinity && upper[i] !== -Infinity) {
+      upper[i] = (upper[i] - mean[i]) / Math.sqrt(sigma[i][i]);
+    }
+
+    if (lower[i] === -Infinity) { infin.set(i, 0); }
+    if (upper[i] === Infinity) { infin.set(i, 1); }
+    if (lower[i] === -Infinity && upper[i] === Infinity) { infin.set(i, -1);}
+    if (lower[i] !== -Infinity && upper[i] !== Infinity) { infin.set(i, 2); }
+    if (lower[i] === -Infinity) { lower[i] = 0; }
+    if (upper[i] === Infinity) { upper[i] = 0; }
+  }
+
+  let inform = 0;
+  let value = 0.0;
+  let error = 0.0;
+  const df = 0;
+  const maxpts = 50000;
+  const abseps = 0.001;
+  const releps = 0.0;
+
+  let sum = 0;
+  for (let i = 0; i < n; i++) {
+    sum += infin.get(i);
+  }
+
+  if (sum === -n) {
+    inform = 0;
+    value = 1.0;
+  }
+  else {
+    ({ error, inform, value } = mvtdst(n, df, copyToDoubleVec(lower), copyToDoubleVec(upper), infin, corrF, delta, maxpts, abseps, releps));
+  }
+
+  if (inform === 3) {
+    // Need to make correlation matrix positive definite
+    let trial = 0;
+    while (inform > 1 && trial < 100) {
+      let eig = numeric.eig(corr);
+      let lambdas = eig.lambda.x;
+      for (let i = 0; i < n; i++) {
+        if (lambdas[i] < 0) {
+          lambdas[i] = 0.0;
+        }
+      }
+
+      let D = numeric.diag(lambdas);
+      let V = eig.E.x;
+      corr = numeric.dot(numeric.dot(V, D), numeric.transpose(V));
+      let corr_diag = Array(n);
+      for (let i = 0; i < n; i++) { corr_diag[i] = corr[i][i]; }
+      let norm = numeric.dot(numeric.transpose([corr_diag]), [corr_diag]);
+
+      for (let j = 0; j < n; j++) {
+        for (let i = j + 1; i < n; i++) {
+          let k = j + 1 + ((i - 1) * i) / 2 - 1;
+          corrF.set(k, corr[i][j] / Math.sqrt(norm[i][j]));
+        }
+      }
+
+      ({ error, inform, value } = mvtdst(n, df, copyToDoubleVec(lower), copyToDoubleVec(upper), infin, corrF, delta, maxpts, abseps, releps));
+    }
+
+    if (inform > 1) {
+      value = -1.0;
+    }
+  }
+
+  return {
+    error: error,
+    inform: inform,
+    value: value
+  };
+}
 
 /**
  * Base class for all aggregation tests.
@@ -314,4 +460,4 @@ function _skatLiu(lambdas, qstat) {
 }
 
 export { AggregationTest as _AggregationTest };  // for unit testing only
-export { SkatTest, ZegginiBurdenTest, _skatDavies, _skatLiu };
+export { SkatTest, ZegginiBurdenTest, pmvnorm, _skatDavies, _skatLiu };
