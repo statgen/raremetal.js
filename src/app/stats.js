@@ -39,17 +39,21 @@ function emptyRowMatrix(nrows, ncols) {
   return m;
 }
 
-function cov2cor(sigma, corr) {
+function cov2cor(sigma) {
+  const corr = emptyRowMatrix(sigma.length, sigma[0].length);
   for (let i = 0; i < sigma.length; i++) {
     for (let j = i; j < sigma[0].length; j++) {
       if (i === j) {
         corr[i][j] = 1.0;
       }
       else {
-        corr[i][j] = corr[j][i] = sigma[i][j] / (Math.sqrt(sigma[i][i]) * Math.sqrt(sigma[j][j]));
+        let v = sigma[i][j] / (Math.sqrt(sigma[i][i]) * Math.sqrt(sigma[j][j]));
+        corr[i][j] = v;
+        corr[j][i] = v;
       }
     }
   }
+  return corr
 }
 
 function pmvnorm(lower, upper, mean, sigma) {
@@ -57,13 +61,7 @@ function pmvnorm(lower, upper, mean, sigma) {
   const infin = makeIntVec(n);
   const delta = makeDoubleVec(n);
   const corrF = makeDoubleVec(n * (n-1) / 2);
-
-  let corr = new Array(n);
-  for (let i = 0; i < n; i++) {
-    corr[i] = new Array(n).fill(NaN);
-  }
-
-  cov2cor(sigma, corr);
+  let corr = cov2cor(sigma);
 
   // Populate corrF
   for (let j = 0; j < n; j++) {
@@ -155,6 +153,140 @@ function pmvnorm(lower, upper, mean, sigma) {
   };
 }
 
+function get_conditional_dist(scores, cov, comb) {
+  const result = new Array(2).fill(0.0);
+  const mu2 = [];
+  const dim = comb.length - 1;
+  const sub_cov = emptyRowMatrix(dim, dim);
+
+  for (let i = 0; i < dim; i++) {
+    let idx1 = comb[i+1];
+    mu2[i] = scores[idx1];
+    for (let j = 0; j < dim; j++) {
+      let idx2 = comb[j+1];
+      sub_cov[i][j] = cov[idx1][idx2];
+    }
+  }
+
+  const inv = numeric.inv(sub_cov);
+  const sigma12 = new Array(dim).fill(NaN);
+  for (let i = 0; i < dim; i++) {
+    let idx1 = comb[0];
+    let idx2 = comb[i+1];
+    sigma12[i] = cov[idx1][idx2];
+  }
+
+  const tmp = new Array(dim).fill(0.0);
+  for (let i = 0; i < dim; i++) {
+    tmp[i] += numeric.dot(sigma12, inv[i]);
+  }
+
+  result[0] = numeric.dot(tmp, mu2);
+  result[1] = 1.0 - numeric.dot(tmp, sigma12);
+
+  if (result[1] < 0) {
+    result[1] = Math.abs(result[1]);
+  }
+
+  return result;
+}
+
+/**
+ * Calculates MVT p-value directly from scores/covariance and maximum test statistic.
+ * TODO: ask Shaung or Goncalo where this comes from?
+ * @param scores
+ * @param cov_t
+ * @param t_max
+ * @return {*|number}
+ */
+function calculate_mvt_pvalue(scores, cov_t, t_max) {
+  let pvalue = 0.0;
+  const dim = scores.length;
+  let chisq = t_max * t_max;
+  let jointProbHash = {};
+
+  if (dim === 1) {
+    pvalue = pchisq(chisq, 1, 0, 0);
+    return pvalue;
+  }
+
+  let uni = pchisq(chisq, 1, 0, 0);
+  pvalue += dim * uni;
+  let indx = [];
+  let alpha = [...Array(dim).keys()]; // 0, 1, 2, 3... dim
+  for (let r = 2; r <= dim; r++) {
+    let j = r;
+    let k = r;
+    let comb = [];
+    let par = [];
+
+    for (let twk = j; twk <= k; twk++) {
+      let r = twk;
+      let done = true;
+      for (let iwk = 0; iwk < r; iwk++) {
+        indx.push(iwk);
+      }
+
+      while (done) {
+        done = false;
+        for (let owk = 0; owk < r; owk++) {
+          comb.push(alpha[indx[owk]]);
+        }
+
+        par = get_conditional_dist(scores, cov_t, comb);
+        let chisq, condProb, prob;
+        if (par[1] === 0.0) {
+          condProb = 0.0;
+        }
+        else {
+          chisq = (t_max - par[0]) * (t_max - par[0]) / par[1];
+          if (chisq < 0) {
+            chisq = -chisq;
+          }
+          condProb = pchisq(chisq, 1, 0, 0);
+        }
+
+        let hashKey = "";
+        if (r === 2) {
+          hashKey += comb[0];
+          hashKey += comb[1];
+          prob = condProb * uni;
+          jointProbHash[hashKey] = prob;
+          hashKey = "";
+        }
+        else {
+          for (let i = 1; i < r; i++) {
+            hashKey += comb[i];
+          }
+
+          prob = jointProbHash[hashKey];
+          prob *= condProb;
+          let newKey = "";
+          newKey += comb[0];
+          newKey += hashKey;
+          jointProbHash[newKey] = prob;
+          hashKey = "";
+        }
+
+        pvalue -= prob;
+        comb = [];
+        for (let iwk = r-1; iwk >= 0; iwk--) {
+          if (indx[iwk] <= (n-1) - (r-iwk)) {
+            indx[iwk]++;
+            for (let swk = iwk + 1; swk < r; swk++) {
+              indx[swk] = indx[swk-1] + 1;
+            }
+            iwk = -1;
+            done = true;
+          }
+        }
+      }
+      indx = [];
+    }
+  }
+  return pvalue;
+}
+
 /**
  * Base class for all aggregation tests.
  */
@@ -235,6 +367,101 @@ class ZegginiBurdenTest extends AggregationTest {
     // The * 2 is for a two-sided p-value.
     let p = pnorm(-Math.abs(z), 0, 1) * 2;
     return [z, p];
+  }
+}
+
+function _vt(maf_cutoffs, u, v, mafs) {
+  // Calculate score statistic and cov weight matrix for each MAF cutoff.
+  const cov_weight = emptyRowMatrix(maf_cutoffs.length, u.length);
+  let t_max = -Infinity;
+  const scores = Array(maf_cutoffs.length).fill(0.0);
+  maf_cutoffs.map((m, i) => {
+    // Weight is 1 if MAF < cutoff, otherwise 0.
+    let w = mafs.map(maf => maf <= m ? 1 : 0);
+    cov_weight[i] = w;
+
+    // Calculate burden t-statistic for this maf cutoff
+    let numer = numeric.dot(w, u);
+    let denom = numeric.dot(numeric.dot(w, v), w);
+    let t_stat = Math.abs(numer / Math.sqrt(denom));
+    scores.push(t_stat);
+    if (t_stat > t_max) { t_max = t_stat; }
+  });
+
+  // Did we calculate any valid scores?
+  if (Math.max(...scores) === 0.0) { throw 'No scores were able to be calculated for this group'; }
+
+  // Calculate covariance matrix
+  const cov_u = numeric.dot(numeric.dot(cov_weight, v), numeric.transpose(cov_weight));
+  const cov_t = cov2cor(cov_u);
+
+  return [scores, cov_t, t_max];
+}
+
+/**
+ * Variable threshold test (VT). <p>
+ */
+class VTTest extends AggregationTest {
+  constructor() {
+    super(...arguments);
+    this.label = 'Variable Threshold Test';
+    this.key = 'vt';
+    this.requiresMaf = true;
+    this._method = 'auto';
+  }
+
+  /**
+   * This code corresponds roughly to: https://github.com/statgen/raremetal/blob/2c82cfc5710dbd9fd56ef67a7ca5f74772d4e70d/raremetal/src/Meta.cpp#L3456
+   * @param u
+   * @param v
+   * @param w This parameter is ignored for VT. Weights are calculated automatically from mafs.
+   * @param mafs
+   */
+  run(u, v, w, mafs) {
+    if (w != null) {
+      throw 'w vector is not accepted in with VT test';
+    }
+
+    // Figure out MAF cutoffs. This tries every possible MAF cutoff given a list of all MAFs.
+    let maf_cutoffs = [];
+    const sorted_mafs = [...mafs].sort();
+    for (let i = 0; i < mafs.length; i++) {
+      if (sorted_mafs[i] > maf_cutoffs.slice(-1)) {
+        maf_cutoffs.push(sorted_mafs[i]);
+      }
+    }
+
+    // Try calculating scores/t-stat covariance the first time (may need refinement later).
+    let [scores, cov_t, t_max] = _vt(maf_cutoffs, u, v, mafs);
+    const lower = new Array(maf_cutoffs.length).fill(-t_max);
+    const upper = new Array(maf_cutoffs.length).fill(t_max);
+    const mean = new Array(maf_cutoffs.length).fill(0);
+    let result = pmvnorm(lower, upper, mean, cov_t);
+
+    let pvalue;
+    if (result.value === -1.0) {
+      throw 'Error: correlation matrix is not positive semi-definite';
+    }
+    else if (result.value === 1.0)  {
+      // Use Shuang's algorithm
+      if (maf_cutoffs.length > 20) {
+        maf_cutoffs = maf_cutoffs.slice(-20);
+        let [scores, cov_t, t_max] = _vt(maf_cutoffs, u, v, mafs);
+        pvalue = calculate_mvt_pvalue(scores, cov_t, t_max);
+      }
+      else {
+        pvalue = calculate_mvt_pvalue(scores, cov_t, t_max);
+      }
+    }
+    else {
+      pvalue = 1.0 - result.value;
+    }
+
+    if (pvalue > 1.0) {
+      pvalue = 1.0;
+    }
+
+    return [t_max, pvalue];
   }
 }
 
@@ -460,4 +687,4 @@ function _skatLiu(lambdas, qstat) {
 }
 
 export { AggregationTest as _AggregationTest };  // for unit testing only
-export { SkatTest, ZegginiBurdenTest, pmvnorm, _skatDavies, _skatLiu };
+export { SkatTest, ZegginiBurdenTest, VTTest, pmvnorm, _skatDavies, _skatLiu };

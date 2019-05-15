@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 
-import { ZegginiBurdenTest, SkatTest, pmvnorm } from '../../src/app/stats.js';
+import { ZegginiBurdenTest, SkatTest, VTTest, pmvnorm } from '../../src/app/stats.js';
 
 describe('stats.js', function() {
   describe('pmvnorm', function() {
@@ -41,6 +41,25 @@ describe('stats.js', function() {
       assert.closeTo(result.value, 0.88037564067513052, 0.001);
       assert.closeTo(result.error, 0.00076046962293943772, 0.001);
       assert.equal(result.inform, 0);
+    });
+  });
+
+  describe('VTTest', function() {
+    it('simple test case', function() {
+      const u = [-1.1983600000000001, 8.4673099999999994, 2.4368799999999999, -1.74072];
+      const cov = [
+        [35.999521600000001, -0.073957332399999992, -0.021069833400000001, -0.091371064400000007],
+        [-0.073957332399999992, 83.542530400000004, -0.047519894799999997, -0.2060421076],
+        [-0.021069833400000001, -0.047519894799999997, 23.926510440000001, -0.058631327999999996],
+        [-0.091371064400000007, -0.2060421076, -0.058631327999999996, 97.791066799999996],
+      ];
+      const mafs = [0.0004395216, 0.00099127976258790436, 0.00028191799999999998, 0.0012230639437412097];
+      const agg = new VTTest();
+      const [tmax, pval] = agg.run(u, cov, null, mafs);
+      const expectedPval = 0.80328082770889286;
+      const expectedTmax = 0.8111221126845517;
+      assert.closeTo(pval, expectedPval, 0.001);
+      assert.closeTo(tmax, expectedTmax, 0.001);
     });
   });
 
