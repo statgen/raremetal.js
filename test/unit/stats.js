@@ -5,9 +5,9 @@ import { ZegginiBurdenTest, SkatTest, pmvnorm } from '../../src/app/stats.js';
 describe('stats.js', function() {
   describe('pmvnorm', function() {
     it('should return correct value for simple case', function() {
-      const lower = Array(4).fill(-0.68280434415179325);
-      const upper = Array(4).fill(0.68280434415179325);
-      const mean = Array(4).fill(0);
+      const lower = new Array(4).fill(-0.68280434415179325);
+      const upper = new Array(4).fill(0.68280434415179325);
+      const mean = new Array(4).fill(0.0);
       const sigma = [
         [1.000,0.707,0.577,0.245],
         [0.707,1.000,0.816,0.347],
@@ -18,6 +18,28 @@ describe('stats.js', function() {
       const result = pmvnorm(lower, upper, mean, sigma);
       assert.closeTo(result.value, 0.12163363705851155, 0.001);
       assert.closeTo(result.error, 0.000020666222108512638, 0.001);
+      assert.equal(result.inform, 0);
+    });
+
+    it('should return correct value when inform==3 is triggered', function() {
+      const lower = new Array(9).fill(-2.2287371197803769);
+      const upper = new Array(9).fill(2.2287371197803769);
+      const mean = new Array(9).fill(0.0);
+      const sigma = [
+        [1.000, 0.632, 0.498, 0.391, 0.323, 0.262, 0.184, 0.135, 0.127],
+        [0.632, 1.000, 0.788, 0.618, 0.511, 0.414, 0.290, 0.213, 0.201],
+        [0.498, 0.788, 1.000, 0.785, 0.649, 0.526, 0.368, 0.270, 0.254],
+        [0.391, 0.618, 0.785, 1.000, 0.827, 0.670, 0.469, 0.344, 0.324],
+        [0.323, 0.511, 0.649, 0.827, 1.000, 0.810, 0.568, 0.416, 0.392],
+        [0.262, 0.414, 0.526, 0.670, 0.810, 1.000, 0.942, 0.867, 0.818],
+        [0.184, 0.290, 0.368, 0.469, 0.568, 0.942, 1.000, 0.981, 0.926],
+        [0.135, 0.213, 0.270, 0.344, 0.416, 0.867, 0.981, 1.000, 0.944],
+        [0.127, 0.201, 0.254, 0.324, 0.392, 0.818, 0.926, 0.944, 1.000]
+      ];
+
+      const result = pmvnorm(lower, upper, mean, sigma);
+      assert.closeTo(result.value, 0.88037564067513052, 0.001);
+      assert.closeTo(result.error, 0.00076046962293943772, 0.001);
       assert.equal(result.inform, 0);
     });
   });
