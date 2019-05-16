@@ -271,7 +271,7 @@ function calculate_mvt_pvalue(scores, cov_t, t_max) {
         pvalue -= prob;
         comb = [];
         for (let iwk = r-1; iwk >= 0; iwk--) {
-          if (indx[iwk] <= (n-1) - (r-iwk)) {
+          if (indx[iwk] <= (dim-1) - (r-iwk)) {
             indx[iwk]++;
             for (let swk = iwk + 1; swk < r; swk++) {
               indx[swk] = indx[swk-1] + 1;
