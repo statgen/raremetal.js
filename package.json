@@ -80,6 +80,7 @@
     "isparta": "^4.1.1",
     "jsdoc": "^3.6.1",
     "mocha": "^6.1.4",
+    "nyc": "^14.1.1",
     "sinon": "^7.3.2",
     "sinon-chai": "^3.3.0",
     "source-map-loader": "^0.2.4",
