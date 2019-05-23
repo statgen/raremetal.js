@@ -13,7 +13,7 @@ require("@babel/register");
 const { ArgumentParser } = require("argparse");
 const { readMaskFileSync, extractScoreStats, extractCovariance } = require("./fio.js");
 const { REGEX_EPACTS } = require("./constants.js");
-const { ZegginiBurdenTest, SkatTest } = require("./stats.js");
+const { ZegginiBurdenTest, SkatTest, VTTest } = require("./stats.js");
 const fs = require("fs");
 const yaml = require("js-yaml");
 
@@ -115,6 +115,12 @@ async function single(args) {
       let skat = new SkatTest();
       skat._method = method;
       let [, p] = skat.run(scores.u, cov.matrix, null, mafs);
+      results.addResult(group, p);
+    }
+    else if (args.test === 'vt') {
+      let mafs = scores.altFreq.map(x => Math.min(x,1-x));
+      let vt = new VTTest();
+      let [, p] = vt.run(scores.u, cov.matrix, null, mafs);
       results.addResult(group, p);
     }
 
