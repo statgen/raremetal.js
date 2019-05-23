@@ -687,4 +687,4 @@ function _skatLiu(lambdas, qstat) {
 }
 
 export { AggregationTest as _AggregationTest };  // for unit testing only
-export { SkatTest, ZegginiBurdenTest, VTTest, pmvnorm, _skatDavies, _skatLiu };
+export { SkatTest, ZegginiBurdenTest, VTTest, pmvnorm, calculate_mvt_pvalue, _skatDavies, _skatLiu };
