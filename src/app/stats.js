@@ -116,7 +116,8 @@ function pmvnorm(lower, upper, mean, sigma) {
     // Need to make correlation matrix positive definite
     let trial = 0;
     while (inform > 1 && trial < 100) {
-      let eig = numeric.eig(corr);
+      let eig = numeric.eig(corr, 100000);
+
       let lambdas = eig.lambda.x;
       for (let i = 0; i < n; i++) {
         if (lambdas[i] < 0) {
