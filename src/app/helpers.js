@@ -5,9 +5,9 @@
  */
 import numeric from "numeric";
 import { REGEX_EPACTS } from "./constants";
-import { _AggregationTest, SkatTest, ZegginiBurdenTest } from "./stats";
+import { _AggregationTest, SkatTest, ZegginiBurdenTest, VTTest } from "./stats";
 
-const _all_tests = [ZegginiBurdenTest, SkatTest];
+const _all_tests = [ZegginiBurdenTest, SkatTest, VTTest];
 
 /**
  * Look up aggregation tests by unique name.
