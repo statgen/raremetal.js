@@ -9,7 +9,10 @@
  * @license MIT
  */
 
-require("@babel/register");
+require('@babel/register')({
+  extends: __dirname + '/../.././.babelrc',
+  ignore: [/node_modules/],
+});
 const { ArgumentParser } = require("argparse");
 const { readMaskFileSync, extractScoreStats, extractCovariance } = require("./fio.js");
 const { REGEX_EPACTS } = require("./constants.js");
