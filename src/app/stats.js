@@ -8,8 +8,8 @@
 import * as qfc from './qfc.js';
 import numeric from 'numeric';
 import { pchisq, dbeta, pnorm } from './rstats.js';
-import * as mvtdstpack from './mvtdstpack.js';
-const { DoubleVec, IntVec, mvtdst } = mvtdstpack;
+import mvtdstpack from './mvtdstpack.js';
+const { DoubleVec, IntVec, mvtdst } = mvtdstpack();
 
 function makeDoubleVec(size) {
   const v = new DoubleVec();

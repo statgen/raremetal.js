@@ -1,6 +1,6 @@
 import { assert } from 'chai';
-import * as mvtdstpack from '../../src/app/mvtdstpack.js';
-const { DoubleVec, IntVec, mvtdst } = mvtdstpack;
+import mvtdstpack from '../../src/app/mvtdstpack.js';
+const { DoubleVec, IntVec, mvtdst } = mvtdstpack();
 
 describe('mvtdstpack.js', function() {
   describe('Test mvtdst', function() {
