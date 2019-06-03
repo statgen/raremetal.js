@@ -43,7 +43,8 @@
 
 
     <section>
-        <article><h2>raremetal.js</h2><p><a href="https://travis-ci.com/statgen/raremetal.js"><img src="https://travis-ci.com/statgen/raremetal.js.svg?branch=master" alt="Build Status"></a>
+        <article><h2>raremetal.js</h2>
+<p><a href="https://travis-ci.com/statgen/raremetal.js"><img src="https://travis-ci.com/statgen/raremetal.js.svg?branch=master" alt="Build Status"></a>
 <a href="https://david-dm.org/statgen/raremetal.js"><img src="https://david-dm.org/statgen/raremetal.js.svg" alt="Dependency Status"></a>
 <a href="https://david-dm.org/statgen/raremetal.js#info=devDependencies"><img src="https://david-dm.org/statgen/raremetal.js/dev-status.svg" alt="devDependency Status"></a></p>
 <p>A package for performing rare variant aggregation tests and meta-analysis using score covariance matrices.</p>
@@ -67,9 +68,12 @@
 <li><a href="https://genome.sph.umich.edu/wiki/RAREMETAL">RAREMETAL</a></li>
 <li><a href="https://github.com/zhanxw/rvtests">rvtests</a></li>
 </ul>
-<h2>Usage</h2><h3>Installation</h3><p>The package can be installed with NPM:</p>
+<h2>Usage</h2>
+<h3>Installation</h3>
+<p>The package can be installed with NPM:</p>
 <p><code>npm install --save raremetal.js</code></p>
-<h3>Importing</h3><p>This package may be incorporated into both web/browser and node.js based projects.</p>
+<h3>Importing</h3>
+<p>This package may be incorporated into both web/browser and node.js based projects.</p>
 <p>On the web, include the <code>dist/raremetal.min.js</code> file in your site:</p>
 <p><code>&lt;script src=&quot;/path/to/your/assets/raremetal.min.js&quot; type=&quot;application/javascript&quot;&gt;&lt;/script&gt;</code></p>
 <p>Or alternatively via CDN:</p>
@@ -82,16 +86,21 @@ const raremetal = require(&quot;raremetal.js&quot;);
 const helpers = raremetal.helpers;
 
 // Statistical functions for calculating aggregation tests.
-const stats = raremetal.stats;</code></pre><h3>Examples</h3><p>The best working example of how to use the library can be found in LocusZoom. The <a href="http://statgen.github.io/locuszoom/examples/aggregation_tests.html">aggregation test example</a> shows how LocusZoom uses the functions in <a href="helpers.js.html">src/app/helpers.js</a> to: </p>
+const stats = raremetal.stats;
+</code></pre>
+<h3>Examples</h3>
+<p>The best working example of how to use the library can be found in LocusZoom. The <a href="http://statgen.github.io/locuszoom/examples/aggregation_tests.html">aggregation test example</a> shows how LocusZoom uses the functions in <a href="helpers.js.html">src/app/helpers.js</a> to:</p>
 <ul>
 <li>Load score statistics and covariance matrices for genes within a genomic region.</li>
 <li>Calculate aggregation tests (burden, SKAT) for each gene in the region.</li>
 </ul>
-<p>Functions in <a href="helpers.js.html">src/app/helpers.js</a> are designed to load data in JSON format from an API (or a static JSON file.) The API format is specified <a href="portal-api.pdf">this PDF</a>. </p>
-<p>For examples of loading data and running tests using the command-line (CLI) version of this package, see 
+<p>Functions in <a href="helpers.js.html">src/app/helpers.js</a> are designed to load data in JSON format from an API (or a static JSON file.) The API format is specified <a href="portal-api.pdf">this PDF</a>.</p>
+<p>For examples of loading data and running tests using the command-line (CLI) version of this package, see
 <a href="cli.js.html">src/app/cli.js</a>. Scores and covariances are loaded from rvtest or RAREMETAL formatted files. When installing
-this package, an executable script <code>raremetal.js</code> should be installed, which corresponds to <a href="cli.js.html">src/app/cli.js</a>. </p>
-<h2>Development</h2><h3>Requirements</h3><p>This package has been developed and tested using Node.js 8 LTS (Carbon). It currently does not work with the latest version of Node.js, though we aim to patch that eventually. You can manage multiple Node.js versions using <a href="https://github.com/creationix/nvm">nvm</a>, and this package includes a <code>.nvmrc</code> file that specifies which version we are currently testing against. </p>
+this package, an executable script <code>raremetal.js</code> should be installed, which corresponds to <a href="cli.js.html">src/app/cli.js</a>.</p>
+<h2>Development</h2>
+<h3>Requirements</h3>
+<p>This package has been developed and tested using Node.js 8 LTS (Carbon). It currently does not work with the latest version of Node.js, though we aim to patch that eventually. You can manage multiple Node.js versions using <a href="https://github.com/creationix/nvm">nvm</a>, and this package includes a <code>.nvmrc</code> file that specifies which version we are currently testing against.</p>
 <p>If you would like to make changes to the core functionality within this module for development, the best method would be
 to <a href="https://github.com/statgen/raremetal.js#fork-destination-box">fork the repository on Github</a>, and then clone your fork locally:</p>
 <pre class="prettyprint source"><code># Clone from github
@@ -99,11 +108,14 @@ git clone https://github.com/your_account/raremetal.js
 
 # Install project dependencies
 cd raremetal.js
-npm install</code></pre><p>Alternatively, you could clone directly from our repository with <code>git clone https://github.com/statgen/raremetal.js</code>.
+npm install
+</code></pre>
+<p>Alternatively, you could clone directly from our repository with <code>git clone https://github.com/statgen/raremetal.js</code>.
 This will make it difficult to contribute your changes back upstream to us, however.</p>
 <p>Building some portions of the documentation (such as methods and API docs) require <code>pandoc</code> and a working <code>LaTeX</code> installation on your
 system; you must install these separately. Already built documentation is provided in both the npm package and the git repository.</p>
-<h3>Useful Commands</h3><p>The following commands are particularly useful during development</p>
+<h3>Useful Commands</h3>
+<p>The following commands are particularly useful during development</p>
 <ul>
 <li><code>npm test</code>: run unit tests and exit</li>
 <li><code>npm run watch</code>: auto-run tests whenever code changes</li>
@@ -119,13 +131,13 @@ system; you must install these separately. Already built documentation is provid
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-browser.html">browser</a></li><li><a href="module-cli.html">cli</a></li><li><a href="module-fio.html">fio</a></li><li><a href="module-print.html">print</a></li><li><a href="module-qfc.html">qfc</a></li><li><a href="module-rstats.html">rstats</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="module-fio-GenotypeCovarianceMatrix.html">GenotypeCovarianceMatrix</a></li><li><a href="module-fio-ScoreStatTable.html">ScoreStatTable</a></li><li><a href="module-fio-VariantMask.html">VariantMask</a></li><li><a href="module-stats-AggregationTest.html">AggregationTest</a></li><li><a href="module-stats-SkatTest.html">SkatTest</a></li><li><a href="module-stats-ZegginiBurdenTest.html">ZegginiBurdenTest</a></li><li><a href="PortalVariantsHelper.html">PortalVariantsHelper</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AGGREGATION_TESTS">AGGREGATION_TESTS</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-browser.html">browser</a></li><li><a href="module-cli.html">cli</a></li><li><a href="module-fio.html">fio</a></li><li><a href="module-print.html">print</a></li><li><a href="module-qfc.html">qfc</a></li><li><a href="module-rstats.html">rstats</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="module-fio-GenotypeCovarianceMatrix.html">GenotypeCovarianceMatrix</a></li><li><a href="module-fio-ScoreStatTable.html">ScoreStatTable</a></li><li><a href="module-fio-VariantMask.html">VariantMask</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AGGREGATION_TESTS">AGGREGATION_TESTS</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Wed Apr 10 2019 16:05:47 GMT-0400 (EDT)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.1</a> on Mon Jun 03 2019 16:29:17 GMT-0400 (Eastern Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>
