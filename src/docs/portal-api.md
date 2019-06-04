@@ -134,13 +134,12 @@ Only requesting scores and covariance for the "PTV" mask just to save some space
   "phenotype": "rand_qt",
   "samples": "ALL",
   "genomeBuild": "GRCh37",
-  "masks": [...]
+  "masks": [...],
+  "maskDefinitions": [...]
 }
 ```
 
-The `masks` key can be either a numeric ID, representing a server-side mask file (for example, if a mask was already computed for a particular genotype dataset), or it can be a mask definition itself. This allows the client to send a specific list of variants to the server.
-
-If we want a mask already defined on the server, send a list of IDs:
+The `masks` should be a list of integer IDs, representing server-side mask files (for example, if a mask was already computed for a particular genotype dataset). For example:
 
 ```json
 {
@@ -148,11 +147,11 @@ If we want a mask already defined on the server, send a list of IDs:
 }
 ```
 
-Or instead of a using server-side masks, supply a list of your own generated in the browser or client-side:
+You can instead supply a list of your own generated masks in the browser or client-side using the `maskDefinitions` key:
 
 ```json
 {
-  "masks": [
+  "maskDefinitions": [
     {
       "id": 10,
       "name": "PTV+LOF<0.01",
@@ -170,6 +169,8 @@ Or instead of a using server-side masks, supply a list of your own generated in 
 ```
 
 In this case, the ID can be any integer, so long as it is unique across all of the masks sent in the request.
+
+Note that both `masks` and `maskDefinitions` should not be given together. 
 
 #### Response
 
