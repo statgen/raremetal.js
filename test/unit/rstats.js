@@ -1,4 +1,4 @@
-import { dbeta, pchisq, pnorm, dgamma } from '../../src/app/rstats.js';
+import { dbeta, pchisq, pnorm, dgamma, dchisq } from '../../src/app/rstats.js';
 import { assert } from 'chai';
 import sqlite3 from 'sqlite3';
 
@@ -34,6 +34,30 @@ function nearlyEqual(a, b, epsilon = 0.00001) {
 }
 
 describe('rstats.js', function() {
+  describe('dchisq()', function() {
+    it('simple test', function() {
+      const p = dchisq(1, 1);
+      assert.closeTo(dchisq(1, 1), 0.2419707, 1e-4);
+      assert.closeTo(dchisq(30, 1), 2.228087e-08, 1e-6);
+      assert.closeTo(dchisq(1481, 1), 4.940656e-324, 1e-6);
+    });
+
+    it('should have point mass at 0 when df=0', function() {
+      assert.strictEqual(dchisq(0, 0), Infinity);
+      for (let p = 1; p <= 16; p++) {
+        let x = p / 16.0;
+        let v = dchisq(x, 0);
+        assert.strictEqual(v, 0);
+      }
+    });
+
+    it('should result in 0 for very large x', function() {
+      for (let x of [Infinity, 1e80, 1e50, 1e40]) {
+        assert.strictEqual(dchisq(x, 10), 0);
+      }
+    });
+  });
+
   describe('dgamma()', function() {
     it('simple test', function() {
       const d1 = dgamma(1, 1, 1);

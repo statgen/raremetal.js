@@ -1054,6 +1054,17 @@ export function dgamma(x, shape, scale, give_log) {
 }
 
 /**
+ * The chi-squared density function.
+ * @param x
+ * @param df
+ * @param give_log
+ * @return {number|*}
+ */
+export function dchisq(x, df, give_log) {
+  return dgamma(x, df / 2.0, 2.0, give_log);
+}
+
+/**
  * The chi-squared cumulative distribution function.
  *
  * Supports the non-centrality parameter ncp.
