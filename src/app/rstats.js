@@ -1012,6 +1012,48 @@ function pgamma(x, alph, scale, lower_tail, log_p) {
 }
 
 /**
+ * The gamma density function.
+ * @param x
+ * @param shape
+ * @param scale
+ * @param give_log
+ * @return {number|*}
+ */
+export function dgamma(x, shape, scale, give_log) {
+  x = parseNumeric(x);
+  shape = parseNumeric(shape);
+  scale = parseNumeric(scale);
+  give_log = parseBoolean(give_log);
+
+  let pr;
+
+  if (isNaN(x) || isNaN(shape) || isNaN(scale)) {
+    return x + shape + scale;
+  }
+
+  if (shape < 0 || scale <= 0) { ML_ERR_return_NAN; }
+  if (x < 0) {
+    return R_D__0(give_log);
+  }
+  if (shape === 0) {
+    return x === 0 ? Infinity : R_D__0(give_log);
+  }
+  if (x === 0) {
+    if (shape < 1) { return Infinity; }
+    if (shape > 1) { return R_D__0(give_log); }
+    return give_log ? -Math.log(scale) : 1 / scale;
+  }
+
+  if (shape < 1) {
+    pr = dpois_raw(shape, x/scale, give_log);
+    return give_log ? pr + Math.log(shape/x) : pr * shape / x;
+  }
+
+  pr = dpois_raw(shape-1, x/scale, give_log);
+  return give_log ? pr - Math.log(scale) : pr/scale;
+}
+
+/**
  * The chi-squared cumulative distribution function.
  *
  * Supports the non-centrality parameter ncp.
