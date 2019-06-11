@@ -533,7 +533,14 @@ class SkatTest extends AggregationTest {
     // Calculate Q
     let q = numeric.dot(numeric.dot(u,numeric.diag(w)),u);
 
-    // Calculate lambdas
+    /**
+     * Code to calculate eigenvalues from V^(1/2) * W * V^(1/2)
+     * This first decomposes V = U * S * U' (SVD on symmetric normal matrix results in this, instead of U * S * V').
+     * If we take sqrt(S), then U * sqrt(S) * U' is a square root of the original matrix V. For a diagonal matrix,
+     * sqrt(S) is just the sqrt(s_i) of each individual diagonal element.
+     * Then we just take the dot product of (U * sqrt(S) * U') * W * (U * sqrt(S) * U'), which is V^(1/2) * W * V^(1/2).
+     * Finally we compute SVD of that matrix, and take the singular values as the eigenvalues.
+     */
     let lambdas;
     try {
       let svd = numeric.svd(v);
