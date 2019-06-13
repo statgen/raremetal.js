@@ -9,6 +9,7 @@ import * as qfc from './qfc.js';
 import numeric from 'numeric';
 import { pchisq, dbeta, pnorm } from './rstats.js';
 import mvtdstpack from './mvtdstpack.js';
+import { cholesky } from './linalg.js';
 const { DoubleVec, IntVec, mvtdst } = mvtdstpack();
 
 function makeDoubleVec(size) {
@@ -694,5 +695,247 @@ function _skatLiu(lambdas, qstat) {
   return [qstat, p];
 }
 
+function getEigen(m) {
+  const lambdas = numeric.eig(m, 10000).lambda.x.sort();
+  const n = eig.length;
+  let numNonZero = 0;
+  let sumNonZero = 0.0;
+  for (let i = 0; i < n; i++) {
+    if (lambdas[i] > 0) {
+      numNonZero++;
+      sumNonZero += lambdas[i];
+    }
+  }
+
+  if (numNonZero === 0) {
+    throw "All eigenvalues were 0 when calculating SKAT-O test";
+  }
+
+  const t = sumNonZero / numNonZero / 100000;
+  let numKeep = n;
+  for (let i = 0; i < n; i++) {
+    if (values[i] < t) {
+      numKeep--;
+    }
+    else {
+      break;
+    }
+  }
+
+  const keep = new Array(numKeep).fill(null);
+  for (let i = 0; i < numKeep; i++) {
+    keep[i] = lambdas[n - 1 - i];
+  }
+
+  return keep;
+}
+
+function getMoment(lambdas) {
+  let c = new Array(4).fill(NaN);
+  c[0] = numeric.sum(lambdas);
+  c[1] = numeric.sum(numeric.pow(lambdas, 2));
+  c[2] = numeric.sum(numeric.pow(lambdas, 3));
+  c[3] = numeric.sum(numeric.pow(lambdas, 4));
+
+  const muQ = c[0];
+  const sigmaQ = Math.sqrt(2 * c[1]);
+  const s1 = c[2] / c[1] / Math.sqrt(c[1]);
+  const s2 = c[3] / (c[1] * c[1]);
+
+  let a, d, l;
+  if (s1 * s2 > s2) {
+    a = 1 / (s1 - Math.sqrt(s1 * s1 - s2));
+    d = (s1 * a - a * a);
+    l = a * a - 2 * d;
+  }
+  else {
+    l = 1.0 / s2;
+  }
+
+  const varQ = sigmaQ * sigmaQ;
+  const df = l;
+  return {
+    muQ: muQ,
+    varQ: varQ,
+    df: df
+  }
+}
+
+function getPvalByMoment(q, m) {
+  const qNorm = (Q - m.muQ) / Math.sqrt(m.varQ) * Math.sqrt(2.0 * m.df) + m.df;
+  const pvalue = pchisq(qNorm, m.df, 0, false, false);
+  return pvalue;
+}
+
+function getQvalByMoment(min_pval, m) {
+  const q_org = qchisq(min_pval, m.df, 0, false, false);
+  const q = (q_org - m.df) / Math.sqrt(2.0 * m.df) * Math.sqrt(m.varQ) + m.muQ;
+  return q;
+}
+
+/**
+ * Optimal sequence kernel association test (SKAT). <p>
+ *
+ * The following papers detail the method:
+ *
+ * Original SKAT optimal test paper, utilizing genotypes instead of covariance matrices: https://doi.org/10.1016/j.ajhg.2012.06.007
+ * Meta-analysis of SKAT optimal test, and use of covariance matrices: https://doi.org/10.1016/j.ajhg.2013.05.010
+ *
+ * @extends AggregationTest
+ */
+class SkatOptimalTest extends AggregationTest {
+  constructor() {
+    super(...arguments);
+    this.label = 'SKAT Optimal Test';
+    this.key = 'skat-o';
+    this.requiresMaf = true;
+
+    /**
+     * Skat test method. Only used for dev/testing.
+     * Should not be set by user.
+     * @private
+     * @type {string}
+     */
+    this._method = 'auto';
+  }
+
+  /**
+   * Calculate typical SKAT weights using beta density function.
+   *
+   * @function
+   * @param mafs {number[]} Array of minor allele frequencies.
+   * @param a {number} alpha defaults to 1.
+   * @param b {number} beta defaults to 25.
+   */
+  static weights(mafs, a = 1, b = 25) {
+    let weights = Array(mafs.length).fill(null);
+    for (let i = 0; i < mafs.length; i++) {
+      let w = dbeta(mafs[i], a, b, false);
+      w *= w;
+      weights[i] = w;
+    }
+    return weights;
+  }
+
+  /**
+   * Calculate optimal SKAT test. <p>
+   *
+   * @function
+   * @param {Number[]} u Vector of score statistics (length m, number of variants).
+   * @param {Number[]} v Covariance matrix of score statistics (m x m).
+   * @param {Number[]} w Weight vector (length m, number of variants). If weights are not provided, they will
+   *  be calculated using the default weights() method of this object.
+   * @param {Number[]} mafs A vector of minor allele frequencies. These will be used to calculate weights if
+   *  they were not provided.
+   * @return {Number[]} SKAT p-value.
+   */
+  run(u, v, w, mafs) {
+    const { dot, svd, sum, mul, rep, pow } = numeric;
+    const t = numeric.transpose;
+
+    // Calculate weights (if necessary)
+    if (w === undefined || w === null) {
+      w = SkatTest.weights(mafs);
+    }
+
+    const nVar = u.length; // number of variants
+
+    // Setup rho values
+    const nRhos = 10;
+    const rhos = new Array(nRhos).fill(null);
+    for (let i = 0; i <= nRhos; i++) {
+      let v = i / 10;
+      if (v > 0.999) {
+        // rvtests does this to avoid rank deficiency
+        v = 0.999;
+      }
+      rhos[i] = v;
+    }
+
+    // Calculate rho matrices (1-rho)*I + rho*1*1'
+    // [ 1   rho rho ]
+    // [ rho 1   rho ]
+    // [ rho rho 1   ]
+    const Rp = new Array(nRhos).fill(null);
+    for (let i = 0; i < nRhos; i++) {
+      let r = num.rep([nVar, nVar], this.rhos[i]);
+      for (let j = 0; j < r.length; j++) {
+        r[j][j] = 1.0;
+      }
+      Rp[i] = r;
+    }
+
+    // Calculate Q statistics, where Q = U' * W * R(rho) * W * U
+    // U is the score statistic vector, W is the diagonal weight matrix for each variant
+    // R(rho) is a matrix for each rho value that reflects weighting between burden & SKAT
+    const Qs = [];
+    for (let i = 0; i < nRhos; i++) {
+      Qs[i] = dot(t(u), dot(w, dot(Rp[i], dot(w, u))));
+    }
+
+    // Calculate lambdas (eigenvalues of W * IOTA * W.) In the paper, IOTA is the covariance matrix divided by
+    // the phenotypic variance sigma^2. 
+    const lambdas = new Array(nRhos).fill(null);
+    const phis = new Array(nRhos).fill(null); // W * IOTA * W i.e. W * G'G/sigma^2 * W
+    for (let i = 0; i < nRhos; i++) {
+      let L = cholesky(Rp[i]);
+      let phi = dot(w, dot(v, w));
+      let phi_rho = dot(t(L), dot(phi, L));
+      lambdas[i] = svd(phi_rho).S;
+      phis[i] = phi;
+    }
+
+    // Calculate moments
+    const moments = new Array(nRhos).fill(null);
+    for (let i = 0; i < nRhos; i++) {
+      moments[i] = getMoment(lambdas);
+    }
+
+    // Calculate p-values for each rho
+    const pvals = new Array(nRhos).fill(null);
+    for (let i = 0; i < nRhos; i++) {
+      pvals[i] = getPvalByMoment(Qs[i], moments[i]);
+    }
+
+    // Calculate minimum p-value across all rho values
+    let minP = pvals[0];
+    let minIndex = 0;
+    for (let i = 1; i < nRhos; i++) {
+      if (pvals[i] < minP) {
+        minP = pvals[i];
+        minIndex = i;
+      }
+    }
+    const rho = rhos[minIndex];
+    const Q = Qs[minIndex];
+
+    // Calculate minimum Q(p)
+    const Qs_minP = new Array(nRhos).fill(null);
+    for (let i = 0; i < nRhos; i++) {
+      Qs_minP[i] = getQvalByMoment(minP, moments[i]);
+    }
+
+    // Calculate parameters needed for Z'(I-M)Z part
+    const Z11 = dot(v, rep([nVar, 1], 1));
+    const ZZ = v;
+    const ZMZ = dot(Z11, t(Z11)) / sum(ZZ);
+    const ZIMZ = ZZ - ZMZ;
+    const lambda = getEigen(ZIMZ);
+    const varZeta = 4 * sum(mul(ZMZ, ZIMZ));
+    const muQ = sum(lambda);
+    const varQ = 2.0 * sum(pow(lambda, 2)) + varZeta;
+    const kerQ = 12.0 * sum(pow(lambda, 4)) / ((sum(pow(lambda, 2))) ** 2);
+    const dF = 12.0 / kerQ;
+
+    // Calculate taus
+    const z_mean = sum(ZZ) / (nVar ** 2);
+    const tau1 = sum(dot(ZZ, ZZ)) / (nVar ** 2) / z_mean;
+    const taus = new Array(nRhos).fill(null);
+    for (let i = 0; i < nRhos; i++) {
+      taus[i] = (nVar * nVar) * rhos[i] * z_mean + tau1 * (1 - rhos[i]);
+    }
+  }
+}
+
 export { AggregationTest as _AggregationTest };  // for unit testing only
-export { SkatTest, ZegginiBurdenTest, VTTest, pmvnorm, calculate_mvt_pvalue, _skatDavies, _skatLiu };
+export { SkatTest, SkatOptimalTest, ZegginiBurdenTest, VTTest, pmvnorm, calculate_mvt_pvalue, _skatDavies, _skatLiu };
