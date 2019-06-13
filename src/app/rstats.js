@@ -308,9 +308,80 @@ const R_DT_0 = (lower_tail, log_p) => (lower_tail ? R_D__0(log_p) : R_D__1(log_p
 const R_DT_1 = (lower_tail, log_p) => (lower_tail ? R_D__1(log_p) : R_D__0(log_p));
 // const R_D_half = () => (log_p ? -M_LN2 : 0.5);
 
+// This is some sort of trick by using 0.5 - p + 0.5 to "perhaps gain 1 bit of accuracy"
+const R_D_Lval = (p, lower_tail) => (lower_tail ? p : (0.5 - p + 0.5));
+const R_D_Cval = (p, lower_tail) => (lower_tail ? (0.5 - p + 0.5) : p);
+
 const R_D_val = (x, log_p)	=> (log_p ? Math.log(x) : (x));
+const R_D_log = (p, log_p) => (log_p ? p : Math.log(p));
 const R_D_Clog = (p, log_p) => (log_p ? Math.log1p(-(p)) : (0.5 - (p) + 0.5));
 const R_DT_val = (x, lower_tail, log_p) => ((lower_tail ? R_D_val(x, log_p) : R_D_Clog(x, log_p)));
+
+const R_D_LExp = (x, log_p) => (log_p ? R_Log1_Exp(x) : Math.log1p(-x));
+
+// Be careful, for some reason they named two functions off by only 1 capital letter...
+// R_DT_log != R_DT_Log
+const R_DT_log = (p, lower_tail) => (lower_tail ? R_D_log(p) : R_D_LExp(p));
+const R_DT_Clog = (p, lower_tail) => (lower_tail ? R_D_LExp(p) : R_D_log(p));
+const R_DT_Log = (p, lower_tail) => (lower_tail ? p : R_Log1_Exp(p));
+
+/**
+ * See warning for R_Q_P01_boundaries (this function should be wrapped in try/catch.)
+ */
+function R_Q_P01_check(p, log_p) {
+  if ((log_p && p > 0) || (!log_p && (p < 0 || p > 1))) {
+    throw ML_ERR_return_NAN();
+  }
+}
+
+/**
+ * Note this has changed from the R implementation which was a C macro.
+ * You should wrap this in a try catch, like:
+ * try {
+ *   boundaries(...)
+ * }
+ * catch (e) { return e; }
+ */
+function R_Q_P01_boundaries(p, lower_tail, log_p, left, right) {
+  if (log_p) {
+    if (p > 0) { throw ML_ERR_return_NAN(); }
+    if (p === 0) { throw lower_tail ? right : left;  }
+    if (p === Number.NEGATIVE_INFINITY) { throw lower_tail ? left : right; }
+  }
+  else {
+    if (p < 0 || p > 1) { throw ML_ERR_return_NAN(); }
+    if (p === 0) { throw lower_tail ? left : right; }
+    if (p === 1) { throw lower_tail ? right : left; }
+  }
+}
+
+function R_DT_qIv(p, lower_tail, log_p) {
+  if (log_p) {
+    if (lower_tail) {
+      return Math.exp(p);
+    }
+    else {
+      return -Math.expm1(p);
+    }
+  }
+  else {
+    return R_D_Lval(p, lower_tail);
+  }
+}
+
+function R_DT_CIv(p, lower_tail, log_p) {
+  if (log_p) {
+    if (lower_tail) {
+      return -Math.expm1(p);
+    }
+    else {
+      return Math.exp(p);
+    }
+  }
+  else {
+    return R_D_Cval(p);
+  }
+}
 
 function fmin2(x, y) {
   if (isNaN(x) || isNaN(y)) {
