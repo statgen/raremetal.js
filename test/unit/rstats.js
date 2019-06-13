@@ -1,4 +1,4 @@
-import { dbeta, pchisq, pnorm, dgamma, dchisq } from '../../src/app/rstats.js';
+import { dbeta, pchisq, pnorm, dgamma, dchisq, qchisq, qnorm, qgamma } from '../../src/app/rstats.js';
 import { assert } from 'chai';
 import sqlite3 from 'sqlite3';
 
@@ -33,7 +33,54 @@ function nearlyEqual(a, b, epsilon = 0.00001) {
   }
 }
 
+function arrayStrictEqual(a1, a2) {
+  if (a1.length !== a2.length) { throw 'Arrays must be equal length'; }
+  for (let i = 0; i < a1.length; i++) {
+    assert.strictEqual(a1[i], a2[i]);
+  }
+}
+
+function arrayCloseTo(a1, a2, tol) {
+  if (a1.length !== a2.length) { throw 'Arrays must be equal length'; }
+  for (let i = 0; i < a1.length; i++) {
+    assert.closeTo(a1[i], a2[i], tol);
+  }
+}
+
 describe('rstats.js', function() {
+  describe('qnorm()', function() {
+    it('simple test', function() {
+      assert.closeTo(qnorm(0.01, 0, 1, true, false), -2.326348, 1e-6);
+      assert.closeTo(qnorm(0.01, 0, 1, false, false), 2.326348, 1e-6);
+      assert.strictEqual(qnorm(0, 0, 1, true, false), Number.NEGATIVE_INFINITY);
+      assert.strictEqual(qnorm(Number.NEGATIVE_INFINITY, 0, 1, true, true), Number.NEGATIVE_INFINITY);
+      assert.strictEqual(qnorm(1, 0, 1, true, false), Number.POSITIVE_INFINITY);
+      assert.strictEqual(qnorm(0, 0, 1, true, true), Number.POSITIVE_INFINITY);
+      assert.isNaN(qnorm(1.1, 0, 0, 1, true, false));
+
+      let p = [0.25, 0.001, 1e-20];
+      let q_calc = p.map(x => qnorm(x, 0, 1, true, false));
+      let q_truth = [-0.6744897501960817, -3.090232306167814, -9.262340089798408];
+      arrayCloseTo(q_calc, q_truth, 1e-14);
+
+      assert.closeTo(qnorm(-1e5, 0, 1, true, true), -447.1974945, 1e-6);
+    });
+  });
+
+  describe('qgamma()', function() {
+    it('simple test', function() {
+      const p = qgamma(0.5, 0.5, 2.0, true, false);
+      assert.closeTo(p, 0.4549364, 1e-6);
+    });
+  });
+
+  describe('qchisq()', function() {
+    it('simple test', function() {
+      const p = qchisq(0.5, 1, true, false);
+      assert.closeTo(p, 0.4549364, 1e-6);
+    });
+  });
+
   describe('dchisq()', function() {
     it('simple test', function() {
       const p = dchisq(1, 1);
