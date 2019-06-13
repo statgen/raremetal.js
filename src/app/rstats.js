@@ -1386,6 +1386,214 @@ export function qnorm(p, mu, sigma, lower_tail, log_p) {
   return mu + sigma * val;
 }
 
+function qchisq_appr(p, nu, g, lower_tail, log_p, tol) {
+  const C7 = 4.67;
+  const C8 = 6.66;
+  const C9 = 6.73;
+  const C10 = 13.32;
+
+  let alpha, a, c, ch, p1;
+  let p2, q, t, x;
+
+  if (isNaN(p) || isNaN(nu)) {
+    return p + nu;
+  }
+
+  try {
+    R_Q_P01_check(p, log_p);
+  }
+  catch(e) { return e; }
+  if (nu <= 0) { return ML_ERR_return_NAN(); }
+
+  alpha = 0.5 * nu;
+  c = alpha - 1;
+
+  if (nu < (-1.24) * (p1 = R_DT_log(p))) {
+    let lgam1pa = (alpha < 0.5) ? lgamma1p(alpha) : (Math.log(alpha) + g);
+    ch = Math.exp((lgam1pa + p1)/alpha + M_LN2);
+  }
+  else if (nu > 0.32) {
+    x = qnorm(p, 0, 1, lower_tail, log_p);
+    p1 = 2.0 / (9 * nu);
+    ch = nu * Math.pow(x * Math.sqrt(p1) + 1 - p1, 3);
+
+    if (ch > 2.2*nu + 6) {
+      ch = -2 * (R_DT_Clog(p, lower_tail) - c * Math.log(0.5 * ch) + g);
+    }
+  }
+  else {
+    ch = 0.4;
+    a = R_DT_Clog(p, lower_tail) + g + c * M_LN2;
+    do {
+      q = ch;
+      p1 = 1.0 / (1 + ch*(C7 + ch));
+      p2 = ch * (C9 + ch*(C8 + ch));
+      t = -0.5 + (C7 + 2*ch)*p1 - (C9 + ch*(C10 + 3 * ch)) / p2;
+      ch -= (1 - Math.exp(a + 0.5 * ch) * p2 * p1) / t;
+    }
+    while (Math.abs(q - ch) > tol * Math.abs(ch));
+  }
+
+  return ch;
+}
+
+/**
+ * Inverse CDF / quantile function of gamma distribution.
+ * @param p
+ * @param alpha
+ * @param scale
+ * @param lower_tail
+ * @param log_p
+ * @return {*|number|number|*}
+ */
+export function qgamma(p, alpha, scale, lower_tail, log_p) {
+  const EPS1 = 1e-2;
+  const EPS2 = 5e-7;
+  const EPS_N = 1e-15;
+  const LN_EPS = -36.043653389117156;
+  const MAXIT = 1000;
+  const pMIN = 1e-100;
+  const pMAX = 1-1e-14;
+  const i420 = 1.0 / 420.0;
+  const i2520 = 1.0 / 2520.0;
+  const i5040 = 1.0 / 5040.0;
+
+  let p_, a, b, c, g, ch, ch0, p1;
+  let p2, q, s1, s2, s3, s4, s5, s6, t, x;
+  let i, max_it_Newton = 1;
+
+  if (isNaN(p) || isNaN(alpha) || isNaN(scale)) { return p + alpha + scale; }
+  try {
+    R_Q_P01_boundaries(p, lower_tail, log_p, 0.0, Number.POSITIVE_INFINITY);
+  }
+  catch(e) { return e; }
+
+  if (alpha < 0 || scale <= 0) { return ML_ERR_return_NAN(); }
+  if (alpha === 0) { return 0.0; }
+  if (alpha < 1e-10) {
+    max_it_Newton = 7;
+  }
+
+  p_ = R_DT_qIv(p, lower_tail, log_p);
+  g = lgammafn(alpha);
+
+  // Closure to mimic the ugly 'goto END' everywhere
+  function end() {
+    x = 0.5 * scale * ch;
+    if (max_it_Newton) {
+      if (!log_p) {
+        p = Math.log(p);
+        log_p = true;
+      }
+      if (x === 0) {
+        const _1_p = 1.0 + 1e-7;
+        const _1_m = 1.0 - 1e-7;
+        x = DBL_MIN;
+        p_ = pgamma(x, alpha, scale, lower_tail, log_p);
+        if ((lower_tail && p_ > p * _1_p) || (!lower_tail && p_ < p * _1_m)) {
+          return 0.0;
+        }
+      }
+      else {
+        p_ = pgamma(x, alpha, scale, lower_tail, log_p);
+      }
+
+      if (p_ === Number.NEGATIVE_INFINITY) { return 0; }
+    }
+    for (let i = 1; i <= max_it_Newton; i++) {
+      p1 = p_ - p;
+      if (Math.abs(p1) < Math.abs(EPS_N * p)) {
+        break;
+      }
+
+      if ((g = dgamma(x, alpha, scale, log_p)) === R_D__0(log_p)) {
+        break;
+      }
+
+      t = log_p ? p1 * Math.exp(p_ - g) : p1 / g;
+      t = lower_tail ? x - t : x + t;
+      p_ = pgamma(t, alpha, scale, lower_tail, log_p);
+      if (Math.abs(p_ - p) > Math.abs(p1) || (i > 1 && Math.abs(p_ - p) === Math.abs(p1))) {
+        break;
+      }
+
+      /*
+      // This code appears to be never triggered in R, or rather I'm unable to find where
+      // Harmful_notably_if_max_it_Newton_is_1 is ever defined
+      if (t > 1.1*x) { t = 1.1 * x; }
+      else if (t < 0.9*x) { t = 0.9 * x; }
+       */
+
+      x = t;
+    }
+    return x;
+  }
+
+  ch = qchisq_appr(p, 2 * alpha, g, lower_tail, log_p, EPS1);
+  if (!isFinite(ch)) {
+    max_it_Newton = 0;
+    return end();
+  }
+  if (ch < EPS2) {
+    max_it_Newton = 20;
+    return end();
+  }
+  if (p_ > pMAX || p_ < pMIN) {
+    max_it_Newton = 20;
+    return end();
+  }
+
+  c = alpha - 1;
+  s6 = (120 + c * (346 + 127*c)) * i5040;
+  ch0 = ch;
+  for (let i = 1; i <= MAXIT; i++) {
+    q = ch;
+    p1 = 0.5 * ch;
+    p2 = p_ - pgamma_raw(p1, alpha, true, false);
+    if (!isFinite(p2) || ch <= 0) {
+      ch = ch0;
+      max_it_Newton = 27;
+      return end();
+    }
+
+    t = p2 * Math.exp(alpha * M_LN2 + g + p1 - c*Math.log(ch));
+    b = t/ch;
+    a = 0.5*t - b*c;
+    s1 = (210+ a*(140+a*(105+a*(84+a*(70+60*a))))) * i420;
+    s2 = (420+ a*(735+a*(966+a*(1141+1278*a)))) * i2520;
+    s3 = (210+ a*(462+a*(707+932*a))) * i2520;
+    s4 = (252+ a*(672+1182*a) + c*(294+a*(889+1740*a))) * i5040;
+    s5 = (84+2264*a + c*(1175+606*a)) * i2520;
+    ch += t*(1+0.5*t*s1-b*c*(s1-b*(s2-b*(s3-b*(s4-b*(s5-b*s6))))));
+
+    if (Math.abs(q - ch) < EPS2 * ch) {
+      return end();
+    }
+    if (Math.abs(q - ch) > 0.1 * ch) {
+      if (ch < q) {
+        ch = 0.9 * q;
+      }
+      else {
+        ch = 1.1 * q;
+      }
+    }
+  }
+
+  return end();
+}
+
+/**
+ * Inverse CDF / quantile function for chi-squared distribution.
+ * @param p
+ * @param df
+ * @param lower_tail
+ * @param log_p
+ * @return {*|number}
+ */
+export function qchisq(p, df, lower_tail, log_p) {
+  return qgamma(p, 0.5 * df, 2.0, lower_tail, log_p);
+}
+
 function pnorm_both(x, i_tail, log_p) {
   var cum, ccum;
   var xden, xnum, temp, del, eps, xsq, y;
