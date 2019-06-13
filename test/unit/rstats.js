@@ -76,7 +76,7 @@ describe('rstats.js', function() {
 
   describe('qchisq()', function() {
     it('simple test', function() {
-      const p = qchisq(0.5, 1, true, false);
+      const p = qchisq(0.5, 1, 0, true, false);
       assert.closeTo(p, 0.4549364, 1e-6);
     });
   });

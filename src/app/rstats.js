@@ -1590,7 +1590,8 @@ export function qgamma(p, alpha, scale, lower_tail, log_p) {
  * @param log_p
  * @return {*|number}
  */
-export function qchisq(p, df, lower_tail, log_p) {
+export function qchisq(p, df, ncp = 0, lower_tail = true, log_p = false) {
+  if (ncp !== 0) { throw 'Non-central chi-squared not yet supported'; }
   return qgamma(p, 0.5 * df, 2.0, lower_tail, log_p);
 }
 
