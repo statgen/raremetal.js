@@ -19,7 +19,7 @@ const _all_tests = [ZegginiBurdenTest, SkatTest, VTTest];
  * {key: {label: String, constructor: Object }
  * @type {{String: {label: String, constructor: function}}}
  */
-const AGGREGATION_TESTS = Object.freeze(_all_tests.reduce(function(acc, constructor) {
+const AGGREGATION_TESTS = Object.freeze(_all_tests.reduce(function (acc, constructor) {
   const inst = new constructor();  // Hack- need instance to access attributes
   acc[inst.key] = { label: inst.label, constructor: constructor };
   return acc;
@@ -205,7 +205,7 @@ class PortalGroupHelper {
 
 // Helper method that coordinates multiple tests on a series of masks
 class PortalTestRunner {
-  constructor(groups, variants, test_names=[]) {
+  constructor(groups, variants, test_names = []) {
     this.groups = groups;
     this.variants = variants;
     this._tests = [];
@@ -256,7 +256,7 @@ class PortalTestRunner {
     const mafs = this.variants.getEffectFreq(variants);
     let weights;  // TODO: The runner never actually uses the weights argument. Should it allow this?
 
-    const [ stat, pvalue ] = test.run(scores, cov, weights, mafs);
+    const [stat, pvalue] = test.run(scores, cov, weights, mafs);
 
     // The results describe the group + several new fields for calculation results.
     return {
@@ -300,6 +300,6 @@ function parsePortalJSON(json) {
   return [groups, variants];
 }
 
-export { PortalVariantsHelper as _PortalVariantsHelper , PortalGroupHelper as _PortalGroupHelper }; // testing only
+export { PortalVariantsHelper as _PortalVariantsHelper, PortalGroupHelper as _PortalGroupHelper }; // testing only
 
 export { parsePortalJSON, PortalTestRunner };
