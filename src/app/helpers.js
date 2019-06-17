@@ -231,8 +231,11 @@ class PortalTestRunner {
     return test;
   }
 
+  /**
+   * Run every test on every group in the container and return results
+   * @returns Promise A promise representing the fulfillment state of all tests being run
+   */
   run() {
-    // Run every test on every group in the container and return results
     let results = [];
 
     this._tests.forEach(test => {
@@ -240,10 +243,16 @@ class PortalTestRunner {
         results.push(this._runOne(test, group));
       });
     });
-
-    return results;
+    return Promise.all(results);
   }
 
+  /**
+   *
+   * @param {AggregationTest} test Instance for a single unit test
+   * @param group {Object} Data corresponding to a specific group, following API format docs
+   * @returns {{groupType: *, stat: *, test: *, pvalue: *, variants: (*|Array|string[]|Map), group: *, mask: (*|string|SVGMaskElement|string)}}
+   * @private
+   */
   _runOne(test, group) {
     // Helper method that translates portal data into the format expected by a test.
     const variants = group.variants;
@@ -256,34 +265,47 @@ class PortalTestRunner {
     const mafs = this.variants.getEffectFreq(variants);
     let weights;  // TODO: The runner never actually uses the weights argument. Should it allow this?
 
-    const [stat, pvalue] = test.run(scores, cov, weights, mafs);
+    // Some test classes may return a raw value and others will return a promise. Wrap the result for consistency.
+    let result = test.run(scores, cov, weights, mafs);
+    return Promise.resolve(result)
+      .then(([stat, pvalue]) => {
+        // The results describe the group + several new fields for calculation results.
+        return {
+          groupType: group.groupType,
+          group: group.group,
+          mask: group.mask,
+          variants: group.variants,
 
-    // The results describe the group + several new fields for calculation results.
-    return {
-      groupType: group.groupType,
-      group: group.group,
-      mask: group.mask,
-      variants: group.variants,
-
-      test: test.key,
-      stat,
-      pvalue
-    };
+          test: test.key,
+          stat,
+          pvalue
+        };
+      });
   }
 
+  /**
+   * Generate a JSON representation of the results. Returns a Promise, because some methods may run asynchronously
+   *  (eg via web workers), or require loading external libraries (eg webassembly)
+   * @param results Array
+   * @returns {Promise<{data: {groups: Promise<any> | Array, variants: *}} | never>}
+   */
   toJSON(results) {
     // Output calculation results in a format that matches the "precomputed results" endpoint
     // By passing in an argument, user can format any set of results (even combining multiple runs)
     if (!results) {
       results = this.run();
+    } else {
+      results = Promise.resolve(results);
     }
 
-    return {
-      data: {
-        variants: this.variants.data,
-        groups: results,
+    return results.then(group_results => {
+      return {
+        data: {
+          variants: this.variants.data,
+          groups: group_results,
+        }
       }
-    };
+    });
   }
 }
 
