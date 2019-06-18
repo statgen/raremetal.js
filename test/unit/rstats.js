@@ -200,6 +200,11 @@ describe('rstats.js', function() {
       });
     });
 
+    it('should match additional edge cases', function() {
+      // value of x < 0
+      assert.equal(pchisq(-1.5, 10, 0, false, false), 1.0);
+    });
+
   });
 
   describe('dbeta()', function() {

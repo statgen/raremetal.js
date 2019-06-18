@@ -355,6 +355,11 @@ function R_Q_P01_boundaries(p, lower_tail, log_p, left, right) {
   }
 }
 
+function R_P_bounds_01(x, x_min, x_max, lower_tail, log_p) {
+  if (x <= x_min) { throw R_DT_0(lower_tail, log_p); }
+  if (x >= x_max) { throw R_DT_1(lower_tail, log_p); }
+}
+
 function R_DT_qIv(p, lower_tail, log_p) {
   if (log_p) {
     if (lower_tail) {
@@ -1015,6 +1020,10 @@ function ppois_asymp(x, lambda, lower_tail, log_p) {
 
 function pgamma_raw(x, alph, lower_tail, log_p) {
   var res, d, sum;
+  try {
+    R_P_bounds_01(x, 0.0, Number.POSITIVE_INFINITY, lower_tail, log_p);
+  }
+  catch (e) { return e; }
   if (x < 1) {
     res = pgamma_smallx(x, alph, lower_tail, log_p);
   } else if (x <= alph - 1 && x < 0.8 * (alph + 50)) {
