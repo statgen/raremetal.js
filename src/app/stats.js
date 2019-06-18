@@ -11,6 +11,8 @@ import { pchisq, dbeta, pnorm, qchisq } from './rstats.js';
 import mvtdstpack from './mvtdstpack.js';
 import { cholesky } from './linalg.js';
 const { DoubleVec, IntVec, mvtdst } = mvtdstpack();
+import integral from './integral.js';
+const { DoubleVec: IntegralDoubleVec, SkatIntegrator } = integral();
 
 function makeDoubleVec(size) {
   const v = new DoubleVec();
@@ -24,8 +26,8 @@ function makeIntVec(size) {
   return v;
 }
 
-function copyToDoubleVec(arr) {
-  const v = new DoubleVec();
+function copyToDoubleVec(arr, constructor=DoubleVec) {
+  const v = new constructor();
   for (let i = 0; i < arr.length; i++) {
     v.push_back(arr[i]);
   }
@@ -934,6 +936,40 @@ class SkatOptimalTest extends AggregationTest {
     for (let i = 0; i < nRhos; i++) {
       taus[i] = (nVar * nVar) * rhos[i] * z_mean + tau1 * (1 - rhos[i]);
     }
+
+    // Calculate final p-value
+    const integrator = new SkatIntegrator(
+      copyToDoubleVec(rhos, IntegralDoubleVec),
+      copyToDoubleVec(lambda, IntegralDoubleVec),
+      copyToDoubleVec(Qs_minP, IntegralDoubleVec),
+      copyToDoubleVec(taus, IntegralDoubleVec),
+      muQ,
+      varQ,
+      varZeta,
+      dF
+    );
+    let pvalue = 1 - integrator.skatOptimalIntegral();
+
+    // Check SKAT p-value
+    const multi = (nRhos < 3) ? 2 : 3;
+    if (nRhos) {
+      if (pvalue <= 0) {
+        let p = minP * multi;
+        if (pvalue < p) {
+          pvalue = p;
+        }
+      }
+    }
+    if (pvalue === 0.0) {
+      pvalue = pvals[0];
+      for (let i = 1; i < nRhos; i++) {
+        if (pvals[i] > 0 && pvals[i] < pvalue) {
+          pvalue = pvals[i];
+        }
+      }
+    }
+
+    return [Q, pvalue];
   }
 }
 
