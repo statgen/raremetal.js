@@ -7,7 +7,7 @@
 
 import * as qfc from './qfc.js';
 import numeric from 'numeric';
-import { pchisq, dbeta, pnorm } from './rstats.js';
+import { pchisq, dbeta, pnorm, qchisq } from './rstats.js';
 import mvtdstpack from './mvtdstpack.js';
 import { cholesky } from './linalg.js';
 const { DoubleVec, IntVec, mvtdst } = mvtdstpack();
@@ -697,7 +697,7 @@ function _skatLiu(lambdas, qstat) {
 
 function getEigen(m) {
   const lambdas = numeric.eig(m, 10000).lambda.x.sort();
-  const n = eig.length;
+  const n = lambdas.length;
   let numNonZero = 0;
   let sumNonZero = 0.0;
   for (let i = 0; i < n; i++) {
@@ -714,7 +714,7 @@ function getEigen(m) {
   const t = sumNonZero / numNonZero / 100000;
   let numKeep = n;
   for (let i = 0; i < n; i++) {
-    if (values[i] < t) {
+    if (lambdas[i] < t) {
       numKeep--;
     }
     else {
@@ -743,7 +743,7 @@ function getMoment(lambdas) {
   const s2 = c[3] / (c[1] * c[1]);
 
   let a, d, l;
-  if (s1 * s2 > s2) {
+  if (s1 * s1 > s2) {
     a = 1 / (s1 - Math.sqrt(s1 * s1 - s2));
     d = (s1 * a - a * a);
     l = a * a - 2 * d;
@@ -762,15 +762,13 @@ function getMoment(lambdas) {
 }
 
 function getPvalByMoment(q, m) {
-  const qNorm = (Q - m.muQ) / Math.sqrt(m.varQ) * Math.sqrt(2.0 * m.df) + m.df;
-  const pvalue = pchisq(qNorm, m.df, 0, false, false);
-  return pvalue;
+  const qNorm = (q - m.muQ) / Math.sqrt(m.varQ) * Math.sqrt(2.0 * m.df) + m.df;
+  return pchisq(qNorm, m.df, 0, false, false);
 }
 
 function getQvalByMoment(min_pval, m) {
   const q_org = qchisq(min_pval, m.df, 0, false, false);
-  const q = (q_org - m.df) / Math.sqrt(2.0 * m.df) * Math.sqrt(m.varQ) + m.muQ;
-  return q;
+  return (q_org - m.df) / Math.sqrt(2.0 * m.df) * Math.sqrt(m.varQ) + m.muQ;
 }
 
 /**
@@ -830,15 +828,17 @@ class SkatOptimalTest extends AggregationTest {
    * @return {Number[]} SKAT p-value.
    */
   run(u, v, w, mafs) {
-    const { dot, svd, sum, mul, rep, pow } = numeric;
+    const { dot, svd, sum, mul, div, sub, rep, pow, diag } = numeric;
     const t = numeric.transpose;
 
     // Calculate weights (if necessary)
     if (w === undefined || w === null) {
-      w = SkatTest.weights(mafs);
+      w = SkatOptimalTest.weights(mafs);
     }
 
     const nVar = u.length; // number of variants
+    w = diag(w); // diagonal matrix
+    u = t([u]); // column vector
 
     // Setup rho values
     const nRhos = 10;
@@ -858,7 +858,7 @@ class SkatOptimalTest extends AggregationTest {
     // [ rho rho 1   ]
     const Rp = new Array(nRhos).fill(null);
     for (let i = 0; i < nRhos; i++) {
-      let r = num.rep([nVar, nVar], this.rhos[i]);
+      let r = rep([nVar, nVar], rhos[i]);
       for (let j = 0; j < r.length; j++) {
         r[j][j] = 1.0;
       }
@@ -870,7 +870,7 @@ class SkatOptimalTest extends AggregationTest {
     // R(rho) is a matrix for each rho value that reflects weighting between burden & SKAT
     const Qs = [];
     for (let i = 0; i < nRhos; i++) {
-      Qs[i] = dot(t(u), dot(w, dot(Rp[i], dot(w, u))));
+      Qs[i] = dot(t(u), dot(w, dot(Rp[i], dot(w, u))))[0][0];
     }
 
     // Calculate lambdas (eigenvalues of W * IOTA * W.) In the paper, IOTA is the covariance matrix divided by
@@ -888,7 +888,7 @@ class SkatOptimalTest extends AggregationTest {
     // Calculate moments
     const moments = new Array(nRhos).fill(null);
     for (let i = 0; i < nRhos; i++) {
-      moments[i] = getMoment(lambdas);
+      moments[i] = getMoment(lambdas[i]);
     }
 
     // Calculate p-values for each rho
@@ -906,7 +906,7 @@ class SkatOptimalTest extends AggregationTest {
         minIndex = i;
       }
     }
-    const rho = rhos[minIndex];
+    //const rho = rhos[minIndex];
     const Q = Qs[minIndex];
 
     // Calculate minimum Q(p)
@@ -918,8 +918,8 @@ class SkatOptimalTest extends AggregationTest {
     // Calculate parameters needed for Z'(I-M)Z part
     const Z11 = dot(v, rep([nVar, 1], 1));
     const ZZ = v;
-    const ZMZ = dot(Z11, t(Z11)) / sum(ZZ);
-    const ZIMZ = ZZ - ZMZ;
+    const ZMZ = div(dot(Z11, t(Z11)),sum(ZZ));
+    const ZIMZ = sub(ZZ,ZMZ);
     const lambda = getEigen(ZIMZ);
     const varZeta = 4 * sum(mul(ZMZ, ZIMZ));
     const muQ = sum(lambda);
