@@ -6,3 +6,4 @@ tmp
 # Emscripten
 src/app/qfc.js
 src/app/mvtdstpack.js
+src/app/integral.js

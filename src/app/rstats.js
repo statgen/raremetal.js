@@ -323,7 +323,7 @@ const R_D_LExp = (x, log_p) => (log_p ? R_Log1_Exp(x) : Math.log1p(-x));
 // R_DT_log != R_DT_Log
 const R_DT_log = (p, lower_tail) => (lower_tail ? R_D_log(p) : R_D_LExp(p));
 const R_DT_Clog = (p, lower_tail) => (lower_tail ? R_D_LExp(p) : R_D_log(p));
-const R_DT_Log = (p, lower_tail) => (lower_tail ? p : R_Log1_Exp(p));
+//const R_DT_Log = (p, lower_tail) => (lower_tail ? p : R_Log1_Exp(p));
 
 /**
  * See warning for R_Q_P01_boundaries (this function should be wrapped in try/catch.)
@@ -1459,7 +1459,7 @@ export function qgamma(p, alpha, scale, lower_tail, log_p) {
   const EPS1 = 1e-2;
   const EPS2 = 5e-7;
   const EPS_N = 1e-15;
-  const LN_EPS = -36.043653389117156;
+  //const LN_EPS = -36.043653389117156;
   const MAXIT = 1000;
   const pMIN = 1e-100;
   const pMAX = 1-1e-14;
@@ -1469,7 +1469,7 @@ export function qgamma(p, alpha, scale, lower_tail, log_p) {
 
   let p_, a, b, c, g, ch, ch0, p1;
   let p2, q, s1, s2, s3, s4, s5, s6, t, x;
-  let i, max_it_Newton = 1;
+  let max_it_Newton = 1;
 
   if (isNaN(p) || isNaN(alpha) || isNaN(scale)) { return p + alpha + scale; }
   try {
