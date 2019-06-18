@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 
-import { ZegginiBurdenTest, SkatTest, SkatOptimalTest, VTTest, pmvnorm, calculate_mvt_pvalue } from '../../src/app/stats.js';
+import { ZegginiBurdenTest, SkatTest, SkatOptimalTest, VTTest, WASM_HELPERS, calculate_mvt_pvalue } from '../../src/app/stats.js';
 
 describe('stats.js', function() {
   describe('pmvnorm', function() {
@@ -15,10 +15,12 @@ describe('stats.js', function() {
         [0.245,0.347,0.425,1.000]
       ];
 
-      const result = pmvnorm(lower, upper, mean, sigma);
-      assert.closeTo(result.value, 0.12163363705851155, 0.001);
-      assert.closeTo(result.error, 0.000020666222108512638, 0.001);
-      assert.equal(result.inform, 0);
+      return WASM_HELPERS.then(module => {
+        const result = module.pmvnorm(lower, upper, mean, sigma);
+        assert.closeTo(result.value, 0.12163363705851155, 0.001);
+        assert.closeTo(result.error, 0.000020666222108512638, 0.001);
+        assert.equal(result.inform, 0);
+      });
     });
 
     it('should return correct value when inform==3 is triggered', function() {
@@ -37,10 +39,12 @@ describe('stats.js', function() {
         [0.127, 0.201, 0.254, 0.324, 0.392, 0.818, 0.926, 0.944, 1.000]
       ];
 
-      const result = pmvnorm(lower, upper, mean, sigma);
-      assert.closeTo(result.value, 0.88037564067513052, 0.001);
-      assert.closeTo(result.error, 0.00076046962293943772, 0.001);
-      assert.equal(result.inform, 0);
+      return WASM_HELPERS.then(module => {
+        const result = module.pmvnorm(lower, upper, mean, sigma);
+        assert.closeTo(result.value, 0.88037564067513052, 0.001);
+        assert.closeTo(result.error, 0.00076046962293943772, 0.001);
+        assert.equal(result.inform, 0);
+      });
     });
   });
 
@@ -77,11 +81,13 @@ describe('stats.js', function() {
       ];
       const mafs = [0.0004395216, 0.00099127976258790436, 0.00028191799999999998, 0.0012230639437412097];
       const agg = new VTTest();
-      const [tmax, pval] = agg.run(u, cov, null, mafs);
-      const expectedPval = 0.80328082770889286;
-      const expectedTmax = 0.8111221126845517;
-      assert.closeTo(pval, expectedPval, 0.001);
-      assert.closeTo(tmax, expectedTmax, 0.001);
+
+      return agg.run(u, cov, null, mafs).then(([tmax, pval]) => {
+        const expectedPval = 0.80328082770889286;
+        const expectedTmax = 0.8111221126845517;
+        assert.closeTo(pval, expectedPval, 0.001);
+        assert.closeTo(tmax, expectedTmax, 0.001);
+      });
     });
   });
 

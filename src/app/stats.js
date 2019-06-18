@@ -10,29 +10,163 @@ import numeric from 'numeric';
 import { pchisq, dbeta, pnorm, qchisq } from './rstats.js';
 import mvtdstpack from './mvtdstpack.js';
 import { cholesky } from './linalg.js';
-const { DoubleVec, IntVec, mvtdst } = mvtdstpack();
+
 import integral from './integral.js';
 const { DoubleVec: IntegralDoubleVec, SkatIntegrator } = integral();
 
-function makeDoubleVec(size) {
-  const v = new DoubleVec();
-  v.resize(size, NaN);
-  return v;
-}
+// A promise that can be used to access module members once the wasm loader has resolved.
+// Because the webassembly code is loaded asyncronously, anything using any module method will need to be resolved asynchronously as well.
 
-function makeIntVec(size) {
-  const v = new IntVec();
-  v.resize(size, NaN);
-  return v;
-}
+// Functions using WASM will be defined inside a single promise- sort of a meta-module
+const WASM_HELPERS = new Promise((resolve, reject) => {
+  // The emscripten "module" doesn't return a true promise, so it can't be chained in the traditional sense.
+  // This syntax is a hack that allows us to wrap the wasm module with our helper functions and access those helpers.
+  try {
+    mvtdstpack().then(module => {
+      function makeDoubleVec(size) {
+        const v = new module.DoubleVec();
+        v.resize(size, NaN);
+        return v;
+      }
 
-function copyToDoubleVec(arr, constructor=DoubleVec) {
-  const v = new constructor();
-  for (let i = 0; i < arr.length; i++) {
-    v.push_back(arr[i]);
+      function makeIntVec(size) {
+        const v = new module.IntVec();
+        v.resize(size, NaN);
+        return v;
+      }
+
+      function copyToDoubleVec(arr, constructor=module.DoubleVec) {
+        const v = new constructor();
+        for (let i = 0; i < arr.length; i++) {
+          v.push_back(arr[i]);
+        }
+        return v;
+      }
+
+      function pmvnorm(lower, upper, mean, sigma) {
+        const n = sigma.length;
+        const infin = makeIntVec(n);
+        const delta = makeDoubleVec(n);
+        const corrF = makeDoubleVec(n * (n - 1) / 2);
+        let corr = cov2cor(sigma);
+
+        // Populate corrF
+        for (let j = 0; j < n; j++) {
+          for (let i = j + 1; i < n; i++) {
+            let k = j + 1 + ((i - 1) * i) / 2 - 1;
+            corrF.set(k, corr[i][j]);
+          }
+        }
+
+        // Calculate limits
+        for (let i = 0; i < n; i++) {
+          delta.set(i, 0.0);
+
+          if (lower[i] !== Infinity && lower[i] !== -Infinity) {
+            lower[i] = (lower[i] - mean[i]) / Math.sqrt(sigma[i][i]);
+          }
+
+          if (upper[i] !== Infinity && upper[i] !== -Infinity) {
+            upper[i] = (upper[i] - mean[i]) / Math.sqrt(sigma[i][i]);
+          }
+
+          if (lower[i] === -Infinity) {
+            infin.set(i, 0);
+          }
+          if (upper[i] === Infinity) {
+            infin.set(i, 1);
+          }
+          if (lower[i] === -Infinity && upper[i] === Infinity) {
+            infin.set(i, -1);
+          }
+          if (lower[i] !== -Infinity && upper[i] !== Infinity) {
+            infin.set(i, 2);
+          }
+          if (lower[i] === -Infinity) {
+            lower[i] = 0;
+          }
+          if (upper[i] === Infinity) {
+            upper[i] = 0;
+          }
+        }
+
+        let inform = 0;
+        let value = 0.0;
+        let error = 0.0;
+        const df = 0;
+        const maxpts = 50000;
+        const abseps = 0.001;
+        const releps = 0.0;
+
+        let sum = 0;
+        for (let i = 0; i < n; i++) {
+          sum += infin.get(i);
+        }
+
+        if (sum === -n) {
+          inform = 0;
+          value = 1.0;
+        } else {
+          ({ error, inform, value } = module.mvtdst(n, df, copyToDoubleVec(lower), copyToDoubleVec(upper), infin, corrF, delta, maxpts, abseps, releps));
+        }
+
+        if (inform === 3) {
+          // Need to make correlation matrix positive definite
+          let trial = 0;
+          while (inform > 1 && trial < 100) {
+            let eig = numeric.eig(corr, 100000);
+
+            let lambdas = eig.lambda.x;
+            for (let i = 0; i < n; i++) {
+              if (lambdas[i] < 0) {
+                lambdas[i] = 0.0;
+              }
+            }
+
+            let D = numeric.diag(lambdas);
+            let V = eig.E.x;
+            corr = numeric.dot(numeric.dot(V, D), numeric.transpose(V));
+            let corr_diag = Array(n);
+            for (let i = 0; i < n; i++) {
+              corr_diag[i] = corr[i][i];
+            }
+            let norm = numeric.dot(numeric.transpose([corr_diag]), [corr_diag]);
+
+            for (let j = 0; j < n; j++) {
+              for (let i = j + 1; i < n; i++) {
+                let k = j + 1 + ((i - 1) * i) / 2 - 1;
+                corrF.set(k, corr[i][j] / Math.sqrt(norm[i][j]));
+              }
+            }
+
+            ({ error, inform, value } = module.mvtdst(n, df, copyToDoubleVec(lower), copyToDoubleVec(upper), infin, corrF, delta, maxpts, abseps, releps));
+          }
+
+          if (inform > 1) {
+            value = -1.0;
+          }
+        }
+
+        return {
+          error: error,
+          inform: inform,
+          value: value
+        };
+      }
+
+      const helper_module = {
+        makeDoubleVec,
+        makeIntVec,
+        copyToDoubleVec,
+        pmvnorm,
+      };
+
+      resolve(helper_module);
+    });
+  } catch (error) {
+    reject(error);
   }
-  return v;
-}
+});
 
 function emptyRowMatrix(nrows, ncols) {
   let m = new Array(nrows);
@@ -48,8 +182,7 @@ function cov2cor(sigma) {
     for (let j = i; j < sigma[0].length; j++) {
       if (i === j) {
         corr[i][j] = 1.0;
-      }
-      else {
+      } else {
         let v = sigma[i][j] / (Math.sqrt(sigma[i][i]) * Math.sqrt(sigma[j][j]));
         corr[i][j] = v;
         corr[j][i] = v;
@@ -59,104 +192,6 @@ function cov2cor(sigma) {
   return corr
 }
 
-function pmvnorm(lower, upper, mean, sigma) {
-  const n = sigma.length;
-  const infin = makeIntVec(n);
-  const delta = makeDoubleVec(n);
-  const corrF = makeDoubleVec(n * (n-1) / 2);
-  let corr = cov2cor(sigma);
-
-  // Populate corrF
-  for (let j = 0; j < n; j++) {
-    for (let i = j + 1; i < n; i++) {
-      let k = j + 1 + ((i - 1) * i) / 2 - 1;
-      corrF.set(k, corr[i][j]);
-    }
-  }
-
-  // Calculate limits
-  for (let i = 0; i < n; i++) {
-    delta.set(i, 0.0);
-
-    if (lower[i] !== Infinity && lower[i] !== -Infinity) {
-      lower[i] = (lower[i] - mean[i]) / Math.sqrt(sigma[i][i]);
-    }
-
-    if (upper[i] !== Infinity && upper[i] !== -Infinity) {
-      upper[i] = (upper[i] - mean[i]) / Math.sqrt(sigma[i][i]);
-    }
-
-    if (lower[i] === -Infinity) { infin.set(i, 0); }
-    if (upper[i] === Infinity) { infin.set(i, 1); }
-    if (lower[i] === -Infinity && upper[i] === Infinity) { infin.set(i, -1);}
-    if (lower[i] !== -Infinity && upper[i] !== Infinity) { infin.set(i, 2); }
-    if (lower[i] === -Infinity) { lower[i] = 0; }
-    if (upper[i] === Infinity) { upper[i] = 0; }
-  }
-
-  let inform = 0;
-  let value = 0.0;
-  let error = 0.0;
-  const df = 0;
-  const maxpts = 50000;
-  const abseps = 0.001;
-  const releps = 0.0;
-
-  let sum = 0;
-  for (let i = 0; i < n; i++) {
-    sum += infin.get(i);
-  }
-
-  if (sum === -n) {
-    inform = 0;
-    value = 1.0;
-  }
-  else {
-    ({ error, inform, value } = mvtdst(n, df, copyToDoubleVec(lower), copyToDoubleVec(upper), infin, corrF, delta, maxpts, abseps, releps));
-  }
-
-  if (inform === 3) {
-    // Need to make correlation matrix positive definite
-    let trial = 0;
-    while (inform > 1 && trial < 100) {
-      let eig = numeric.eig(corr, 100000);
-
-      let lambdas = eig.lambda.x;
-      for (let i = 0; i < n; i++) {
-        if (lambdas[i] < 0) {
-          lambdas[i] = 0.0;
-        }
-      }
-
-      let D = numeric.diag(lambdas);
-      let V = eig.E.x;
-      corr = numeric.dot(numeric.dot(V, D), numeric.transpose(V));
-      let corr_diag = Array(n);
-      for (let i = 0; i < n; i++) { corr_diag[i] = corr[i][i]; }
-      let norm = numeric.dot(numeric.transpose([corr_diag]), [corr_diag]);
-
-      for (let j = 0; j < n; j++) {
-        for (let i = j + 1; i < n; i++) {
-          let k = j + 1 + ((i - 1) * i) / 2 - 1;
-          corrF.set(k, corr[i][j] / Math.sqrt(norm[i][j]));
-        }
-      }
-
-      ({ error, inform, value } = mvtdst(n, df, copyToDoubleVec(lower), copyToDoubleVec(upper), infin, corrF, delta, maxpts, abseps, releps));
-    }
-
-    if (inform > 1) {
-      value = -1.0;
-    }
-  }
-
-  return {
-    error: error,
-    inform: inform,
-    value: value
-  };
-}
-
 function get_conditional_dist(scores, cov, comb) {
   const result = new Array(2).fill(0.0);
   const mu2 = [];
@@ -164,10 +199,10 @@ function get_conditional_dist(scores, cov, comb) {
   const sub_cov = emptyRowMatrix(dim, dim);
 
   for (let i = 0; i < dim; i++) {
-    let idx1 = comb[i+1];
+    let idx1 = comb[i + 1];
     mu2[i] = scores[idx1];
     for (let j = 0; j < dim; j++) {
-      let idx2 = comb[j+1];
+      let idx2 = comb[j + 1];
       sub_cov[i][j] = cov[idx1][idx2];
     }
   }
@@ -176,7 +211,7 @@ function get_conditional_dist(scores, cov, comb) {
   const sigma12 = new Array(dim).fill(NaN);
   for (let i = 0; i < dim; i++) {
     let idx1 = comb[0];
-    let idx2 = comb[i+1];
+    let idx2 = comb[i + 1];
     sigma12[i] = cov[idx1][idx2];
   }
 
@@ -420,8 +455,10 @@ class VTTest extends AggregationTest {
    * @param v
    * @param w This parameter is ignored for VT. Weights are calculated automatically from mafs.
    * @param mafs
+   * @return Promise
    */
   run(u, v, w, mafs) {
+    // Uses wasm, returns a promise
     if (w != null) {
       throw 'w vector is not accepted in with VT test';
     }
@@ -440,32 +477,32 @@ class VTTest extends AggregationTest {
     const lower = new Array(maf_cutoffs.length).fill(-t_max);
     const upper = new Array(maf_cutoffs.length).fill(t_max);
     const mean = new Array(maf_cutoffs.length).fill(0);
-    let result = pmvnorm(lower, upper, mean, cov_t);
 
-    let pvalue;
-    if (result.value === -1.0) {
-      throw 'Error: correlation matrix is not positive semi-definite';
-    }
-    else if (result.value === 1.0)  {
-      // Use Shuang's algorithm
-      if (maf_cutoffs.length > 20) {
-        maf_cutoffs = maf_cutoffs.slice(-20);
-        let [scores, cov_t, t_max] = _vt(maf_cutoffs, u, v, mafs);
-        pvalue = calculate_mvt_pvalue(scores, cov_t, t_max);
+    return WASM_HELPERS.then(module => {
+      let result = module.pmvnorm(lower, upper, mean, cov_t);
+
+      let pvalue;
+      if (result.value === -1.0) {
+        throw 'Error: correlation matrix is not positive semi-definite';
+      } else if (result.value === 1.0) {
+        // Use Shuang's algorithm
+        if (maf_cutoffs.length > 20) {
+          maf_cutoffs = maf_cutoffs.slice(-20);
+          let [scores, cov_t, t_max] = _vt(maf_cutoffs, u, v, mafs);
+          pvalue = calculate_mvt_pvalue(scores, cov_t, t_max);
+        } else {
+          pvalue = calculate_mvt_pvalue(scores, cov_t, t_max);
+        }
+      } else {
+        pvalue = 1.0 - result.value;
       }
-      else {
-        pvalue = calculate_mvt_pvalue(scores, cov_t, t_max);
+
+      if (pvalue > 1.0) {
+        pvalue = 1.0;
       }
-    }
-    else {
-      pvalue = 1.0 - result.value;
-    }
 
-    if (pvalue > 1.0) {
-      pvalue = 1.0;
-    }
-
-    return [t_max, pvalue];
+      return [t_max, pvalue];
+    });
   }
 }
 
@@ -876,7 +913,7 @@ class SkatOptimalTest extends AggregationTest {
     }
 
     // Calculate lambdas (eigenvalues of W * IOTA * W.) In the paper, IOTA is the covariance matrix divided by
-    // the phenotypic variance sigma^2. 
+    // the phenotypic variance sigma^2.
     const lambdas = new Array(nRhos).fill(null);
     const phis = new Array(nRhos).fill(null); // W * IOTA * W i.e. W * G'G/sigma^2 * W
     for (let i = 0; i < nRhos; i++) {
@@ -974,4 +1011,6 @@ class SkatOptimalTest extends AggregationTest {
 }
 
 export { AggregationTest as _AggregationTest };  // for unit testing only
-export { SkatTest, SkatOptimalTest, ZegginiBurdenTest, VTTest, pmvnorm, calculate_mvt_pvalue, _skatDavies, _skatLiu };
+export { SkatTest, SkatOptimalTest, ZegginiBurdenTest, VTTest,
+  WASM_HELPERS, calculate_mvt_pvalue, _skatDavies, _skatLiu
+};
