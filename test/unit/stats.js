@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 
-import { ZegginiBurdenTest, SkatTest, SkatOptimalTest, VTTest, WASM_HELPERS, calculate_mvt_pvalue } from '../../src/app/stats.js';
+import { ZegginiBurdenTest, SkatTest, SkatOptimalTest, VTTest, MVT_WASM_HELPERS, calculate_mvt_pvalue } from '../../src/app/stats.js';
 
 describe('stats.js', function() {
   describe('pmvnorm', function() {
@@ -15,7 +15,7 @@ describe('stats.js', function() {
         [0.245,0.347,0.425,1.000]
       ];
 
-      return WASM_HELPERS.then(module => {
+      return MVT_WASM_HELPERS.then(module => {
         const result = module.pmvnorm(lower, upper, mean, sigma);
         assert.closeTo(result.value, 0.12163363705851155, 0.001);
         assert.closeTo(result.error, 0.000020666222108512638, 0.001);
@@ -39,7 +39,7 @@ describe('stats.js', function() {
         [0.127, 0.201, 0.254, 0.324, 0.392, 0.818, 0.926, 0.944, 1.000]
       ];
 
-      return WASM_HELPERS.then(module => {
+      return MVT_WASM_HELPERS.then(module => {
         const result = module.pmvnorm(lower, upper, mean, sigma);
         assert.closeTo(result.value, 0.88037564067513052, 0.001);
         assert.closeTo(result.error, 0.00076046962293943772, 0.001);
@@ -236,14 +236,15 @@ describe('stats.js', function() {
         0.00412922
       ];
       let agg = new SkatOptimalTest();
-      let [, pval] = agg.run(u, cov, null, mafs);
-      let expectedPval = 0.6156647276107277;
-      assert.closeTo(
-        pval,
-        expectedPval,
-        0.001,
-        'SkatOptimalTest on known u/cov did not produce close enough p-value to expected'
-      )
+      return agg.run(u, cov, null, mafs).then(([, pval]) => {
+        let expectedPval = 0.6156647276107277;
+        assert.closeTo(
+          pval,
+          expectedPval,
+          0.001,
+          'SkatOptimalTest on known u/cov did not produce close enough p-value to expected'
+        )
+      });
     });
   });
 });

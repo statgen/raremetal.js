@@ -12,13 +12,11 @@ import mvtdstpack from './mvtdstpack.js';
 import { cholesky } from './linalg.js';
 
 import integral from './integral.js';
-const { DoubleVec: IntegralDoubleVec, SkatIntegrator } = integral();
-
-// A promise that can be used to access module members once the wasm loader has resolved.
-// Because the webassembly code is loaded asyncronously, anything using any module method will need to be resolved asynchronously as well.
 
 // Functions using WASM will be defined inside a single promise- sort of a meta-module
-const WASM_HELPERS = new Promise((resolve, reject) => {
+//   Because the webassembly code is loaded asynchronously, anything using any module method will need to be
+//   resolved asynchronously as well.
+const MVT_WASM_HELPERS = new Promise((resolve, reject) => {
   // The emscripten "module" doesn't return a true promise, so it can't be chained in the traditional sense.
   // This syntax is a hack that allows us to wrap the wasm module with our helper functions and access those helpers.
   try {
@@ -478,7 +476,7 @@ class VTTest extends AggregationTest {
     const upper = new Array(maf_cutoffs.length).fill(t_max);
     const mean = new Array(maf_cutoffs.length).fill(0);
 
-    return WASM_HELPERS.then(module => {
+    return MVT_WASM_HELPERS.then(module => {
       let result = module.pmvnorm(lower, upper, mean, cov_t);
 
       let pvalue;
@@ -974,43 +972,54 @@ class SkatOptimalTest extends AggregationTest {
       taus[i] = (nVar * nVar) * rhos[i] * z_mean + tau1 * (1 - rhos[i]);
     }
 
-    // Calculate final p-value
-    const integrator = new SkatIntegrator(
-      copyToDoubleVec(rhos, IntegralDoubleVec),
-      copyToDoubleVec(lambda, IntegralDoubleVec),
-      copyToDoubleVec(Qs_minP, IntegralDoubleVec),
-      copyToDoubleVec(taus, IntegralDoubleVec),
-      muQ,
-      varQ,
-      varZeta,
-      dF
-    );
-    let pvalue = 1 - integrator.skatOptimalIntegral();
+    return MVT_WASM_HELPERS.then(mvt_module => {
+      // This part is a little ugly, in that we're consuming two async emscripten wrappers that don't support Promise
+      //  chaining. Once both modules are loaded, the real calculations are done synchronously.
+      // Integral is an emscripten module, so wrap it to allow promise chaining
+      return new Promise((resolve, reject) => {
+        try {
+          integral().then(int_module => {
+            const integrator = new int_module.SkatIntegrator(
+              mvt_module.copyToDoubleVec(rhos, int_module.DoubleVec),
+              mvt_module.copyToDoubleVec(lambda, int_module.DoubleVec),
+              mvt_module.copyToDoubleVec(Qs_minP, int_module.DoubleVec),
+              mvt_module.copyToDoubleVec(taus, int_module.DoubleVec),
+              muQ,
+              varQ,
+              varZeta,
+              dF
+            );
+            let pvalue = 1 - integrator.skatOptimalIntegral();
 
-    // Check SKAT p-value
-    const multi = (nRhos < 3) ? 2 : 3;
-    if (nRhos) {
-      if (pvalue <= 0) {
-        let p = minP * multi;
-        if (pvalue < p) {
-          pvalue = p;
+            // Check SKAT p-value
+            const multi = (nRhos < 3) ? 2 : 3;
+            if (nRhos) {
+              if (pvalue <= 0) {
+                let p = minP * multi;
+                if (pvalue < p) {
+                  pvalue = p;
+                }
+              }
+            }
+            if (pvalue === 0.0) {
+              pvalue = pvals[0];
+              for (let i = 1; i < nRhos; i++) {
+                if (pvals[i] > 0 && pvals[i] < pvalue) {
+                  pvalue = pvals[i];
+                }
+              }
+            }
+            resolve([Q, pvalue]);
+          });
+        } catch (error) {
+          reject(error);
         }
-      }
-    }
-    if (pvalue === 0.0) {
-      pvalue = pvals[0];
-      for (let i = 1; i < nRhos; i++) {
-        if (pvals[i] > 0 && pvals[i] < pvalue) {
-          pvalue = pvals[i];
-        }
-      }
-    }
-
-    return [Q, pvalue];
+      });
+    });
   }
 }
 
 export { AggregationTest as _AggregationTest };  // for unit testing only
 export { SkatTest, SkatOptimalTest, ZegginiBurdenTest, VTTest,
-  WASM_HELPERS, calculate_mvt_pvalue, _skatDavies, _skatLiu
+  MVT_WASM_HELPERS, calculate_mvt_pvalue, _skatDavies, _skatLiu
 };
