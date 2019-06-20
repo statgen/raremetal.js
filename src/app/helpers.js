@@ -324,4 +324,4 @@ function parsePortalJSON(json) {
 
 export { PortalVariantsHelper as _PortalVariantsHelper, PortalGroupHelper as _PortalGroupHelper }; // testing only
 
-export { parsePortalJSON, PortalTestRunner };
+export { parsePortalJSON, PortalTestRunner, AGGREGATION_TESTS };

@@ -18,3 +18,5 @@ if (typeof exports === 'object' && typeof module === 'object')
       define([], function() { return mvtdstpack; });
     else if (typeof exports === 'object')
       exports["mvtdstpack"] = mvtdstpack;
+
+    export default mvtdstpack;

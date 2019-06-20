@@ -18,4 +18,5 @@ if (typeof exports === 'object' && typeof module === 'object')
       define([], function() { return Module; });
     else if (typeof exports === 'object')
       exports["Module"] = Module;
-    
+
+    export default Module;
