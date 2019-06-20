@@ -8,10 +8,12 @@
 import * as qfc from './qfc.js';
 import numeric from 'numeric';
 import { pchisq, dbeta, pnorm, qchisq } from './rstats.js';
-import mvtdstpack from './mvtdstpack.js';
 import { cholesky } from './linalg.js';
 
+import mvtdstpack from './mvtdstpack.js';
 import integral from './integral.js';
+
+
 
 // Functions using WASM will be defined inside a single promise- sort of a meta-module
 //   Because the webassembly code is loaded asynchronously, anything using any module method will need to be
@@ -353,7 +355,7 @@ class ZegginiBurdenTest extends AggregationTest {
   constructor() {
     super(...arguments);
     this.key = 'burden';
-    this.label = 'Burden Test';
+    this.label = 'Burden';
   }
 
   /**
@@ -441,7 +443,7 @@ function _vt(maf_cutoffs, u, v, mafs) {
 class VTTest extends AggregationTest {
   constructor() {
     super(...arguments);
-    this.label = 'Variable Threshold Test';
+    this.label = 'Variable Threshold';
     this.key = 'vt';
     this.requiresMaf = true;
     this._method = 'auto';
@@ -516,7 +518,7 @@ class VTTest extends AggregationTest {
 class SkatTest extends AggregationTest {
   constructor() {
     super(...arguments);
-    this.label = 'SKAT Test';
+    this.label = 'SKAT';
     this.key = 'skat';
     this.requiresMaf = true;
 
@@ -821,7 +823,7 @@ function getQvalByMoment(min_pval, m) {
 class SkatOptimalTest extends AggregationTest {
   constructor() {
     super(...arguments);
-    this.label = 'SKAT Optimal Test';
+    this.label = 'SKAT Optimal';
     this.key = 'skat-o';
     this.requiresMaf = true;
 
