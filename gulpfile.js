@@ -12,7 +12,6 @@ const rename = require('gulp-rename');
 
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const webpackStream = require('webpack-stream');
-const ShakePlugin = require('webpack-common-shake').Plugin;
 
 const Instrumenter = isparta.Instrumenter;
 const mochaGlobals = require('./test/setup/.globals');
@@ -53,6 +52,9 @@ function build() {
         libraryTarget: 'umd',
         library: config.mainVarName
       },
+      optimization: {
+        minimize: false,
+      },
       externals: {},
       module: {
         // Make sure to load the source maps for any dependent libraries
@@ -81,14 +83,10 @@ function build() {
         new CleanWebpackPlugin({
           verbose: true,
           cleanOnceBeforeBuildPatterns: [
-            'dist/*.js',
-            'dist/*.js.map'
+            'dist/*',
           ]
         }),
-        // CommonJS tree-shaking is not well supported by webpack, but this gives some small benefits
-        new ShakePlugin()
       ],
-      // TODO: there are known issues with sourcemaps being built from webpack
       devtool: 'source-map',
       node: {
         fs: 'empty'
@@ -104,6 +102,12 @@ function build() {
     })
     .pipe(sourcemaps.write('./'))
     .pipe(gulp.dest(destinationFolder));
+}
+
+function copy_wasm() {
+  return gulp
+    .src(['src/app/*.wasm'])
+    .pipe(gulp.dest('dist/'));
 }
 
 function _mocha() {
@@ -160,7 +164,7 @@ function watchDocs() {
 exports.lint = gulp.parallel(lintSrc, lintTest, lintGulpfile);
 exports.test = gulp.series(exports.lint, test);
 exports.coverage = gulp.series(exports.lint, coverage);
-exports.build = gulp.series(exports.lint, test, build);
+exports.build = gulp.series(exports.lint, test, build, copy_wasm);
 exports.watch = gulp.series(watch);
 exports.watch_docs = gulp.series(watchDocs);
 exports.default = gulp.series(exports.test);
