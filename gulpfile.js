@@ -12,6 +12,7 @@ const rename = require('gulp-rename');
 
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const webpackStream = require('webpack-stream');
+// const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;   // This is useful for explaining large builds, but not needed for most runs
 
 const Instrumenter = isparta.Instrumenter;
 const mochaGlobals = require('./test/setup/.globals');
@@ -69,14 +70,6 @@ function build() {
             exclude: /node_modules/,
             loader: 'babel-loader'
           },
-          {
-            test: /\.wasm$/,
-            type: 'javascript/auto',
-            loader: 'file-loader',
-            options: {
-              publicPath: 'dist/'
-            }
-          }
         ]
       },
       plugins: [
@@ -86,10 +79,13 @@ function build() {
             'dist/*',
           ]
         }),
+        // new BundleAnalyzerPlugin(),
       ],
       devtool: 'source-map',
-      node: {
-        fs: 'empty'
+      node: { // Reduce build size bloat by skipping certain emscripten library bloat. TODO: Verify this doesn't break integral.js!
+        fs: 'empty',
+        path: 'empty',
+        crypto: 'empty'
       }
     }))
     .pipe(gulp.dest(destinationFolder))
