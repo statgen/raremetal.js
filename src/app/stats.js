@@ -879,13 +879,11 @@ class SkatOptimalTest extends AggregationTest {
     // Calculate lambdas (eigenvalues of W * IOTA * W.) In the paper, IOTA is the covariance matrix divided by
     // the phenotypic variance sigma^2. 
     const lambdas = new Array(nRhos).fill(null);
-    const phis = new Array(nRhos).fill(null); // W * IOTA * W i.e. W * G'G/sigma^2 * W
+    const phi = div(dot(w, dot(v, w)), 2); // https://git.io/fjwqF
     for (let i = 0; i < nRhos; i++) {
       let L = cholesky(Rp[i]);
-      let phi = dot(w, dot(v, w));
       let phi_rho = dot(t(L), dot(phi, L));
-      lambdas[i] = svd(phi_rho).S;
-      phis[i] = phi;
+      lambdas[i] = getEigen(phi_rho);
     }
 
     // Calculate moments
@@ -919,8 +917,8 @@ class SkatOptimalTest extends AggregationTest {
     }
 
     // Calculate parameters needed for Z'(I-M)Z part
-    const Z11 = dot(v, rep([nVar, 1], 1));
-    const ZZ = v;
+    const Z11 = dot(phi, rep([nVar, 1], 1));
+    const ZZ = phi;
     const ZMZ = div(dot(Z11, t(Z11)),sum(ZZ));
     const ZIMZ = sub(ZZ,ZMZ);
     const lambda = getEigen(ZIMZ);
