@@ -12,11 +12,4 @@ var Module=typeof mvtdstpack!=="undefined"?mvtdstpack:{};var moduleOverrides={};
 }
 );
 })();
-if (typeof exports === 'object' && typeof module === 'object')
-      module.exports = mvtdstpack;
-    else if (typeof define === 'function' && define['amd'])
-      define([], function() { return mvtdstpack; });
-    else if (typeof exports === 'object')
-      exports["mvtdstpack"] = mvtdstpack;
-
-    export default mvtdstpack;
+export default mvtdstpack;

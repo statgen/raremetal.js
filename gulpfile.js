@@ -90,7 +90,7 @@ function build() {
         // new BundleAnalyzerPlugin(),
       ],
       devtool: 'source-map',
-      node: { // Reduce build size bloat by skipping certain emscripten library bloat. TODO: Verify this doesn't break integral.js!
+      node: { // Reduce build size bloat by skipping certain emscripten library shims. TODO: Verify this doesn't break integral.js!
         fs: 'empty',
         path: 'empty',
         crypto: 'empty'
@@ -168,9 +168,7 @@ function watchDocs() {
 exports.lint = gulp.parallel(lintSrc, lintTest, lintGulpfile);
 exports.test = gulp.series(exports.lint, test);
 exports.coverage = gulp.series(exports.lint, coverage);
-exports.build = gulp.series(
-  // exports.lint, test,
-  build, copy_wasm);
+exports.build = gulp.series(exports.lint, test, build, copy_wasm);
 exports.watch = gulp.series(watch);
 exports.watch_docs = gulp.series(watchDocs);
 exports.default = gulp.series(exports.test);
