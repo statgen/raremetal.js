@@ -811,7 +811,7 @@ class SkatOptimalTest extends AggregationTest {
     let weights = Array(mafs.length).fill(null);
     for (let i = 0; i < mafs.length; i++) {
       let w = dbeta(mafs[i], a, b, false);
-      w *= w;
+      //w *= w;
       weights[i] = w;
     }
     return weights;
