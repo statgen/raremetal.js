@@ -873,6 +873,7 @@ class SkatOptimalTest extends AggregationTest {
     const Qs = [];
     for (let i = 0; i < nRhos; i++) {
       Qs[i] = dot(t(u), dot(w, dot(Rp[i], dot(w, u))))[0][0];
+      Qs[i] = Qs[i] / 2.0; // SKAT R package divides by 2
     }
 
     // Calculate lambdas (eigenvalues of W * IOTA * W.) In the paper, IOTA is the covariance matrix divided by
