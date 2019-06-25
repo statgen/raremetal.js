@@ -698,7 +698,7 @@ function _skatLiu(lambdas, qstat) {
 }
 
 function getEigen(m) {
-  const lambdas = numeric.eig(m, 10000).lambda.x.sort((a, b) => a - b);
+  const lambdas = numeric.eig(m, 100000).lambda.x.sort((a, b) => a - b);
   const n = lambdas.length;
   let numNonZero = 0;
   let sumNonZero = 0.0;
