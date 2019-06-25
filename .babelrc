@@ -4,5 +4,9 @@
     ["@babel/plugin-transform-runtime", {
       "regenerator": true
     }]
+  ],
+  "ignore": [
+    "src/app/integral.js",
+    "src/app/integral.js.map",
   ]
 }
