@@ -239,5 +239,25 @@ describe('stats.js', function() {
         'SkatOptimalTest on known u/cov did not produce close enough p-value to expected'
       )
     });
+
+    it('another edge case', function() {
+      let u = [-1.19836, 8.46731, 2.43688, -1.74072];
+      let cov = [
+        [ 35.9995216, -0.07395733239999999, -0.0210698334, -0.09137106440000001 ],
+        [ -0.07395733239999999, 83.5425304, -0.0475198948, -0.2060421076 ],
+        [ -0.0210698334, -0.0475198948, 23.92651044, -0.058631327999999996 ],
+        [ -0.09137106440000001, -0.2060421076, -0.058631327999999996, 97.7910668 ],
+      ];
+      let mafs = [0.000439398, 0.000991001, 0.000281918, 0.00122272];
+      let agg = new SkatOptimalTest();
+      let [, pval] = agg.run(u, cov, null, mafs);
+      let expectedPval = 0.779274359;
+      assert.closeTo(
+        pval,
+        expectedPval,
+        1e-6,
+        'SkatOptimalTest on known u/cov did not produce close enough p-value to expected'
+      )
+    });
   });
 });
