@@ -833,6 +833,11 @@ class SkatOptimalTest extends AggregationTest {
     const { dot, svd, sum, mul, div, sub, rep, pow, diag } = numeric;
     const t = numeric.transpose;
 
+    if (u.length === 1) {
+      // rvtest
+      return new SkatTest().run(u, v, w, mafs);
+    }
+
     // Calculate weights (if necessary)
     if (w === undefined || w === null) {
       w = SkatOptimalTest.weights(mafs);
