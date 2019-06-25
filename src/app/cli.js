@@ -59,6 +59,10 @@ class Results {
     })
   }
 
+  getLastResult() {
+    return this.results.slice(-1)[0];
+  }
+
   toString() {
     let s = "group\tpvalue\n";
     //let s = Object.keys(this.results[0]).join("\t") + "\n";
@@ -135,6 +139,7 @@ async function single(args) {
     }
 
     if (!args.silent) console.timeEnd("  Total time");
+    if (!args.silent) console.log("  Pvalue: ", results.getLastResult().pvalue);
     i += 1;
   }
 
