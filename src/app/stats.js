@@ -843,16 +843,19 @@ class SkatOptimalTest extends AggregationTest {
     u = t([u]); // column vector
 
     // Setup rho values
-    const nRhos = 10;
-    const rhos = new Array(nRhos).fill(null);
-    for (let i = 0; i <= nRhos; i++) {
+    const rhos = [];
+    for (let i = 0; i <= 10; i++) {
       let v = i / 10;
       if (v > 0.999) {
         // rvtests does this to avoid rank deficiency
         v = 0.999;
       }
-      rhos[i] = v;
+      rhos.push(v);
     }
+    const nRhos = rhos.length;
+    // MetaSKAT optimal.mod rho values
+    //const rhos = [0, 0.01, 0.04, 0.09, 0.25, 0.5, 0.999];
+    //const nRhos = rhos.length;
 
     // Calculate rho matrices (1-rho)*I + rho*1*1'
     // [ 1   rho rho ]
@@ -937,6 +940,10 @@ class SkatOptimalTest extends AggregationTest {
     }
 
     // Calculate final p-value
+    if (new Set([rhos.length, Qs_minP.length, taus.length]).size > 1) {
+      throw "Parameter arrays for SKAT integration must all be the same length";
+    }
+
     const integrator = new SkatIntegrator(
       copyToDoubleVec(rhos, IntegralDoubleVec),
       copyToDoubleVec(lambda, IntegralDoubleVec),
