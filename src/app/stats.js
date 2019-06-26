@@ -710,7 +710,7 @@ function getEigen(m) {
   }
 
   if (numNonZero === 0) {
-    throw "All eigenvalues were 0 when calculating SKAT-O test";
+    throw new Error("All eigenvalues were 0 when calculating SKAT-O test");
   }
 
   const t = sumNonZero / numNonZero / 100000;
@@ -891,7 +891,13 @@ class SkatOptimalTest extends AggregationTest {
     for (let i = 0; i < nRhos; i++) {
       let L = cholesky(Rp[i]);
       let phi_rho = dot(t(L), dot(phi, L));
-      lambdas[i] = getEigen(phi_rho);
+      try {
+        lambdas[i] = getEigen(phi_rho);
+      }
+      catch (error) {
+        console.error(error.message);
+        return [NaN, NaN];
+      }
     }
 
     // Calculate moments
@@ -929,7 +935,14 @@ class SkatOptimalTest extends AggregationTest {
     const ZZ = phi;
     const ZMZ = div(dot(Z11, t(Z11)),sum(ZZ));
     const ZIMZ = sub(ZZ,ZMZ);
-    const lambda = getEigen(ZIMZ);
+    let lambda;
+    try {
+      lambda = getEigen(ZIMZ);
+    }
+    catch (error) {
+      console.error(error.message);
+      return [NaN, NaN];
+    }
     const varZeta = 4 * sum(mul(ZMZ, ZIMZ));
     const muQ = sum(lambda);
     const varQ = 2.0 * sum(pow(lambda, 2)) + varZeta;

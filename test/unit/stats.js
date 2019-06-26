@@ -259,5 +259,14 @@ describe('stats.js', function() {
         'SkatOptimalTest on known u/cov did not produce close enough p-value to expected'
       )
     });
+
+    it('scores and covariance matrix are all the same value', function() {
+      let u = [5.90907, 5.90907];
+      let cov = [[47.7780604, 47.7780604], 47.7780604, 47.7780604];
+      let mafs = [0.00056243, 0.00056243];
+      let agg = new SkatOptimalTest();
+      let [, pval] = agg.run(u, cov, null, mafs);
+      assert.isNaN(pval);
+    });
   });
 });
