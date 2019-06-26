@@ -38,6 +38,7 @@ function getSettings() {
   single.addArgument(["-t", "--test"], { help: "Specify group-based test to run. Can be 'burden', 'skat'." });
   single.addArgument(["-c", "--cov"], { help: "File containing covariance statistics across windows of variants" });
   single.addArgument(["-g", "--group"], { help: "Only analyze 1 group/gene." });
+  single.addArgument(["--skato-rhos"], { help: "Specify rho values for SKAT-O as comma separated string."});
   single.addArgument(["-o", "--out"], { help: "File to write results to." });
   single.addArgument(["--silent"], { help: "Silence console output.", default: false });
 
@@ -119,8 +120,12 @@ async function single(args) {
 
       // Method
       if (args.test === 'skato') {
+        let rhos;
+        if (!(args.skato_rhos === null)) {
+          rhos = args.skato_rhos.split(",").map(x => parseFloat(x.trim()));
+        }
         let skat = new SkatOptimalTest();
-        let [, p] = skat.run(scores.u, cov.matrix, null, mafs);
+        let [, p] = skat.run(scores.u, cov.matrix, null, mafs, rhos);
         results.addResult(group, p);
       }
       else {

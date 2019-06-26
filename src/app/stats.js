@@ -827,9 +827,10 @@ class SkatOptimalTest extends AggregationTest {
    *  be calculated using the default weights() method of this object.
    * @param {Number[]} mafs A vector of minor allele frequencies. These will be used to calculate weights if
    *  they were not provided.
+   * @param {Number[]} rhos A vector of rho values, representing the weighting between burden and SKAT statistics.
    * @return {Number[]} SKAT p-value.
    */
-  run(u, v, w, mafs) {
+  run(u, v, w, mafs, rhos) {
     const { dot, svd, sum, mul, div, sub, rep, pow, diag } = numeric;
     const t = numeric.transpose;
 
@@ -848,14 +849,16 @@ class SkatOptimalTest extends AggregationTest {
     u = t([u]); // column vector
 
     // Setup rho values
-    const rhos = [];
-    for (let i = 0; i <= 10; i++) {
-      let v = i / 10;
-      if (v > 0.999) {
-        // rvtests does this to avoid rank deficiency
-        v = 0.999;
+    if (!rhos) {
+      rhos = [];
+      for (let i = 0; i <= 10; i++) {
+        let v = i / 10;
+        if (v > 0.999) {
+          // rvtests does this to avoid rank deficiency
+          v = 0.999;
+        }
+        rhos.push(v);
       }
-      rhos.push(v);
     }
     const nRhos = rhos.length;
     // MetaSKAT optimal.mod rho values
