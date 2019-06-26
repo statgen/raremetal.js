@@ -231,7 +231,7 @@ describe('stats.js', function() {
       ];
       let agg = new SkatOptimalTest();
       let [, pval] = agg.run(u, cov, null, mafs);
-      let expectedPval = 0.6156647276107277;
+      let expectedPval = 1;
       assert.closeTo(
         pval,
         expectedPval,
