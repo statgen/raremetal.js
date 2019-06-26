@@ -831,7 +831,7 @@ class SkatOptimalTest extends AggregationTest {
    * @return {Number[]} SKAT p-value.
    */
   run(u, v, w, mafs, rhos) {
-    const { dot, svd, sum, mul, div, sub, rep, pow, diag } = numeric;
+    const { dot, sum, mul, div, sub, rep, pow, diag } = numeric;
     const t = numeric.transpose;
 
     if (u.length === 1) {
