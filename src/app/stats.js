@@ -735,7 +735,7 @@ function _skatLiu(lambdas, qstat) {
 }
 
 function getEigen(m) {
-  const lambdas = numeric.eig(m, 10000).lambda.x.sort();
+  const lambdas = numeric.eig(m, 1000000).lambda.x.sort((a, b) => a - b);
   const n = lambdas.length;
   let numNonZero = 0;
   let sumNonZero = 0.0;
@@ -747,7 +747,7 @@ function getEigen(m) {
   }
 
   if (numNonZero === 0) {
-    throw "All eigenvalues were 0 when calculating SKAT-O test";
+    throw new Error("All eigenvalues were 0 when calculating SKAT-O test");
   }
 
   const t = sumNonZero / numNonZero / 100000;
@@ -848,7 +848,7 @@ class SkatOptimalTest extends AggregationTest {
     let weights = Array(mafs.length).fill(null);
     for (let i = 0; i < mafs.length; i++) {
       let w = dbeta(mafs[i], a, b, false);
-      w *= w;
+      //w *= w;
       weights[i] = w;
     }
     return weights;
@@ -864,11 +864,17 @@ class SkatOptimalTest extends AggregationTest {
    *  be calculated using the default weights() method of this object.
    * @param {Number[]} mafs A vector of minor allele frequencies. These will be used to calculate weights if
    *  they were not provided.
+   * @param {Number[]} rhos A vector of rho values, representing the weighting between burden and SKAT statistics.
    * @return {Number[]} SKAT p-value.
    */
-  run(u, v, w, mafs) {
-    const { dot, svd, sum, mul, div, sub, rep, pow, diag } = numeric;
+  run(u, v, w, mafs, rhos) {
+    const { dot, sum, mul, div, sub, rep, pow, diag } = numeric;
     const t = numeric.transpose;
+
+    if (u.length === 1) {
+      // rvtest
+      return new SkatTest().run(u, v, w, mafs);
+    }
 
     // Calculate weights (if necessary)
     if (w === undefined || w === null) {
@@ -880,16 +886,21 @@ class SkatOptimalTest extends AggregationTest {
     u = t([u]); // column vector
 
     // Setup rho values
-    const nRhos = 10;
-    const rhos = new Array(nRhos).fill(null);
-    for (let i = 0; i <= nRhos; i++) {
-      let v = i / 10;
-      if (v > 0.999) {
-        // rvtests does this to avoid rank deficiency
-        v = 0.999;
+    if (!rhos) {
+      rhos = [];
+      for (let i = 0; i <= 10; i++) {
+        let v = i / 10;
+        if (v > 0.999) {
+          // rvtests does this to avoid rank deficiency
+          v = 0.999;
+        }
+        rhos.push(v);
       }
-      rhos[i] = v;
     }
+    const nRhos = rhos.length;
+    // MetaSKAT optimal.mod rho values
+    //const rhos = [0, 0.01, 0.04, 0.09, 0.25, 0.5, 0.999];
+    //const nRhos = rhos.length;
 
     // Calculate rho matrices (1-rho)*I + rho*1*1'
     // [ 1   rho rho ]
@@ -910,18 +921,23 @@ class SkatOptimalTest extends AggregationTest {
     const Qs = [];
     for (let i = 0; i < nRhos; i++) {
       Qs[i] = dot(t(u), dot(w, dot(Rp[i], dot(w, u))))[0][0];
+      Qs[i] = Qs[i] / 2.0; // SKAT R package divides by 2
     }
 
     // Calculate lambdas (eigenvalues of W * IOTA * W.) In the paper, IOTA is the covariance matrix divided by
     // the phenotypic variance sigma^2.
     const lambdas = new Array(nRhos).fill(null);
-    const phis = new Array(nRhos).fill(null); // W * IOTA * W i.e. W * G'G/sigma^2 * W
+    const phi = div(dot(w, dot(v, w)), 2); // https://git.io/fjwqF
     for (let i = 0; i < nRhos; i++) {
       let L = cholesky(Rp[i]);
-      let phi = dot(w, dot(v, w));
       let phi_rho = dot(t(L), dot(phi, L));
-      lambdas[i] = svd(phi_rho).S;
-      phis[i] = phi;
+      try {
+        lambdas[i] = getEigen(phi_rho);
+      }
+      catch (error) {
+        console.error(error.message);
+        return [NaN, NaN];
+      }
     }
 
     // Calculate moments
@@ -955,11 +971,18 @@ class SkatOptimalTest extends AggregationTest {
     }
 
     // Calculate parameters needed for Z'(I-M)Z part
-    const Z11 = dot(v, rep([nVar, 1], 1));
-    const ZZ = v;
+    const Z11 = dot(phi, rep([nVar, 1], 1));
+    const ZZ = phi;
     const ZMZ = div(dot(Z11, t(Z11)),sum(ZZ));
     const ZIMZ = sub(ZZ,ZMZ);
-    const lambda = getEigen(ZIMZ);
+    let lambda;
+    try {
+      lambda = getEigen(ZIMZ);
+    }
+    catch (error) {
+      console.error(error.message);
+      return [NaN, NaN];
+    }
     const varZeta = 4 * sum(mul(ZMZ, ZIMZ));
     const muQ = sum(lambda);
     const varQ = 2.0 * sum(pow(lambda, 2)) + varZeta;
@@ -972,6 +995,11 @@ class SkatOptimalTest extends AggregationTest {
     const taus = new Array(nRhos).fill(null);
     for (let i = 0; i < nRhos; i++) {
       taus[i] = (nVar * nVar) * rhos[i] * z_mean + tau1 * (1 - rhos[i]);
+    }
+
+    // Calculate final p-value
+    if (new Set([rhos.length, Qs_minP.length, taus.length]).size > 1) {
+      throw "Parameter arrays for SKAT integration must all be the same length";
     }
 
     return MVT_WASM_HELPERS.then(mvt_module => {
