@@ -236,14 +236,22 @@ class PortalTestRunner {
    * @returns Promise A promise representing the fulfillment state of all tests being run
    */
   run() {
-    let results = [];
+    let partials = [];
 
     this._tests.forEach(test => {
       this.groups.data.forEach(group => {
-        results.push(this._runOne(test, group));
+        partials.push(this._runOne.bind(this, test, group));
       });
     });
-    return Promise.all(results);
+    // Despite the async syntax, ensure that each tests is run in series, to mitigate memory allocation errors when
+    //  running many tests
+    return partials.reduce((results, one_test) => {
+      return results.then((all_prior) => {
+        return one_test().then(one_res => {
+          return [...all_prior, one_res];
+        });
+      });
+    }, Promise.resolve([]));
   }
 
   /**
