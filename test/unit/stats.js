@@ -1,6 +1,9 @@
 import { assert } from 'chai';
 
-import { ZegginiBurdenTest, SkatTest, SkatOptimalTest, VTTest, MVT_WASM_HELPERS, calculate_mvt_pvalue } from '../../src/app/stats.js';
+import {
+  ZegginiBurdenTest, SkatTest, SkatOptimalTest, VTTest,
+  MVT_WASM_HELPERS, calculate_mvt_pvalue, _get_conditional_dist
+} from '../../src/app/stats.js';
 
 describe('stats.js', function() {
   describe('pmvnorm', function() {
@@ -68,6 +71,22 @@ describe('stats.js', function() {
       const result = calculate_mvt_pvalue(scores, cov_t, t_max);
       assert.closeTo(result, 0.060143850853423546, 0.001);
     })
+  });
+
+  describe('get_conditional_dist', function () {
+    it('regression test for browser bug', function () {
+      const scores = [0, 0, 0, 1.5462063784800575, 0.21031859503159187, 9.04952262687792];
+      const cov = [
+        [1,0.47234514133873046,0.3847563633178216],
+        [0.47234514133873046,1,0.4872017342012682],
+        [0.3847563633178216,0.4872017342012682,1]
+      ];
+      const comb = [0, 3];
+
+      assert.doesNotThrow(() => {
+        _get_conditional_dist(scores, cov, comb);
+      }, Error);
+    });
   });
 
   describe('VTTest', function() {

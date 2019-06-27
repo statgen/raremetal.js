@@ -1049,7 +1049,11 @@ class SkatOptimalTest extends AggregationTest {
   }
 }
 
-export { AggregationTest as _AggregationTest };  // for unit testing only
+export { // for unit testing only
+  AggregationTest as _AggregationTest,
+  get_conditional_dist as _get_conditional_dist
+};
 export { SkatTest, SkatOptimalTest, ZegginiBurdenTest, VTTest,
-  MVT_WASM_HELPERS, calculate_mvt_pvalue, _skatDavies, _skatLiu
+  MVT_WASM_HELPERS, calculate_mvt_pvalue, _skatDavies, _skatLiu,
+
 };
