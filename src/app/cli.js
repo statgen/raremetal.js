@@ -121,7 +121,7 @@ async function single(args) {
       // Method
       if (args.test === 'skato') {
         let rhos;
-        if (!(args.skato_rhos === null)) {
+        if (args.skato_rhos) {
           rhos = args.skato_rhos.split(",").map(x => parseFloat(x.trim()));
         }
         let skat = new SkatOptimalTest();
