@@ -83,6 +83,18 @@ describe('stats.js', function() {
       assert.closeTo(pval, expectedPval, 0.001);
       assert.closeTo(tmax, expectedTmax, 0.001);
     });
+
+    it('another test case', function() {
+      const u = [-9.878952083073537, 12.680946050118969, -291.9939911043961];
+      const v = [
+        [40.82130053120187, -0.615159211757634, 38.35175223857379],
+        [-0.615159211757634, 137.90112609660812, -8.419886880248262],
+        [38.35175223857379, -8.419886880248262, 783.8686025536995]
+      ];
+      const mafs = [0.002204301068559289, 0.007526881527155638, 0.04435483738780022];
+      const agg = new VTTest();
+      const [tmax, pval] = agg.run(u, v, null, mafs);
+    });
   });
 
   describe('ZegginiBurdenTest', function() {
