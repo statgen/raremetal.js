@@ -91,7 +91,7 @@ async function single(args) {
   let total = args.group == null ? mask.size() : 1;
   let i = 1;
   for (let [group, groupVars] of mask) {
-    if (args.group !== null && args.group !== group) {
+    if ((args.group != null) && (args.group !== group)) {
       continue;
     }
 
