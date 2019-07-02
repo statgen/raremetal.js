@@ -101,14 +101,18 @@ class VariantMask {
    * Get the number of groups
    * @return {number} Number of groups.
    */
-  size() { return this.groups.size }
+  size() {
+    return this.groups.size;
+  }
 
   /**
    * Iterate over groups with syntax:
    * <pre>for (let [group, variants] in mask) { ... }</pre>
    * @return Iterator over entries, yields [group, array of variants]
    */
-  [Symbol.iterator]() { return this.groups.entries() }
+  [Symbol.iterator]() {
+    return this.groups.entries();
+  }
 
   /**
    * Retrieve a specific group's variants.
