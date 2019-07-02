@@ -184,12 +184,12 @@ describe('stats.js', function() {
       ];
       let mafs = [0.000281496, 0.000283886, 0.000284308, 0.00412922];
       let agg = new SkatOptimalTest();
-      let [, pval] = agg.run(u, cov, null, mafs);
-      let expectedPval = 1;
+      let [, pval] = agg.run(u, cov, null, mafs, null);
+      let expectedPval = 0.83714;
       assert.closeTo(
         pval,
         expectedPval,
-        0.001,
+        0.00001,
         'SkatOptimalTest on known u/cov did not produce close enough p-value to expected'
       )
     });
@@ -205,7 +205,7 @@ describe('stats.js', function() {
       let mafs = [0.000439398, 0.000991001, 0.000281918, 0.00122272];
       let agg = new SkatOptimalTest();
       let [, pval] = agg.run(u, cov, null, mafs);
-      let expectedPval = 0.779274359;
+      let expectedPval = 0.7790806306;
       assert.closeTo(
         pval,
         expectedPval,
