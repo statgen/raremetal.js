@@ -83,6 +83,7 @@ class Results {
 async function single(args) {
   // Load mask file.
   const mask = readMaskFileSync(args.mask);
+  if (!args.silent) console.log(`Read ${mask.size()} groups from mask file`);
 
   // Run test on one group, or all groups
   const results = new Results();
