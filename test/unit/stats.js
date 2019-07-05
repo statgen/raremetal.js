@@ -118,9 +118,10 @@ describe('stats.js', function() {
       ];
       const mafs = [0.002204301068559289, 0.007526881527155638, 0.04435483738780022];
       const agg = new VTTest();
-      const [tmax, pval] = agg.run(u, v, null, mafs);
-      assert.closeTo(tmax, 9.04952262687792, 0.0001);
-      assert.closeTo(pval, 4.307841306988618e-19, 0.0001);
+      return agg.run(u, v, null, mafs).then(function ([tmax, pval]) {
+        assert.closeTo(tmax, 9.04952262687792, 0.0001);
+        assert.closeTo(pval, 4.307841306988618e-19, 0.0001);
+      });
     });
   });
 
