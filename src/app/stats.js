@@ -423,7 +423,7 @@ function _vt(maf_cutoffs, u, v, mafs) {
     let numer = numeric.dot(w, u);
     let denom = numeric.dot(numeric.dot(w, v), w);
     let t_stat = Math.abs(numer / Math.sqrt(denom));
-    scores.push(t_stat);
+    scores[i] = t_stat;
     if (t_stat > t_max) { t_max = t_stat; }
   });
 
