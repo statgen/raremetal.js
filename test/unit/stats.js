@@ -185,7 +185,7 @@ describe('stats.js', function() {
       let mafs = [0.000281496, 0.000283886, 0.000284308, 0.00412922];
       let agg = new SkatOptimalTest();
       let [, pval] = agg.run(u, cov, null, mafs, null);
-      let expectedPval = 0.83714;
+      let expectedPval = 0.837201;
       assert.closeTo(
         pval,
         expectedPval,
@@ -205,7 +205,7 @@ describe('stats.js', function() {
       let mafs = [0.000439398, 0.000991001, 0.000281918, 0.00122272];
       let agg = new SkatOptimalTest();
       let [, pval] = agg.run(u, cov, null, mafs);
-      let expectedPval = 0.7790806306;
+      let expectedPval = 0.7791556;
       assert.closeTo(
         pval,
         expectedPval,
