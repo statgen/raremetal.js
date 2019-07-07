@@ -7,12 +7,11 @@
 
 import * as qfc from './qfc.js';
 import numeric from 'numeric';
-import { pchisq, dbeta, pnorm, qchisq } from './rstats.js';
+import { pchisq, dbeta, pnorm, qchisq, dchisq } from './rstats.js';
 import mvtdstpack from './mvtdstpack.js';
 import { cholesky } from './linalg.js';
 const { DoubleVec, IntVec, mvtdst } = mvtdstpack();
-import integral from './integral.js';
-const { DoubleVec: IntegralDoubleVec, SkatIntegrator } = integral();
+import { GaussKronrod } from './quadrature.js';
 
 function makeDoubleVec(size) {
   const v = new DoubleVec();
@@ -773,6 +772,158 @@ function getQvalByMoment(min_pval, m) {
   return (q_org - m.df) / Math.sqrt(2.0 * m.df) * Math.sqrt(m.varQ) + m.muQ;
 }
 
+class SkatIntegrator {
+  constructor(rhos, lambda, Qs_minP, taus, MuQ, VarQ, VarZeta, Df) {
+    this.rhos = rhos;
+    this.lambda = lambda;
+    this.Qs_minP = Qs_minP;
+    this.taus = taus;
+    this.MuQ = MuQ;
+    this.VarQ = VarQ;
+    this.VarZeta = VarZeta;
+    this.Df = Df;
+  }
+
+  static pvalueDavies(q, lambdas) {
+    let n = lambdas.length;
+    let nc1 = Array(n).fill(0);
+    let n1 = Array(n).fill(1);
+    let sigma = 0.0;
+    let lim1 = 10000;
+    let acc = 0.0001;
+    let res = qfc.qf(lambdas, nc1, n1, n, sigma, q, lim1, acc);
+    let qfval = res[0];
+    let fault = res[1];
+    let pvalue = 1.0 - qfval;
+
+    if (pvalue > 1.0) {
+      pvalue = 1.0;
+    }
+
+    if (fault) {
+      pvalue = -1.0;
+    }
+
+    return pvalue;
+  }
+
+  static pvalueLiu(q, lambdas) {
+    let n = lambdas.length;
+    let [c1, c2, c3, c4] = Array(4).fill(0.0);
+    for (let i = 0; i < n; i++) {
+      let ilambda = lambdas[i];
+      c1 += ilambda;
+      c2 += ilambda * ilambda;
+      c3 += ilambda * ilambda * ilambda;
+      c4 += ilambda * ilambda * ilambda * ilambda;
+    }
+
+    let s1 = c3 / Math.sqrt(c2 * c2 * c2);
+    let s2 = c4 / (c2 * c2);
+    let muQ = c1;
+    let sigmaQ = Math.sqrt(2.0 * c2);
+    let tStar = (q - muQ) / sigmaQ;
+
+    let delta, l, a;
+    if (s1 * s1 > s2) {
+      a = 1.0 / (s1 - Math.sqrt(s1 * s1 - s2));
+      delta = s1 * a * a * a - a * a;
+      l = a * a - 2.0 * delta;
+    } else {
+      a = 1.0 / s1;
+      delta = 0.0;
+      l = c2 * c2 * c2 / (c3 * c3);
+    }
+
+    let muX = l + delta;
+    let sigmaX = Math.sqrt(2.0) * a;
+    let qNew = tStar * sigmaX + muX;
+
+    if (qNew < 0) { return 1; }
+
+    let p;
+    if (delta === 0) {
+      p = pchisq(qNew,l,0,0);
+    } else {
+      // Non-central chi-squared
+      p = pchisq(qNew,l,delta,0,0);
+    }
+
+    return p;
+  }
+
+  integrandDavies(x) {
+    let kappa = Number.MAX_VALUE;
+    const nRho = this.rhos.length;
+    for (let i = 0; i < nRho; i++) {
+      let v = (this.Qs_minP[i] - this.taus[i] * x) / (1.0 - this.rhos[i]);
+      if (i === 0) {
+        kappa = v;
+      }
+      if (v < kappa) {
+        kappa = v;
+      }
+    }
+    let temp;
+    if (kappa > numeric.sum(this.lambda) * 10000) {
+      temp = 0.0;
+    }
+    else {
+      let Q = (kappa - this.MuQ) * Math.sqrt(this.VarQ - this.VarZeta) / Math.sqrt(this.VarQ) + this.MuQ;
+      temp = SkatIntegrator.pvalueDavies(Q, this.lambda);
+      if (temp <= 0.0 || temp === 1.0) {
+        temp = SkatIntegrator.pvalueLiu(Q, this.lambda);
+      }
+    }
+    let final = (1.0 - temp) * dchisq(x, 1);
+    //console.log("integrandDavies: ", x, temp, final);
+    return final;
+  }
+
+  integrandLiu(x) {
+    let kappa = Number.MAX_VALUE;
+    const nRho = this.rhos.length;
+    for (let i = 0; i < nRho; i++) {
+      let v = (this.Qs_minP[i] - this.taus[i] * x) / (1.0 - this.rhos[i]);
+      if (v < kappa) {
+        kappa = v;
+      }
+    }
+    let Q = (kappa - this.MuQ) / Math.sqrt(this.VarQ) * Math.sqrt(2.0 * this.Df) + this.Df;
+
+    let ret;
+    if (Q <= 0) {
+      ret = 0;
+    }
+    else {
+      ret = pchisq(Q, this.Df) * dchisq(x, 1);
+    }
+
+    return ret;
+  }
+
+  skatOptimalIntegral() {
+    const integ = new GaussKronrod(21, 15);
+
+    // Try integrating Davies first
+    let result;
+    try {
+      result = integ.integrate(this.integrandDavies.bind(this), 0, 40);
+    }
+    catch (e1) {
+      try {
+        result = integ.integrate(this.integrandLiu.bind(this), 0, 40);
+      }
+      catch (e2) {
+        console.error("Could not integrate Davies or Liu integrands (SKAT-O)");
+        throw e2;
+      }
+    }
+
+    return result[0];
+  }
+}
+
 /**
  * Optimal sequence kernel association test (SKAT). <p>
  *
@@ -966,10 +1117,10 @@ class SkatOptimalTest extends AggregationTest {
     }
 
     const integrator = new SkatIntegrator(
-      copyToDoubleVec(rhos, IntegralDoubleVec),
-      copyToDoubleVec(lambda, IntegralDoubleVec),
-      copyToDoubleVec(Qs_minP, IntegralDoubleVec),
-      copyToDoubleVec(taus, IntegralDoubleVec),
+      rhos,
+      lambda,
+      Qs_minP,
+      taus,
       muQ,
       varQ,
       varZeta,
