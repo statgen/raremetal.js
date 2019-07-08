@@ -29,8 +29,8 @@ const STATS_FORMAT = {
  * @private
  */
 function _variantSort(a, b) {
-  let pos_a = a.match(REGEX_EPACTS)[2];
-  let pos_b = b.match(REGEX_EPACTS)[2];
+  let pos_a = parseInt(a.match(REGEX_EPACTS)[2]);
+  let pos_b = parseInt(b.match(REGEX_EPACTS)[2]);
 
   if (pos_a < pos_b) {
     return -1
