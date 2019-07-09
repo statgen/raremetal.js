@@ -104,6 +104,12 @@ async function single(args) {
 
     let scores = await extractScoreStats(args.score, region, groupVars);
 
+    if (!scores.variants.length) {
+      console.log("  No polymorphic variants loaded from group, skipping");
+      results.addResult(group, NaN);
+      continue;
+    }
+
     /**
      * During the loading of the score stats, we may have dropped some of the
      * group variants due to monomorphic or other QC issues.
