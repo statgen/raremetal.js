@@ -210,16 +210,15 @@ describe('stats.js', function() {
       ];
       let mafs = [0.000281496, 0.000283886, 0.000284308, 0.00412922];
       let agg = new SkatOptimalTest();
-      return agg.run(u, cov, null, mafs).then(([, pval]) => {
-        let expectedPval = 1;
-        assert.closeTo(
-          pval,
-          expectedPval,
-          0.001,
-          'SkatOptimalTest on known u/cov did not produce close enough p-value to expected'
-        )
-      });
 
+      let [, pval] = agg.run(u, cov, null, mafs);
+      let expectedPval = 0.837201;
+      assert.closeTo(
+        pval,
+        expectedPval,
+        0.001,
+        'SkatOptimalTest on known u/cov did not produce close enough p-value to expected'
+      )
     });
 
     it('another edge case', function() {
@@ -232,16 +231,16 @@ describe('stats.js', function() {
       ];
       let mafs = [0.000439398, 0.000991001, 0.000281918, 0.00122272];
       let agg = new SkatOptimalTest();
-      // let [, pval] = agg.run(u, cov, null, mafs);
-      return agg.run(u, cov, null, mafs).then(([, pval]) => {
-        let expectedPval = 0.779274359;
-        assert.closeTo(
-          pval,
-          expectedPval,
-          1e-6,
-          'SkatOptimalTest on known u/cov did not produce close enough p-value to expected'
-        );
-      });
+
+      let [, pval] = agg.run(u, cov, null, mafs);
+      let expectedPval = 0.7791556;
+      assert.closeTo(
+        pval,
+        expectedPval,
+        1e-6,
+        'SkatOptimalTest on known u/cov did not produce close enough p-value to expected'
+      );
+
     });
 
     it('scores and covariance matrix are all the same value', function() {
