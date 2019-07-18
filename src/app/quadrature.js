@@ -278,14 +278,8 @@ class GaussKronrod {
     }
 
     this.error = error_local;
-    // console.log(
-    //   `${a.toString().padEnd(15)}`,
-    //   `${b.toString().padEnd(15)}`,
-    //   `${max_levels.toString().padEnd(5)}`,
-    //   `${abs_tol.toExponential(2).padEnd(11)}`,
-    //   `${estimate.toFixed(4).padEnd(10)}`,
-    //   `${error_local.toExponential(2).padStart(5).padEnd(11)}`,
-    // );
+    //let dbg = `${a.toString().padEnd(15)} ${b.toString().padEnd(15)} ${max_levels.toString().padEnd(5)} ${abs_tol.toExponential(2).padEnd(11)} ${estimate.toExponential(2).padEnd(11)} ${error_local.toExponential(2).padStart(5).padEnd(11)}\n`;
+    //this.stream.write(dbg);
     return [estimate, error_local];
   }
 
