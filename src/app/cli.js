@@ -142,8 +142,10 @@ async function single(args) {
     let cov = await extractCovariance(args.cov, region, scores.variants, scores);
 
     if (args.test === 'burden') {
+      const timer = new Timer();
       let [, p] = new ZegginiBurdenTest().run(scores.u, cov.matrix, null);
-      results.addResult(group, p);
+      timer.stop();
+      results.addResult(group, p, timer);
     }
     else if (args.test.startsWith('skat')) {
       // Use default weights for now
@@ -165,15 +167,19 @@ async function single(args) {
         let method = args.test.replace('skat-','');
         let skat = new SkatTest();
         skat._method = method;
+        const timer = new Timer();
         let [, p] = skat.run(scores.u, cov.matrix, null, mafs);
-        results.addResult(group, p);
+        timer.stop();
+        results.addResult(group, p, timer);
       }
     }
     else if (args.test === 'vt') {
       let mafs = scores.altFreq.map(x => Math.min(x,1-x));
       let vt = new VTTest();
+      const timer = new Timer();
       let [, p] = await vt.run(scores.u, cov.matrix, null, mafs);
-      results.addResult(group, p);
+      timer.stop();
+      results.addResult(group, p, timer);
     }
 
     if (!args.silent) console.timeEnd("  Total time");
