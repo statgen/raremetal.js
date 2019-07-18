@@ -168,7 +168,7 @@ async function single(args) {
     else if (args.test === 'vt') {
       let mafs = scores.altFreq.map(x => Math.min(x,1-x));
       let vt = new VTTest();
-      let [, p] = vt.run(scores.u, cov.matrix, null, mafs);
+      let [, p] = await vt.run(scores.u, cov.matrix, null, mafs);
       results.addResult(group, p);
     }
 
