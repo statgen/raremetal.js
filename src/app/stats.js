@@ -937,6 +937,16 @@ class SkatIntegrator {
     return ret;
   }
 
+  _debugWriteIntegrandDavies(fpath, xstart=0, xend=40, increment=0.001) {
+    let fs = require("fs");
+    let stream = fs.createWriteStream(fpath);
+    let v;
+    for (let x = xstart; x < xend; x += increment) {
+      v = this.integrandDavies(x);
+      stream.write(x + "\t" + v + "\n");
+    }
+  }
+
   skatOptimalIntegral() {
     const integ = new GaussKronrod(21, 15);
 
