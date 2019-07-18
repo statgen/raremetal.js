@@ -203,8 +203,22 @@ class PortalGroupHelper {
   }
 }
 
-// Helper method that coordinates multiple tests on a series of masks
+/**
+ * Run one or more burden tests. This will operate in sequence: all specified tests on all specified masks
+ *
+ * The actual call signature of a burden test is pretty low-level. In addition to running the list of tests,
+ *  this helper also restructures human-friendly mask and variant representations into a shape that works directly
+ *  with the calculation.
+ */
 class PortalTestRunner {
+  /**
+   * Create a test runner object, using group and variant data of the form provided by `parsePortalJSON`. Generally,
+   *  this helper is a convenience wrapper based on the raremetal.js API format spec, and hence it expects
+   *  variant and group definitions to follow that spec.
+   * @param groups PortalGroupHelper
+   * @param variants PortalVariantsHelper
+   * @param test_names {String[]|_AggregationTest[]}
+   */
   constructor(groups, variants, test_names = []) {
     this.groups = groups;
     this.variants = variants;
@@ -213,9 +227,13 @@ class PortalTestRunner {
     test_names.forEach(name => this.addTest(name));
   }
 
+  /**
+   *
+   * @param test {String|_AggregationTest}
+   * @return {_AggregationTest}
+   */
   addTest(test) {
     // Add a new test by name, or directly from an instance
-    // TODO Find a way to do this without using the registry
     if (typeof test === 'string') {
       let type = AGGREGATION_TESTS[test];
       if (!type) {
@@ -225,8 +243,6 @@ class PortalTestRunner {
     } else if (!(test instanceof _AggregationTest)) {
       throw new Error('Must specify test as name or instance');
     }
-
-
     this._tests.push(test);
     return test;
   }
