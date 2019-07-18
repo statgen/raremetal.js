@@ -201,6 +201,8 @@ describe('stats.js', function() {
 
   describe('SkatOptimalTest', function() {
     it('should return correct p-value for known u/cov (standard weights)', function () {
+      this.timeout(10000);
+
       let u = [1.26175, 3.45806, -4.90216, -7.05748];
       let cov = [
         [23.902543, -0.01359241884, -0.01361261692, -0.1976943976],
@@ -210,9 +212,8 @@ describe('stats.js', function() {
       ];
       let mafs = [0.000281496, 0.000283886, 0.000284308, 0.00412922];
       let agg = new SkatOptimalTest();
-
-      let [, pval] = agg.run(u, cov, null, mafs);
-      let expectedPval = 0.837201;
+      let [, pval] = agg.run(u, cov, null, mafs, null);
+      let expectedPval = 0.836933;
       assert.closeTo(
         pval,
         expectedPval,
@@ -222,6 +223,8 @@ describe('stats.js', function() {
     });
 
     it('another edge case', function() {
+      this.timeout(10000);
+
       let u = [-1.19836, 8.46731, 2.43688, -1.74072];
       let cov = [
         [ 35.9995216, -0.07395733239999999, -0.0210698334, -0.09137106440000001 ],
@@ -233,7 +236,7 @@ describe('stats.js', function() {
       let agg = new SkatOptimalTest();
 
       let [, pval] = agg.run(u, cov, null, mafs);
-      let expectedPval = 0.7791556;
+      let expectedPval = 0.7788944;
       assert.closeTo(
         pval,
         expectedPval,
@@ -244,6 +247,8 @@ describe('stats.js', function() {
     });
 
     it('scores and covariance matrix are all the same value', function() {
+      this.timeout(10000);
+
       let u = [5.90907, 5.90907];
       let cov = [[47.7780604, 47.7780604], 47.7780604, 47.7780604];
       let mafs = [0.00056243, 0.00056243];
