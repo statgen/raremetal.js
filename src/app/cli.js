@@ -72,6 +72,10 @@ class Results {
   }
 
   addResult(group, pvalue, time) {
+    if (!time) {
+      time = NaN;
+    }
+
     this.results.push({
       group: group,
       pvalue: pvalue,
