@@ -48,15 +48,34 @@ function getSettings() {
   return parser.parseArgs();
 }
 
+class Timer {
+  constructor() {
+    this.start = process.hrtime();
+  }
+
+  stop() {
+    this.end = process.hrtime(this.start);
+  }
+
+  getElapsedMilliseconds() {
+    return (this.end[0] * 1e9 + this.end[1]) / 1e6;
+  }
+
+  toString() {
+    return `${this.getElapsedMilliseconds().toFixed(1)}`;
+  }
+}
+
 class Results {
   constructor() {
     this.results = [];
   }
 
-  addResult(group, pvalue) {
+  addResult(group, pvalue, time) {
     this.results.push({
       group: group,
       pvalue: pvalue,
+      time: time
     })
   }
 
@@ -65,11 +84,12 @@ class Results {
   }
 
   toString() {
-    let s = "group\tpvalue\n";
+    let s = "group\tpvalue\ttime_ms\n";
     //let s = Object.keys(this.results[0]).join("\t") + "\n";
     for (let obj of this.results) {
       s += obj["group"] + "\t";
-      s += obj["pvalue"].toExponential(2) + "\n";
+      s += obj["pvalue"].toExponential(2) + "\t";
+      s += obj["time"].toString() + "\n";
     }
     return s;
   }
@@ -132,8 +152,10 @@ async function single(args) {
           rhos = args.skato_rhos.split(",").map(x => parseFloat(x.trim()));
         }
         let skat = new SkatOptimalTest();
+        const timer = new Timer();
         let [, p] = skat.run(scores.u, cov.matrix, null, mafs, rhos);
-        results.addResult(group, p);
+        timer.stop();
+        results.addResult(group, p, timer);
       }
       else {
         let method = args.test.replace('skat-','');
