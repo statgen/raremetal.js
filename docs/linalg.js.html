@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: pprint.js</title>
+    <title>JSDoc: Source: linalg.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: pprint.js</h1>
+    <h1 class="page-title">Source: linalg.js</h1>
 
     
 
@@ -26,56 +26,32 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/**
- * Functions for pretty-printing various data structures. &lt;p>
- *
- * This should not be included in the browser bundle. The dependencies cause
- * a large increase in the download size (~ 200k -> 750k). And the pretty
- * printing does not work in the browser console anyway.
- *
- * @module print
- * @license MIT
- */
-
-import Table from 'cli-table2';
+            <pre class="prettyprint source linenums"><code>import numeric from 'numeric';
 
 /**
- * Pretty print a table of score statistics
- * @param scores
+ * Return the cholesky decomposition A = GG'. The matrix G is returned.
+ * @param A
+ * @return {*}
  */
-function printScoreTable(scores) {
-  let table = new Table({
-    head: ["variant", "u", "sqrt_v", "alt_freq"]
-  });
-
-  for (let i = 0; i &lt; scores.variants.length; i++) {
-    table.push([
-      scores.variants[i],
-      scores.u[i],
-      scores.v[i],
-      scores.altFreq[i]
-    ])
+export function cholesky(A) {
+  const n = A.length;
+  const G = numeric.rep([n, n], 0);
+  for (let i = 0; i &lt; n; i++) {
+    for (let j = 0; j &lt;= i; j++) {
+      let s = A[j][i];
+      for (let k = 0; k &lt;= j-1; k++) {
+        s = s - G[j][k] * G[i][k];
+      }
+      if (j &lt; i) {
+        G[i][j] = s / G[j][j];
+      }
+      else {
+        G[i][i] = Math.sqrt(s);
+      }
+    }
   }
-
-  console.log(table.toString());
-  console.log("\n");
-}
-
-/**
- * Pretty print the matrix to the console for debugging purposes
- * @param matrix
- */
-function printCovarianceMatrix(matrix) {
-  let pos = new Array(...matrix.positions.keys());
-  let table = new Table({
-    head: pos
-  });
-  table.push(...matrix.matrix);
-  console.log(table.toString());
-  console.log("\n");
-}
-
-export { printScoreTable, printCovarianceMatrix };</code></pre>
+  return G;
+}</code></pre>
         </article>
     </section>
 
