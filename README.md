@@ -18,6 +18,15 @@ The methods implemented in this package are described across a number of papers 
 
 * ["Rare-Variant Association Testing for Sequencing Data with the Sequence Kernel Association Test." Wu et al, 2011.](https://www.cell.com/ajhg/fulltext/S0002-9297%2811%2900222-9)
 
+**Variable threshold test**:
+
+* ["A General Framework for Detecting Disease Associations with Rare Variants in Sequencing Studies." Lin et al, 2011.](https://doi.org/10.1016/j.ajhg.2011.07.015)
+
+**SKAT optimal test**:
+
+* ["General Framework for Meta-analysis of Rare Variants in Sequencing Association Studies." Lee et al, 2013.](https://doi.org/10.1016/j.ajhg.2013.05.010)
+* ["Optimal Tests for Rare Variant Effects in Sequencing Association Studies." Lee et al, 2012.](https://doi.org/10.1093/biostatistics/kxs014)
+
 **Methods for aggregation tests on covariance matrices**:
 
 * ["Meta-analysis of gene-level tests for rare variant association." Liu et al, 2013.](https://www.nature.com/articles/ng.2852)
@@ -78,7 +87,7 @@ this package, an executable script `raremetal.js` should be installed, which cor
 
 ### Requirements
 
-This package has been developed and tested using Node.js 8 LTS (Carbon). It currently does not work with the latest version of Node.js, though we aim to patch that eventually. You can manage multiple Node.js versions using [nvm](https://github.com/creationix/nvm), and this package includes a `.nvmrc` file that specifies which version we are currently testing against. 
+This package has been developed and tested using Node.js 10 LTS (Dubnium). It currently does not work with the latest version of Node.js, though we aim to patch that eventually. You can manage multiple Node.js versions using [nvm](https://github.com/creationix/nvm), and this package includes a `.nvmrc` file that specifies which version we are currently testing against.
 
 If you would like to make changes to the core functionality within this module for development, the best method would be
 to [fork the repository on Github](https://github.com/statgen/raremetal.js#fork-destination-box), and then clone your fork locally:
