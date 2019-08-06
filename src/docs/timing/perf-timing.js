@@ -28,14 +28,12 @@ class Timer {
 
 function readJson(filename) {
   const jsonRaw = fs.readFileSync(filename);
-  const json = JSON.parse(jsonRaw);
-  return json;
+  return JSON.parse(jsonRaw);
 }
 
 function loadPortalJson(filename) {
   const json = readJson(filename);
-  const scoreCov = parsePortalJson(json);
-  return scoreCov;
+  return parsePortalJson(json);
 }
 
 function scoreCovDescriptiveStats(scoreCov, maskId) {
@@ -54,13 +52,11 @@ function scoreCovDescriptiveStats(scoreCov, maskId) {
     avgGroupNvar += nVar / nGroups;
   }
 
-  const stats = {
+  return {
     "Avg length/group": avgGroupLength,
     "Avg variants/group": avgGroupNvar,
     "Number of groups": nGroups,
   };
-
-  return stats;
 }
 
 function timeAggregationTests(tests, scoreCov) {
@@ -123,7 +119,7 @@ function timeAggregationTests(tests, scoreCov) {
 
 function runTiming(scoreCov) {
   const timerLoad = new Timer();
-  timerLoad.stop()
+  timerLoad.stop();
 
   const tests = {
     "zegginiBurden": testBurden,
@@ -140,16 +136,14 @@ function runTiming(scoreCov) {
   // Run all tests/masks
   const timerTests = new Timer();
   const perTestTimes = timeAggregationTests(tests, scoreCov);
-  timerTests.stop()
+  timerTests.stop();
 
   // Return timings
-  const timings = {
+  return {
     load: timerLoad.toString(),
     allTests: timerTests.toString(),
     perTest: perTestTimes
-  }
-
-  return timings;
+  };
 }
 
 function main() {

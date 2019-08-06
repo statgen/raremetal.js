@@ -33,9 +33,9 @@
  */
 import numeric from "numeric";
 import { REGEX_EPACTS } from "./constants";
-import { _AggregationTest, SkatTest, ZegginiBurdenTest, VTTest } from "./stats";
+import { _AggregationTest, SkatTest, ZegginiBurdenTest, VTTest, SkatOptimalTest } from "./stats";
 
-const _all_tests = [ZegginiBurdenTest, SkatTest, VTTest];
+const _all_tests = [ZegginiBurdenTest, SkatTest, VTTest, SkatOptimalTest];
 
 /**
  * Look up aggregation tests by unique name.
@@ -47,7 +47,7 @@ const _all_tests = [ZegginiBurdenTest, SkatTest, VTTest];
  * {key: {label: String, constructor: Object }
  * @type {{String: {label: String, constructor: function}}}
  */
-const AGGREGATION_TESTS = Object.freeze(_all_tests.reduce(function(acc, constructor) {
+const AGGREGATION_TESTS = Object.freeze(_all_tests.reduce(function (acc, constructor) {
   const inst = new constructor();  // Hack- need instance to access attributes
   acc[inst.key] = { label: inst.label, constructor: constructor };
   return acc;
@@ -231,9 +231,23 @@ class PortalGroupHelper {
   }
 }
 
-// Helper method that coordinates multiple tests on a series of masks
+/**
+ * Run one or more burden tests. This will operate in sequence: all specified tests on all specified masks
+ *
+ * The actual call signature of a burden test is pretty low-level. In addition to running the list of tests,
+ *  this helper also restructures human-friendly mask and variant representations into a shape that works directly
+ *  with the calculation.
+ */
 class PortalTestRunner {
-  constructor(groups, variants, test_names=[]) {
+  /**
+   * Create a test runner object, using group and variant data of the form provided by `parsePortalJSON`. Generally,
+   *  this helper is a convenience wrapper based on the raremetal.js API format spec, and hence it expects
+   *  variant and group definitions to follow that spec.
+   * @param groups PortalGroupHelper
+   * @param variants PortalVariantsHelper
+   * @param test_names {String[]|_AggregationTest[]}
+   */
+  constructor(groups, variants, test_names = []) {
     this.groups = groups;
     this.variants = variants;
     this._tests = [];
@@ -241,9 +255,13 @@ class PortalTestRunner {
     test_names.forEach(name => this.addTest(name));
   }
 
+  /**
+   *
+   * @param test {String|_AggregationTest}
+   * @return {_AggregationTest}
+   */
   addTest(test) {
     // Add a new test by name, or directly from an instance
-    // TODO Find a way to do this without using the registry
     if (typeof test === 'string') {
       let type = AGGREGATION_TESTS[test];
       if (!type) {
@@ -253,25 +271,40 @@ class PortalTestRunner {
     } else if (!(test instanceof _AggregationTest)) {
       throw new Error('Must specify test as name or instance');
     }
-
-
     this._tests.push(test);
     return test;
   }
 
+  /**
+   * Run every test on every group in the container and return results
+   * @returns Promise A promise representing the fulfillment state of all tests being run
+   */
   run() {
-    // Run every test on every group in the container and return results
-    let results = [];
+    let partials = [];
 
     this._tests.forEach(test => {
       this.groups.data.forEach(group => {
-        results.push(this._runOne(test, group));
+        partials.push(this._runOne.bind(this, test, group));
       });
     });
-
-    return results;
+    // Despite the async syntax, ensure that each tests is run in series, to mitigate memory allocation errors when
+    //  running many tests
+    return partials.reduce((results, one_test) => {
+      return results.then((all_prior) => {
+        return one_test().then(one_res => {
+          return [...all_prior, one_res];
+        });
+      });
+    }, Promise.resolve([]));
   }
 
+  /**
+   *
+   * @param {AggregationTest} test Instance for a single unit test
+   * @param group {Object} Data corresponding to a specific group, following API format docs
+   * @returns {{groupType: *, stat: *, test: *, pvalue: *, variants: (*|Array|string[]|Map), group: *, mask: (*|string|SVGMaskElement|string)}}
+   * @private
+   */
   _runOne(test, group) {
     // Helper method that translates portal data into the format expected by a test.
     const variants = group.variants;
@@ -284,34 +317,47 @@ class PortalTestRunner {
     const mafs = this.variants.getEffectFreq(variants);
     let weights;  // TODO: The runner never actually uses the weights argument. Should it allow this?
 
-    const [ stat, pvalue ] = test.run(scores, cov, weights, mafs);
+    // Some test classes may return a raw value and others will return a promise. Wrap the result for consistency.
+    let result = test.run(scores, cov, weights, mafs);
+    return Promise.resolve(result)
+      .then(([stat, pvalue]) => {
+        // The results describe the group + several new fields for calculation results.
+        return {
+          groupType: group.groupType,
+          group: group.group,
+          mask: group.mask,
+          variants: group.variants,
 
-    // The results describe the group + several new fields for calculation results.
-    return {
-      groupType: group.groupType,
-      group: group.group,
-      mask: group.mask,
-      variants: group.variants,
-
-      test: test.key,
-      stat,
-      pvalue
-    };
+          test: test.key,
+          stat,
+          pvalue
+        };
+      });
   }
 
+  /**
+   * Generate a JSON representation of the results. Returns a Promise, because some methods may run asynchronously
+   *  (eg via web workers), or require loading external libraries (eg webassembly)
+   * @param results Array
+   * @returns {Promise&lt;{data: {groups: Promise&lt;any> | Array, variants: *}} | never>}
+   */
   toJSON(results) {
     // Output calculation results in a format that matches the "precomputed results" endpoint
     // By passing in an argument, user can format any set of results (even combining multiple runs)
     if (!results) {
       results = this.run();
+    } else {
+      results = Promise.resolve(results);
     }
 
-    return {
-      data: {
-        variants: this.variants.data,
-        groups: results,
+    return results.then(group_results => {
+      return {
+        data: {
+          variants: this.variants.data,
+          groups: group_results,
+        }
       }
-    };
+    });
   }
 }
 
@@ -328,9 +374,9 @@ function parsePortalJSON(json) {
   return [groups, variants];
 }
 
-export { PortalVariantsHelper as _PortalVariantsHelper , PortalGroupHelper as _PortalGroupHelper }; // testing only
+export { PortalVariantsHelper as _PortalVariantsHelper, PortalGroupHelper as _PortalGroupHelper }; // testing only
 
-export { parsePortalJSON, PortalTestRunner };
+export { parsePortalJSON, PortalTestRunner, AGGREGATION_TESTS };
 </code></pre>
         </article>
     </section>
@@ -341,13 +387,13 @@ export { parsePortalJSON, PortalTestRunner };
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-browser.html">browser</a></li><li><a href="module-cli.html">cli</a></li><li><a href="module-fio.html">fio</a></li><li><a href="module-print.html">print</a></li><li><a href="module-qfc.html">qfc</a></li><li><a href="module-rstats.html">rstats</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="module-fio-GenotypeCovarianceMatrix.html">GenotypeCovarianceMatrix</a></li><li><a href="module-fio-ScoreStatTable.html">ScoreStatTable</a></li><li><a href="module-fio-VariantMask.html">VariantMask</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AGGREGATION_TESTS">AGGREGATION_TESTS</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-browser.html">browser</a></li><li><a href="module-cli.html">cli</a></li><li><a href="module-fio.html">fio</a></li><li><a href="module-print.html">print</a></li><li><a href="module-qfc.html">qfc</a></li><li><a href="module-rstats.html">rstats</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="module-fio-GenotypeCovarianceMatrix.html">GenotypeCovarianceMatrix</a></li><li><a href="module-fio-ScoreStatTable.html">ScoreStatTable</a></li><li><a href="module-fio-VariantMask.html">VariantMask</a></li><li><a href="PortalTestRunner.html">PortalTestRunner</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AGGREGATION_TESTS">AGGREGATION_TESTS</a></li><li><a href="global.html#cholesky">cholesky</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.1</a> on Tue Jun 04 2019 10:24:16 GMT-0400 (Eastern Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.1</a> on Wed Jul 24 2019 09:57:40 GMT-0400 (Eastern Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>

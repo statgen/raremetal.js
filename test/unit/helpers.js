@@ -168,14 +168,16 @@ describe('helpers.js', function () {
     });
 
     it('combines the results from multiple tests', function () {
-      const results = this.inst.run();
-      const expected_count = this.groups.data.length * this.inst._tests.length;
-      assert.equal(results.length, expected_count);
+      return this.inst.run().then(results => {
+        const expected_count = this.groups.data.length * this.inst._tests.length;
+        assert.equal(results.length, expected_count);
+      });
     });
 
     it('can represent results payload as portal-format precomputed results JSON', function () {
-      const results = this.inst.toJSON();
-      assert.hasAllKeys(results.data, ['groups', 'variants']);
+      return this.inst.toJSON().then(results => {
+        assert.hasAllKeys(results.data, ['groups', 'variants']);
+      });
     });
   });
 

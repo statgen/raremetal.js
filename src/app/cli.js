@@ -9,11 +9,14 @@
  * @license MIT
  */
 
-require("babel-register");
+require('@babel/register')({
+  extends: __dirname + '/../.././.babelrc',
+  ignore: [/node_modules/],
+});
 const { ArgumentParser } = require("argparse");
 const { readMaskFileSync, extractScoreStats, extractCovariance } = require("./fio.js");
 const { REGEX_EPACTS } = require("./constants.js");
-const { ZegginiBurdenTest, SkatTest } = require("./stats.js");
+const { ZegginiBurdenTest, SkatTest, SkatOptimalTest, VTTest } = require("./stats.js");
 const fs = require("fs");
 const yaml = require("js-yaml");
 
@@ -35,6 +38,7 @@ function getSettings() {
   single.addArgument(["-t", "--test"], { help: "Specify group-based test to run. Can be 'burden', 'skat'." });
   single.addArgument(["-c", "--cov"], { help: "File containing covariance statistics across windows of variants" });
   single.addArgument(["-g", "--group"], { help: "Only analyze 1 group/gene." });
+  single.addArgument(["--skato-rhos"], { help: "Specify rho values for SKAT-O as comma separated string." });
   single.addArgument(["-o", "--out"], { help: "File to write results to." });
   single.addArgument(["--silent"], { help: "Silence console output.", default: false });
 
@@ -44,24 +48,52 @@ function getSettings() {
   return parser.parseArgs();
 }
 
+class Timer {
+  constructor() {
+    this.start = process.hrtime();
+  }
+
+  stop() {
+    this.end = process.hrtime(this.start);
+  }
+
+  getElapsedMilliseconds() {
+    return (this.end[0] * 1e9 + this.end[1]) / 1e6;
+  }
+
+  toString() {
+    return `${this.getElapsedMilliseconds().toFixed(1)}`;
+  }
+}
+
 class Results {
   constructor() {
     this.results = [];
   }
 
-  addResult(group, pvalue) {
+  addResult(group, pvalue, time) {
+    if (!time) {
+      time = NaN;
+    }
+
     this.results.push({
       group: group,
       pvalue: pvalue,
+      time: time
     })
   }
 
+  getLastResult() {
+    return this.results.slice(-1)[0];
+  }
+
   toString() {
-    let s = "group\tpvalue\n";
+    let s = "group\tpvalue\ttime_ms\n";
     //let s = Object.keys(this.results[0]).join("\t") + "\n";
     for (let obj of this.results) {
       s += obj["group"] + "\t";
-      s += obj["pvalue"].toExponential(2) + "\n";
+      s += obj["pvalue"].toExponential(2) + "\t";
+      s += obj["time"].toString() + "\n";
     }
     return s;
   }
@@ -75,6 +107,7 @@ class Results {
 async function single(args) {
   // Load mask file.
   const mask = readMaskFileSync(args.mask);
+  if (!args.silent) console.log(`Read ${mask.size()} groups from mask file`);
 
   // Run test on one group, or all groups
   const results = new Results();
@@ -82,7 +115,7 @@ async function single(args) {
   let total = args.group == null ? mask.size() : 1;
   let i = 1;
   for (let [group, groupVars] of mask) {
-    if (args.group !== null && args.group !== group) {
+    if ((args.group != null) && (args.group !== group)) {
       continue;
     }
 
@@ -95,6 +128,12 @@ async function single(args) {
 
     let scores = await extractScoreStats(args.score, region, groupVars);
 
+    if (!scores.variants.length) {
+      console.log("  No polymorphic variants loaded from group, skipping");
+      results.addResult(group, NaN);
+      continue;
+    }
+
     /**
      * During the loading of the score stats, we may have dropped some of the
      * group variants due to monomorphic or other QC issues.
@@ -103,22 +142,48 @@ async function single(args) {
     let cov = await extractCovariance(args.cov, region, scores.variants, scores);
 
     if (args.test === 'burden') {
+      const timer = new Timer();
       let [, p] = new ZegginiBurdenTest().run(scores.u, cov.matrix, null);
-      results.addResult(group, p);
+      timer.stop();
+      results.addResult(group, p, timer);
     }
     else if (args.test.startsWith('skat')) {
       // Use default weights for now
       let mafs = scores.altFreq.map(x => Math.min(x,1-x));
 
       // Method
-      let method = args.test.replace('skat-','');
-      let skat = new SkatTest();
-      skat._method = method;
-      let [, p] = skat.run(scores.u, cov.matrix, null, mafs);
-      results.addResult(group, p);
+      if (args.test === 'skato') {
+        let rhos;
+        if (args.skato_rhos) {
+          rhos = args.skato_rhos.split(",").map(x => parseFloat(x.trim()));
+        }
+        let skat = new SkatOptimalTest();
+        const timer = new Timer();
+        let [, p] = skat.run(scores.u, cov.matrix, null, mafs, rhos);
+        timer.stop();
+        results.addResult(group, p, timer);
+      }
+      else {
+        let method = args.test.replace('skat-','');
+        let skat = new SkatTest();
+        skat._method = method;
+        const timer = new Timer();
+        let [, p] = skat.run(scores.u, cov.matrix, null, mafs);
+        timer.stop();
+        results.addResult(group, p, timer);
+      }
+    }
+    else if (args.test === 'vt') {
+      let mafs = scores.altFreq.map(x => Math.min(x,1-x));
+      let vt = new VTTest();
+      const timer = new Timer();
+      let [, p] = await vt.run(scores.u, cov.matrix, null, mafs);
+      timer.stop();
+      results.addResult(group, p, timer);
     }
 
     if (!args.silent) console.timeEnd("  Total time");
+    if (!args.silent) console.log("  Pvalue: ", results.getLastResult().pvalue);
     i += 1;
   }
 

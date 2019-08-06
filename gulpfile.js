@@ -1,20 +1,22 @@
 const gulp = require('gulp');
 const gutil = require('gulp-util');
-const loadPlugins = require('gulp-load-plugins');
+const mocha = require('gulp-mocha');
+const filter = require('gulp-filter');
+const eslint = require('gulp-eslint');
 const path = require('path');
 const isparta = require('isparta');
 const uglify = require("gulp-uglify-es").default;
+const istanbul = require('gulp-istanbul');
+const sourcemaps = require('gulp-sourcemaps');
+const rename = require('gulp-rename');
 
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const webpackStream = require('webpack-stream');
-const ShakePlugin = require('webpack-common-shake').Plugin;
+// const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;   // This is useful for explaining large builds, but not needed for most runs
 
 const Instrumenter = isparta.Instrumenter;
 const mochaGlobals = require('./test/setup/.globals');
 const manifest = require('./package.json');
-
-// Load all of our Gulp plugins
-const $ = loadPlugins();
 
 // Gather the library data from `package.json`
 const config = manifest.babelBoilerplateOptions;
@@ -25,9 +27,9 @@ const exportFileName = path.basename(mainFile, path.extname(mainFile));
 // Lint a set of files
 function lint(files) {
   return gulp.src(files)
-    .pipe($.eslint())
-    .pipe($.eslint.format())
-    .pipe($.eslint.failAfterError());
+    .pipe(eslint())
+    .pipe(eslint.format())
+    .pipe(eslint.failAfterError());
 }
 
 function lintSrc() {
@@ -45,10 +47,14 @@ function lintGulpfile() {
 function build() {
   return gulp.src(path.join('src/app', config.entryFileName))
     .pipe(webpackStream({
+      mode: 'production',
       output: {
         filename: `${exportFileName}.js`,
         libraryTarget: 'umd',
         library: config.mainVarName
+      },
+      optimization: {
+        minimize: false,
       },
       externals: {},
       module: {
@@ -56,51 +62,68 @@ function build() {
         rules: [
           {
             test: /\.js$/,
-            use: ["source-map-loader"],
+            loader: 'source-map-loader',
             enforce: "pre"
-          }
-        ],
-        loaders: [
+          },
           {
             test: /\.js$/,
             exclude: /node_modules/,
             loader: 'babel-loader'
+          },
+          {
+            test: /\.wasm$/,
+            type: 'javascript/auto',
+            loader: 'file-loader',
+            options: {
+              publicPath: 'dist/'
+            }
           }
         ]
       },
       plugins: [
-        new CleanWebpackPlugin(['dist']),
-        // CommonJS tree-shaking is not well supported by webpack, but this gives some small benefits
-        new ShakePlugin()
+        new CleanWebpackPlugin({
+          verbose: true,
+          cleanOnceBeforeBuildPatterns: [
+            'dist/*',
+          ]
+        }),
+        // new BundleAnalyzerPlugin(),
       ],
-      // TODO: there are known issues with sourcemaps being built from webpack
       devtool: 'source-map',
-      node: {
-        fs: "empty"
+      node: { // Reduce build size bloat by skipping certain emscripten library shims. TODO: Verify this doesn't break integral.js!
+        fs: 'empty',
+        path: 'empty',
+        crypto: 'empty'
       }
     }))
     .pipe(gulp.dest(destinationFolder))
-    .pipe($.filter(['**', '!**/*.js.map']))
-    .pipe($.rename(`${exportFileName}.min.js`))
-    .pipe($.sourcemaps.init({ loadMaps: true }))
+    .pipe(filter(['**', '!**/*.js.map']))
+    .pipe(rename(`${exportFileName}.min.js`))
+    .pipe(sourcemaps.init({ loadMaps: true }))
     .pipe(uglify())
     .on('error', function (err) {
       gutil.log(gutil.colors.red('[Error]'), err.toString());
     })
-    .pipe($.sourcemaps.write('./'))
+    .pipe(sourcemaps.write('./'))
     .pipe(gulp.dest(destinationFolder));
+}
+
+function copy_wasm() {
+  return gulp
+    .src(['src/app/*.wasm'])
+    .pipe(gulp.dest('dist/'));
 }
 
 function _mocha() {
   return gulp.src(['test/setup/node.js', 'test/unit/**/*.js', 'test/integration/**/*.js'], { read: false })
-    .pipe($.mocha({
+    .pipe(mocha({
       globals: Object.keys(mochaGlobals.globals),
-      ignoreLeaks: false
+      checkLeaks: true
     }));
 }
 
 function _registerBabel() {
-  require('babel-register');
+  require('@babel/register');
 }
 
 function test() {
@@ -111,15 +134,15 @@ function test() {
 function coverage(done) {
   _registerBabel();
   gulp.src(['src/app/**/*.js'])
-    .pipe($.filter(['!**/*cli*js']))
-    .pipe($.istanbul({
+    .pipe(filter(['!**/*cli*js']))
+    .pipe(istanbul({
       instrumenter: Instrumenter,
       includeUntested: true
     }))
-    .pipe($.istanbul.hookRequire())
+    .pipe(istanbul.hookRequire())
     .on('finish', () => {
       return test()
-        .pipe($.istanbul.writeReports())
+        .pipe(istanbul.writeReports())
         .on('end', done);
     });
 }
@@ -142,30 +165,10 @@ function watchDocs() {
   });
 }
 
-// Lint our source code
-gulp.task('lint-src', lintSrc);
-
-// Lint our test code
-gulp.task('lint-test', lintTest);
-
-// Lint this file
-gulp.task('lint-gulpfile', lintGulpfile);
-
-// Lint everything
-gulp.task('lint', ['lint-src', 'lint-test', 'lint-gulpfile']);
-
-// Build two versions of the library
-gulp.task('build', ['test'], build);
-
-// Lint and run our tests
-gulp.task('test', ['lint'], test);
-
-// Set up coverage and run tests
-gulp.task('coverage', ['lint'], coverage);
-
-// Run the headless unit tests as you make changes.
-gulp.task('watch', watch);
-gulp.task('watch-docs', watchDocs);
-
-// An alias of test
-gulp.task('default', ['test']);
+exports.lint = gulp.parallel(lintSrc, lintTest, lintGulpfile);
+exports.test = gulp.series(exports.lint, test);
+exports.coverage = gulp.series(exports.lint, coverage);
+exports.build = gulp.series(exports.lint, test, build, copy_wasm);
+exports.watch = gulp.series(watch);
+exports.watch_docs = gulp.series(watchDocs);
+exports.default = gulp.series(exports.test);

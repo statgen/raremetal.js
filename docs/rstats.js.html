@@ -336,9 +336,85 @@ const R_DT_0 = (lower_tail, log_p) => (lower_tail ? R_D__0(log_p) : R_D__1(log_p
 const R_DT_1 = (lower_tail, log_p) => (lower_tail ? R_D__1(log_p) : R_D__0(log_p));
 // const R_D_half = () => (log_p ? -M_LN2 : 0.5);
 
+// This is some sort of trick by using 0.5 - p + 0.5 to "perhaps gain 1 bit of accuracy"
+const R_D_Lval = (p, lower_tail) => (lower_tail ? p : (0.5 - p + 0.5));
+const R_D_Cval = (p, lower_tail) => (lower_tail ? (0.5 - p + 0.5) : p);
+
 const R_D_val = (x, log_p)	=> (log_p ? Math.log(x) : (x));
+const R_D_log = (p, log_p) => (log_p ? p : Math.log(p));
 const R_D_Clog = (p, log_p) => (log_p ? Math.log1p(-(p)) : (0.5 - (p) + 0.5));
 const R_DT_val = (x, lower_tail, log_p) => ((lower_tail ? R_D_val(x, log_p) : R_D_Clog(x, log_p)));
+
+const R_D_LExp = (x, log_p) => (log_p ? R_Log1_Exp(x) : Math.log1p(-x));
+
+// Be careful, for some reason they named two functions off by only 1 capital letter...
+// R_DT_log != R_DT_Log
+const R_DT_log = (p, lower_tail) => (lower_tail ? R_D_log(p) : R_D_LExp(p));
+const R_DT_Clog = (p, lower_tail) => (lower_tail ? R_D_LExp(p) : R_D_log(p));
+//const R_DT_Log = (p, lower_tail) => (lower_tail ? p : R_Log1_Exp(p));
+
+/**
+ * See warning for R_Q_P01_boundaries (this function should be wrapped in try/catch.)
+ */
+function R_Q_P01_check(p, log_p) {
+  if ((log_p &amp;&amp; p > 0) || (!log_p &amp;&amp; (p &lt; 0 || p > 1))) {
+    throw ML_ERR_return_NAN();
+  }
+}
+
+/**
+ * Note this has changed from the R implementation which was a C macro.
+ * You should wrap this in a try catch, like:
+ * try {
+ *   boundaries(...)
+ * }
+ * catch (e) { return e; }
+ */
+function R_Q_P01_boundaries(p, lower_tail, log_p, left, right) {
+  if (log_p) {
+    if (p > 0) { throw ML_ERR_return_NAN(); }
+    if (p === 0) { throw lower_tail ? right : left;  }
+    if (p === Number.NEGATIVE_INFINITY) { throw lower_tail ? left : right; }
+  }
+  else {
+    if (p &lt; 0 || p > 1) { throw ML_ERR_return_NAN(); }
+    if (p === 0) { throw lower_tail ? left : right; }
+    if (p === 1) { throw lower_tail ? right : left; }
+  }
+}
+
+function R_P_bounds_01(x, x_min, x_max, lower_tail, log_p) {
+  if (x &lt;= x_min) { throw R_DT_0(lower_tail, log_p); }
+  if (x >= x_max) { throw R_DT_1(lower_tail, log_p); }
+}
+
+function R_DT_qIv(p, lower_tail, log_p) {
+  if (log_p) {
+    if (lower_tail) {
+      return Math.exp(p);
+    }
+    else {
+      return -Math.expm1(p);
+    }
+  }
+  else {
+    return R_D_Lval(p, lower_tail);
+  }
+}
+
+function R_DT_CIv(p, lower_tail, log_p) {
+  if (log_p) {
+    if (lower_tail) {
+      return -Math.expm1(p);
+    }
+    else {
+      return Math.exp(p);
+    }
+  }
+  else {
+    return R_D_Cval(p);
+  }
+}
 
 function fmin2(x, y) {
   if (isNaN(x) || isNaN(y)) {
@@ -972,6 +1048,10 @@ function ppois_asymp(x, lambda, lower_tail, log_p) {
 
 function pgamma_raw(x, alph, lower_tail, log_p) {
   var res, d, sum;
+  try {
+    R_P_bounds_01(x, 0.0, Number.POSITIVE_INFINITY, lower_tail, log_p);
+  }
+  catch (e) { return e; }
   if (x &lt; 1) {
     res = pgamma_smallx(x, alph, lower_tail, log_p);
   } else if (x &lt;= alph - 1 &amp;&amp; x &lt; 0.8 * (alph + 50)) {
@@ -1037,6 +1117,59 @@ function pgamma(x, alph, scale, lower_tail, log_p) {
     return (x &lt;= 0) ? R_DT(0, lower_tail, log_p) : R_DT(1, lower_tail, log_p);
   }
   return pgamma_raw(x, alph, lower_tail, log_p);
+}
+
+/**
+ * The gamma density function.
+ * @param x
+ * @param shape
+ * @param scale
+ * @param give_log
+ * @return {number|*}
+ */
+export function dgamma(x, shape, scale, give_log) {
+  x = parseNumeric(x);
+  shape = parseNumeric(shape);
+  scale = parseNumeric(scale);
+  give_log = parseBoolean(give_log);
+
+  let pr;
+
+  if (isNaN(x) || isNaN(shape) || isNaN(scale)) {
+    return x + shape + scale;
+  }
+
+  if (shape &lt; 0 || scale &lt;= 0) { ML_ERR_return_NAN; }
+  if (x &lt; 0) {
+    return R_D__0(give_log);
+  }
+  if (shape === 0) {
+    return x === 0 ? Infinity : R_D__0(give_log);
+  }
+  if (x === 0) {
+    if (shape &lt; 1) { return Infinity; }
+    if (shape > 1) { return R_D__0(give_log); }
+    return give_log ? -Math.log(scale) : 1 / scale;
+  }
+
+  if (shape &lt; 1) {
+    pr = dpois_raw(shape, x/scale, give_log);
+    return give_log ? pr + Math.log(shape/x) : pr * shape / x;
+  }
+
+  pr = dpois_raw(shape-1, x/scale, give_log);
+  return give_log ? pr - Math.log(scale) : pr/scale;
+}
+
+/**
+ * The chi-squared density function.
+ * @param x
+ * @param df
+ * @param give_log
+ * @return {number|*}
+ */
+export function dchisq(x, df, give_log) {
+  return dgamma(x, df / 2.0, 2.0, give_log);
 }
 
 /**
@@ -1211,6 +1344,292 @@ function pnchisq_raw(x, f, theta, errmax, reltol, itrmax, lower_tail, log_p) {
 
   let dans = ans;
   return R_DT_val(dans, lower_tail, log_p);
+}
+
+export function qnorm(p, mu, sigma, lower_tail, log_p) {
+  let p_, q, r, val;
+  if (isNaN(p) || isNaN(mu) || isNaN(sigma)) { return p + mu + sigma; }
+
+  try {
+    R_Q_P01_boundaries(p, lower_tail, log_p, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
+  }
+  catch(e) { return e; }
+
+  if (sigma &lt; 0) { return ML_ERR_return_NAN(); }
+  if (sigma === 0) { return mu; }
+
+  p_ = R_DT_qIv(p, lower_tail, log_p);
+  q = p_ - 0.5;
+
+  if (Math.abs(q) &lt;= .425) {/* 0.075 &lt;= p &lt;= 0.925 */
+    r = .180625 - q * q;
+    val =
+      q * (((((((r * 2509.0809287301226727 +
+      33430.575583588128105) * r + 67265.770927008700853) * r +
+      45921.953931549871457) * r + 13731.693765509461125) * r +
+      1971.5909503065514427) * r + 133.14166789178437745) * r +
+      3.387132872796366608)
+      / (((((((r * 5226.495278852854561 +
+      28729.085735721942674) * r + 39307.89580009271061) * r +
+      21213.794301586595867) * r + 5394.1960214247511077) * r +
+      687.1870074920579083) * r + 42.313330701600911252) * r + 1.);
+  } else { /* closer than 0.075 from {0,1} boundary */
+    /* r = min(p, 1-p) &lt; 0.075 */
+    if (q > 0) {
+      r = R_DT_CIv(p, lower_tail, log_p);/* 1-p */
+    }
+    else {
+      r = p_;/* = R_DT_Iv(p) ^=  p */
+    }
+
+    r = Math.sqrt(-((log_p &amp;&amp; ((lower_tail &amp;&amp; q &lt;= 0) || (!lower_tail &amp;&amp; q > 0))) ? p : /* else */ Math.log(r)));
+    /* r = sqrt(-log(r))  &lt;==>  min(p, 1-p) = exp( - r^2 ) */
+
+    if (r &lt;= 5.) { /* &lt;==> min(p,1-p) >= exp(-25) ~= 1.3888e-11 */
+      r += -1.6;
+      val = (((((((r * 7.7454501427834140764e-4 +
+        .0227238449892691845833) * r + .24178072517745061177) *
+        r + 1.27045825245236838258) * r +
+        3.64784832476320460504) * r + 5.7694972214606914055) *
+        r + 4.6303378461565452959) * r +
+        1.42343711074968357734)
+        / (((((((r *
+          1.05075007164441684324e-9 + 5.475938084995344946e-4) *
+          r + .0151986665636164571966) * r +
+          .14810397642748007459) * r + .68976733498510000455) *
+          r + 1.6763848301838038494) * r +
+          2.05319162663775882187) * r + 1.);
+    } else { /* very close to  0 or 1 */
+      r += -5.;
+      val = (((((((r * 2.01033439929228813265e-7 +
+        2.71155556874348757815e-5) * r +
+        .0012426609473880784386) * r + .026532189526576123093) *
+        r + .29656057182850489123) * r +
+        1.7848265399172913358) * r + 5.4637849111641143699) *
+        r + 6.6579046435011037772)
+        / (((((((r *
+          2.04426310338993978564e-15 + 1.4215117583164458887e-7) *
+          r + 1.8463183175100546818e-5) * r +
+          7.868691311456132591e-4) * r + .0148753612908506148525)
+          * r + .13692988092273580531) * r +
+          .59983220655588793769) * r + 1.);
+    }
+
+    if (q &lt; 0.0) {
+      val = -val;
+    }
+    /* return (q >= 0.)? r : -r ;*/
+  }
+  return mu + sigma * val;
+}
+
+function qchisq_appr(p, nu, g, lower_tail, log_p, tol) {
+  const C7 = 4.67;
+  const C8 = 6.66;
+  const C9 = 6.73;
+  const C10 = 13.32;
+
+  let alpha, a, c, ch, p1;
+  let p2, q, t, x;
+
+  if (isNaN(p) || isNaN(nu)) {
+    return p + nu;
+  }
+
+  try {
+    R_Q_P01_check(p, log_p);
+  }
+  catch(e) { return e; }
+  if (nu &lt;= 0) { return ML_ERR_return_NAN(); }
+
+  alpha = 0.5 * nu;
+  c = alpha - 1;
+
+  if (nu &lt; (-1.24) * (p1 = R_DT_log(p))) {
+    let lgam1pa = (alpha &lt; 0.5) ? lgamma1p(alpha) : (Math.log(alpha) + g);
+    ch = Math.exp((lgam1pa + p1)/alpha + M_LN2);
+  }
+  else if (nu > 0.32) {
+    x = qnorm(p, 0, 1, lower_tail, log_p);
+    p1 = 2.0 / (9 * nu);
+    ch = nu * Math.pow(x * Math.sqrt(p1) + 1 - p1, 3);
+
+    if (ch > 2.2*nu + 6) {
+      ch = -2 * (R_DT_Clog(p, lower_tail) - c * Math.log(0.5 * ch) + g);
+    }
+  }
+  else {
+    ch = 0.4;
+    a = R_DT_Clog(p, lower_tail) + g + c * M_LN2;
+    do {
+      q = ch;
+      p1 = 1.0 / (1 + ch*(C7 + ch));
+      p2 = ch * (C9 + ch*(C8 + ch));
+      t = -0.5 + (C7 + 2*ch)*p1 - (C9 + ch*(C10 + 3 * ch)) / p2;
+      ch -= (1 - Math.exp(a + 0.5 * ch) * p2 * p1) / t;
+    }
+    while (Math.abs(q - ch) > tol * Math.abs(ch));
+  }
+
+  return ch;
+}
+
+/**
+ * Inverse CDF / quantile function of gamma distribution.
+ * @param p
+ * @param alpha
+ * @param scale
+ * @param lower_tail
+ * @param log_p
+ * @return {*|number|number|*}
+ */
+export function qgamma(p, alpha, scale, lower_tail, log_p) {
+  const EPS1 = 1e-2;
+  const EPS2 = 5e-7;
+  const EPS_N = 1e-15;
+  //const LN_EPS = -36.043653389117156;
+  const MAXIT = 1000;
+  const pMIN = 1e-100;
+  const pMAX = 1-1e-14;
+  const i420 = 1.0 / 420.0;
+  const i2520 = 1.0 / 2520.0;
+  const i5040 = 1.0 / 5040.0;
+
+  let p_, a, b, c, g, ch, ch0, p1;
+  let p2, q, s1, s2, s3, s4, s5, s6, t, x;
+  let max_it_Newton = 1;
+
+  if (isNaN(p) || isNaN(alpha) || isNaN(scale)) { return p + alpha + scale; }
+  try {
+    R_Q_P01_boundaries(p, lower_tail, log_p, 0.0, Number.POSITIVE_INFINITY);
+  }
+  catch(e) { return e; }
+
+  if (alpha &lt; 0 || scale &lt;= 0) { return ML_ERR_return_NAN(); }
+  if (alpha === 0) { return 0.0; }
+  if (alpha &lt; 1e-10) {
+    max_it_Newton = 7;
+  }
+
+  p_ = R_DT_qIv(p, lower_tail, log_p);
+  g = lgammafn(alpha);
+
+  // Closure to mimic the ugly 'goto END' everywhere
+  function end() {
+    x = 0.5 * scale * ch;
+    if (max_it_Newton) {
+      if (!log_p) {
+        p = Math.log(p);
+        log_p = true;
+      }
+      if (x === 0) {
+        const _1_p = 1.0 + 1e-7;
+        const _1_m = 1.0 - 1e-7;
+        x = DBL_MIN;
+        p_ = pgamma(x, alpha, scale, lower_tail, log_p);
+        if ((lower_tail &amp;&amp; p_ > p * _1_p) || (!lower_tail &amp;&amp; p_ &lt; p * _1_m)) {
+          return 0.0;
+        }
+      }
+      else {
+        p_ = pgamma(x, alpha, scale, lower_tail, log_p);
+      }
+
+      if (p_ === Number.NEGATIVE_INFINITY) { return 0; }
+    }
+    for (let i = 1; i &lt;= max_it_Newton; i++) {
+      p1 = p_ - p;
+      if (Math.abs(p1) &lt; Math.abs(EPS_N * p)) {
+        break;
+      }
+
+      if ((g = dgamma(x, alpha, scale, log_p)) === R_D__0(log_p)) {
+        break;
+      }
+
+      t = log_p ? p1 * Math.exp(p_ - g) : p1 / g;
+      t = lower_tail ? x - t : x + t;
+      p_ = pgamma(t, alpha, scale, lower_tail, log_p);
+      if (Math.abs(p_ - p) > Math.abs(p1) || (i > 1 &amp;&amp; Math.abs(p_ - p) === Math.abs(p1))) {
+        break;
+      }
+
+      /*
+      // This code appears to be never triggered in R, or rather I'm unable to find where
+      // Harmful_notably_if_max_it_Newton_is_1 is ever defined
+      if (t > 1.1*x) { t = 1.1 * x; }
+      else if (t &lt; 0.9*x) { t = 0.9 * x; }
+       */
+
+      x = t;
+    }
+    return x;
+  }
+
+  ch = qchisq_appr(p, 2 * alpha, g, lower_tail, log_p, EPS1);
+  if (!isFinite(ch)) {
+    max_it_Newton = 0;
+    return end();
+  }
+  if (ch &lt; EPS2) {
+    max_it_Newton = 20;
+    return end();
+  }
+  if (p_ > pMAX || p_ &lt; pMIN) {
+    max_it_Newton = 20;
+    return end();
+  }
+
+  c = alpha - 1;
+  s6 = (120 + c * (346 + 127*c)) * i5040;
+  ch0 = ch;
+  for (let i = 1; i &lt;= MAXIT; i++) {
+    q = ch;
+    p1 = 0.5 * ch;
+    p2 = p_ - pgamma_raw(p1, alpha, true, false);
+    if (!isFinite(p2) || ch &lt;= 0) {
+      ch = ch0;
+      max_it_Newton = 27;
+      return end();
+    }
+
+    t = p2 * Math.exp(alpha * M_LN2 + g + p1 - c*Math.log(ch));
+    b = t/ch;
+    a = 0.5*t - b*c;
+    s1 = (210+ a*(140+a*(105+a*(84+a*(70+60*a))))) * i420;
+    s2 = (420+ a*(735+a*(966+a*(1141+1278*a)))) * i2520;
+    s3 = (210+ a*(462+a*(707+932*a))) * i2520;
+    s4 = (252+ a*(672+1182*a) + c*(294+a*(889+1740*a))) * i5040;
+    s5 = (84+2264*a + c*(1175+606*a)) * i2520;
+    ch += t*(1+0.5*t*s1-b*c*(s1-b*(s2-b*(s3-b*(s4-b*(s5-b*s6))))));
+
+    if (Math.abs(q - ch) &lt; EPS2 * ch) {
+      return end();
+    }
+    if (Math.abs(q - ch) > 0.1 * ch) {
+      if (ch &lt; q) {
+        ch = 0.9 * q;
+      }
+      else {
+        ch = 1.1 * q;
+      }
+    }
+  }
+
+  return end();
+}
+
+/**
+ * Inverse CDF / quantile function for chi-squared distribution.
+ * @param p
+ * @param df
+ * @param lower_tail
+ * @param log_p
+ * @return {*|number}
+ */
+export function qchisq(p, df, ncp = 0, lower_tail = true, log_p = false) {
+  if (ncp !== 0) { throw 'Non-central chi-squared not yet supported'; }
+  return qgamma(p, 0.5 * df, 2.0, lower_tail, log_p);
 }
 
 function pnorm_both(x, i_tail, log_p) {
@@ -1589,13 +2008,13 @@ function parseBoolean(x, default_value) {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-browser.html">browser</a></li><li><a href="module-cli.html">cli</a></li><li><a href="module-fio.html">fio</a></li><li><a href="module-print.html">print</a></li><li><a href="module-qfc.html">qfc</a></li><li><a href="module-rstats.html">rstats</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="module-fio-GenotypeCovarianceMatrix.html">GenotypeCovarianceMatrix</a></li><li><a href="module-fio-ScoreStatTable.html">ScoreStatTable</a></li><li><a href="module-fio-VariantMask.html">VariantMask</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AGGREGATION_TESTS">AGGREGATION_TESTS</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-browser.html">browser</a></li><li><a href="module-cli.html">cli</a></li><li><a href="module-fio.html">fio</a></li><li><a href="module-print.html">print</a></li><li><a href="module-qfc.html">qfc</a></li><li><a href="module-rstats.html">rstats</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="module-fio-GenotypeCovarianceMatrix.html">GenotypeCovarianceMatrix</a></li><li><a href="module-fio-ScoreStatTable.html">ScoreStatTable</a></li><li><a href="module-fio-VariantMask.html">VariantMask</a></li><li><a href="PortalTestRunner.html">PortalTestRunner</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AGGREGATION_TESTS">AGGREGATION_TESTS</a></li><li><a href="global.html#cholesky">cholesky</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.1</a> on Tue Jun 04 2019 10:24:16 GMT-0400 (Eastern Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.1</a> on Wed Jul 24 2019 09:57:40 GMT-0400 (Eastern Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>

@@ -3,6 +3,7 @@
  */
 
 import * as qfc from '../../src/app/qfc.js';
+import { assert } from 'chai';
 
 describe('qfc.js', function() {
   describe('qf()', function() {

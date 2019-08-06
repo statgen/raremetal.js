@@ -29,8 +29,8 @@ const STATS_FORMAT = {
  * @private
  */
 function _variantSort(a, b) {
-  let pos_a = a.match(REGEX_EPACTS)[2];
-  let pos_b = b.match(REGEX_EPACTS)[2];
+  let pos_a = parseInt(a.match(REGEX_EPACTS)[2]);
+  let pos_b = parseInt(b.match(REGEX_EPACTS)[2]);
 
   if (pos_a < pos_b) {
     return -1
@@ -101,14 +101,18 @@ class VariantMask {
    * Get the number of groups
    * @return {number} Number of groups.
    */
-  size() { return this.groups.size }
+  size() {
+    return this.groups.size;
+  }
 
   /**
    * Iterate over groups with syntax:
    * <pre>for (let [group, variants] in mask) { ... }</pre>
    * @return Iterator over entries, yields [group, array of variants]
    */
-  [Symbol.iterator]() { return this.groups.entries() }
+  [Symbol.iterator]() {
+    return this.groups.entries();
+  }
 
   /**
    * Retrieve a specific group's variants.

@@ -7,7 +7,7 @@
 		exports["raremetal"] = factory();
 	else
 		root["raremetal"] = factory();
-})(typeof self !== 'undefined' ? self : this, function() {
+})(window, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -46,12 +46,32 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// define getter function for harmony exports
 /******/ 	__webpack_require__.d = function(exports, name, getter) {
 /******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, {
-/******/ 				configurable: false,
-/******/ 				enumerable: true,
-/******/ 				get: getter
-/******/ 			});
+/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
 /******/ 		}
+/******/ 	};
+/******/
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
+/******/
+/******/ 	// create a fake namespace object
+/******/ 	// mode & 1: value is a module id, require it
+/******/ 	// mode & 2: merge all properties of value into the ns
+/******/ 	// mode & 4: return value when already ns object
+/******/ 	// mode & 8|1: behave like require
+/******/ 	__webpack_require__.t = function(value, mode) {
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 		var ns = Object.create(null);
+/******/ 		__webpack_require__.r(ns);
+/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 		return ns;
 /******/ 	};
 /******/
 /******/ 	// getDefaultExport function for compatibility with non-harmony modules
@@ -69,8 +89,9 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// __webpack_public_path__
 /******/ 	__webpack_require__.p = "";
 /******/
+/******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 2);
+/******/ 	return __webpack_require__(__webpack_require__.s = 21);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -80,7 +101,7 @@ return /******/ (function(modules) { // webpackBootstrap
 "use strict";
 /* WEBPACK VAR INJECTION */(function(global) {
 
-var numeric = ( false)?(function numeric() {}):(exports);
+var numeric = ( false)?(undefined):(exports);
 if(typeof global !== "undefined") { global.numeric = numeric; }
 
 numeric.version = "1.2.6";
@@ -4503,692 +4524,2978 @@ numeric.svd= function svd(A) {
 };
 
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(17)))
 
 /***/ }),
 /* 1 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_AggregationTest", function() { return AggregationTest; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "SkatTest", function() { return SkatTest; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ZegginiBurdenTest", function() { return ZegginiBurdenTest; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_skatDavies", function() { return _skatDavies; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_skatLiu", function() { return _skatLiu; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__qfc_js__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_numeric__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_numeric___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_numeric__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__rstats_js__ = __webpack_require__(7);
-/**
- * Calculate group-based tests from score statistics.
- *
- * @module stats
- * @license MIT
- */
+var arrayWithHoles = __webpack_require__(14);
 
+var iterableToArrayLimit = __webpack_require__(15);
 
+var nonIterableRest = __webpack_require__(16);
 
-
-
-/**
- * Base class for all aggregation tests.
- */
-class AggregationTest {
-  constructor() {
-    this.label = '';
-    this.key = '';
-
-    this.requiresMaf = false;
-  }
-
-  run(u, v, w, mafs) { // todo update docstrings and call sigs
-    throw new Error("Method must be implemented in a subclass");
-  }
+function _slicedToArray(arr, i) {
+  return arrayWithHoles(arr) || iterableToArrayLimit(arr, i) || nonIterableRest();
 }
 
-/**
- * Standard burden test that collapses rare variants into a total count of rare alleles observed per sample
- * in a group (e.g. gene). <p>
- *
- * See {@link https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#BURDEN_META_ANALYSIS|our wiki page} for more information.
- * Also see the {@link https://www.ncbi.nlm.nih.gov/pubmed/19810025|paper} describing the method.
- *
- * @extends AggregationTest
- */
-class ZegginiBurdenTest extends AggregationTest {
-  constructor() {
-    super(...arguments);
-    this.key = 'burden';
-    this.label = 'Burden Test';
-  }
-
-  /**
-   * Default weight function for burden test. All variants weighted equally. Only requires the number of variants
-   * since they are all given the same weight value.
-   * @param n {number} Number of variants.
-   * @return {number[]} An array of weights, one per variant.
-   */
-  static weights(n) {
-    return new Array(n).fill(1 / n);
-  }
-
-  /**
-   * Calculate burden test from vector of score statistics and variances.
-   *
-   * @param {Number[]} u Vector of score statistics (length m, number of variants)
-   * @param {Number[]} v Covariance matrix of score statistics
-   * @param {Number[]} w Weight vector (length m, number of variants)
-   * @return {Number[]} Burden test statistic z and p-value
-   */
-  run(u, v, w) {
-    for (let e of [u, v]) {
-      if (!Array.isArray(e) || !e.length) {
-        throw 'Please provide all required arrays';
-      }
-    }
-
-    if (!(u.length === v.length)) {
-      throw 'u and v must be same length';
-    }
-
-    if (w != null) {
-      if (w.length !== u.length) {
-        throw 'w vector must be same length as score vector u';
-      }
-    }
-    else {
-      w = ZegginiBurdenTest.weights(u.length);
-    }
-
-    // This is taken from:
-    // https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#BURDEN_META_ANALYSIS
-    let over = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(w, u);
-    let under = Math.sqrt(__WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(__WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(w, v), w));
-    let z = over / under;
-
-    // The -Math.abs(z) is because pnorm returns the lower tail probability from the normal dist
-    // The * 2 is for a two-sided p-value.
-    let p = Object(__WEBPACK_IMPORTED_MODULE_2__rstats_js__["c" /* pnorm */])(-Math.abs(z), 0, 1) * 2;
-    return [z, p];
-  }
-}
-
-/**
- * Sequence kernel association test (SKAT). <p>
- *
- * See the {@link https://www.cell.com/ajhg/fulltext/S0002-9297%2811%2900222-9|original paper} for details on the
- * method, and {@link https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#SKAT_META_ANALYSIS|our wiki} for information
- * on how the test is calculated using scores/covariances. <p>
- *
- * @extends AggregationTest
- */
-class SkatTest extends AggregationTest {
-  constructor() {
-    super(...arguments);
-    this.label = 'SKAT Test';
-    this.key = 'skat';
-    this.requiresMaf = true;
-
-    /**
-     * Skat test method. Only used for dev/testing.
-     * Should not be set by user.
-     * @private
-     * @type {string}
-     */
-    this._method = 'auto';
-  }
-
-  /**
-   * Calculate typical SKAT weights using beta density function.
-   *
-   * @function
-   * @param mafs {number[]} Array of minor allele frequencies.
-   * @param a {number} alpha defaults to 1.
-   * @param b {number} beta defaults to 25.
-   */
-  static weights(mafs, a = 1, b = 25) {
-    let weights = Array(mafs.length).fill(null);
-    for (let i = 0; i < mafs.length; i++) {
-      let w = Object(__WEBPACK_IMPORTED_MODULE_2__rstats_js__["a" /* dbeta */])(mafs[i], a, b, false);
-      w *= w;
-      weights[i] = w;
-    }
-    return weights;
-  }
-
-  /**
-   * Calculate SKAT test. <p>
-   *
-   * The distribution function of the SKAT test statistic is evaluated using Davies' method by default.
-   * In the special case where there is only 1 lambda, the Liu moment matching approximation method is used. <p>
-   *
-   * @function
-   * @param {Number[]} u Vector of score statistics (length m, number of variants).
-   * @param {Number[]} v Covariance matrix of score statistics (m x m).
-   * @param {Number[]} w Weight vector (length m, number of variants). If weights are not provided, they will
-   *  be calculated using the default weights() method of this object.
-   * @param {Number[]} mafs A vector of minor allele frequencies. These will be used to calculate weights if
-   *  they were not provided.
-   * @return {Number[]} SKAT p-value.
-   */
-  run(u, v, w, mafs) {
-    // Calculate weights (if necessary)
-    if (w === undefined || w === null) {
-      w = SkatTest.weights(mafs);
-    }
-
-    // Calculate Q
-    let q = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(__WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(u,__WEBPACK_IMPORTED_MODULE_1_numeric___default.a.diag(w)),u);
-
-    // Calculate lambdas
-    let lambdas;
-    try {
-      let svd = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.svd(v);
-      let sqrtS = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.sqrt(svd.S);
-      let uT = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.transpose(svd.U);
-      let eigenRhs = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(__WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(svd.U, __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.diag(sqrtS)), uT);
-      let eigenLhs = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(eigenRhs, __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.diag(w));
-      let eigen = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.dot(eigenLhs, eigenRhs);
-      let finalSvd = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.svd(eigen);
-      lambdas = __WEBPACK_IMPORTED_MODULE_1_numeric___default.a.abs(finalSvd.S);
-    } catch(error) {
-      console.log(error);
-      return [NaN, NaN];
-    }
-
-    if (__WEBPACK_IMPORTED_MODULE_1_numeric___default.a.sum(lambdas) < 0.0000000001) {
-      console.error("Sum of lambda values for SKAT test is essentially zero");
-      return [NaN, NaN];
-    }
-
-    // P-value method
-    if (this._method === 'liu') {
-      // Only for debug purposes
-      return _skatLiu(lambdas, q);
-    }
-    else if (this._method === 'davies') {
-      return _skatDavies(lambdas, q);
-    }
-    else if (this._method === 'auto') {
-      if (lambdas.length === 1) {
-        // Davies method does not support 1 lambda
-        // This is what raremetal does
-        return _skatLiu(lambdas, q);
-      }
-      else {
-        let daviesResult = _skatDavies(lambdas, q);
-        if (isNaN(daviesResult[1])) {
-          // Davies' method could not converge. Use R-SKAT's approach instead.
-          return _skatLiu(lambdas, q);
-        } else {
-          return daviesResult;
-        }
-      }
-    }
-    else {
-      throw new Error(`Skat method ${this._method} not implemented`);
-    }
-  }
-}
-
-/**
- * Calculate SKAT p-value using Davies method.
- * @function
- * @param lambdas Eigenvalues of sqrtV * W * sqrtV.
- * @param qstat SKAT test statistic U.T * W * U.
- * @return {Number[]} Array of [Q statistic, p-value].
- * @private
- */
-function _skatDavies(lambdas, qstat) {
-  /**
-   * lambdas - coefficient of jth chi-squared variable
-   * nc1 - non-centrality parameters
-   * n1 - degrees of freedom
-   * n - number of chi-squared variables
-   * sigma - coefficient of standard normal variable
-   * qstat - point at which cdf is to be evaluated (this is SKAT Q stat usually)
-   * lim1 - max number of terms in integration
-   * acc - maximum error
-   * trace - array into which the following is stored:
-   *   trace[0]	absolute sum
-   *   trace[1]	total number of integration terms
-   *   trace[2]	number of integrations
-   *   trace[3]	integration interval in final integration
-   *   trace[4]	truncation point in initial integration
-   *   trace[5]	s.d. of initial convergence factor
-   *   trace[6]	cycles to locate integration parameters
-   * ifault - array into which the following fault codes are stored:
-   *   0 normal operation
-   *   1 required accuracy not achieved
-   *   2 round-off error possibly significant
-   *   3 invalid parameters
-   *   4 unable to locate integration parameters
-   *   5 out of memory
-   * res - store final value into this variable
-   */
-  let n = lambdas.length;
-  let nc1 = Array(n).fill(0);
-  let n1 = Array(n).fill(1);
-  let sigma = 0.0;
-  let lim1 = 10000;
-  let acc = 0.0001;
-  let res = __WEBPACK_IMPORTED_MODULE_0__qfc_js__["a" /* qf */](lambdas, nc1, n1, n, sigma, qstat, lim1, acc);
-  let qfval = res[0];
-  let pval = 1.0 - qfval;
-
-  let converged = (res[1] === 0) && (pval > 0) && (pval <= 1);
-  if (!converged) {
-    pval = NaN;
-  }
-
-  return [qstat, pval];
-}
-
-/**
- * Calculate SKAT p-value using Liu method.
- * @param lambdas Eigenvalues of sqrtV * W * sqrtV.
- * @param qstat SKAT test statistic U.T * W * U.
- * @return {Number[]} [qstat, pvalue]
- * @private
- */
-function _skatLiu(lambdas, qstat) {
-  let n = lambdas.length;
-  let [c1, c2, c3, c4] = Array(4).fill(0.0);
-  for (let i = 0; i < n; i++) {
-    let ilambda = lambdas[i];
-    c1 += ilambda;
-    c2 += ilambda * ilambda;
-    c3 += ilambda * ilambda * ilambda;
-    c4 += ilambda * ilambda * ilambda * ilambda;
-  }
-
-  let s1 = c3 / Math.sqrt(c2 * c2 * c2);
-  let s2 = c4 / (c2 * c2);
-  let muQ = c1;
-  let sigmaQ = Math.sqrt(2.0 * c2);
-  let tStar = (qstat - muQ) / sigmaQ;
-
-  let delta, l, a;
-  if (s1 * s1 > s2) {
-    a = 1.0 / (s1 - Math.sqrt(s1 * s1 - s2));
-    delta = s1 * a * a * a - a * a;
-    l = a * a - 2.0 * delta;
-  } else {
-    a = 1.0 / s1;
-    delta = 0.0;
-    l = c2 * c2 * c2 / (c3 * c3);
-  }
-
-  let muX = l + delta;
-  let sigmaX = Math.sqrt(2.0) * a;
-  let qNew = tStar * sigmaX + muX;
-  let p;
-
-  if (delta === 0) {
-    p = Object(__WEBPACK_IMPORTED_MODULE_2__rstats_js__["b" /* pchisq */])(qNew,l,0,0);
-  } else {
-    // Non-central chi-squared
-    p = Object(__WEBPACK_IMPORTED_MODULE_2__rstats_js__["b" /* pchisq */])(qNew,l,delta,0,0);
-  }
-
-  return [qstat, p];
-}
-
-  // for unit testing only
-
-
+module.exports = _slicedToArray;
 
 /***/ }),
 /* 2 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ (function(module, exports) {
 
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__helpers_js__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__stats_js__ = __webpack_require__(1);
-/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "helpers", function() { return __WEBPACK_IMPORTED_MODULE_0__helpers_js__; });
-/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "stats", function() { return __WEBPACK_IMPORTED_MODULE_1__stats_js__; });
-/**
- * Calculate aggregation tests and meta-analysis of these tests
- * using score statistics and covariance matrices in the browser.
- *
- * This is the user-facing bundle, which exposes an API suitable for use in the web browser.
- * If using es6 modules exclusively, consider including those files directly for greater control.
- *
- * @module browser
- * @license MIT
- */
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
+}
 
-
-
-
-
-
+module.exports = _classCallCheck;
 
 /***/ }),
 /* 3 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ (function(module, exports) {
 
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_PortalVariantsHelper", function() { return PortalVariantsHelper; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "_PortalGroupHelper", function() { return PortalGroupHelper; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "parsePortalJSON", function() { return parsePortalJSON; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "PortalTestRunner", function() { return PortalTestRunner; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_numeric__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_numeric___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_numeric__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__constants__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__stats__ = __webpack_require__(1);
-/**
- * Helper methods for running aggregation tests
- *
- * This wraps internal functionality and provides utilities for reading and writing expected API formats
- */
-
-
-
-
-const _all_tests = [__WEBPACK_IMPORTED_MODULE_2__stats__["ZegginiBurdenTest"], __WEBPACK_IMPORTED_MODULE_2__stats__["SkatTest"]];
-
-/**
- * Look up aggregation tests by unique name.
- *
- * This is a helper for external libraries; it provides an immutable registry of all available tests.
- * TODO would be nice to get rid of this?
- *
- *
- * {key: {label: String, constructor: Object }
- * @type {{String: {label: String, constructor: function}}}
- */
-const AGGREGATION_TESTS = Object.freeze(_all_tests.reduce(function(acc, constructor) {
-  const inst = new constructor();  // Hack- need instance to access attributes
-  acc[inst.key] = { label: inst.label, constructor: constructor };
-  return acc;
-}, {}));
-
-
-/**
- * Helper object for reading and interpreting variant data
- */
-class PortalVariantsHelper {
-  constructor(variants_array) {
-    this._variants = variants_array;
-    this._variant_lookup = this.parsePortalVariantData(variants_array);
-  }
-
-  get data() {  // Raw unparsed data
-    return this._variants;
-  }
-
-  parsePortalVariantData(variants) {
-    // Read an array of variants. Parse names into position/ref/alt, and assign altFreq to MAF.
-    // Return a hash keyed on variant ID for quick lookups.
-    let lookup = {};
-    variants.forEach(data => {
-      let { variant, altFreq, pvalue, score } = data;
-      let [_, chrom, pos, ref, alt, __] = variant.match(__WEBPACK_IMPORTED_MODULE_1__constants__["a" /* REGEX_EPACTS */]);  // eslint-disable-line no-unused-vars
-
-      let effectFreq = altFreq;
-      let effect = alt;
-
-      /**
-       * The variant's score statistic in the API is coded toward the alternate allele.
-       * However, we want the effect coded towards the minor allele, since most rare variant tests assume
-       * you are counting the rare/minor allele.
-       */
-      if (altFreq > 0.5) {
-        /**
-         * The effect allele is initially the alt allele. Since we're flipping it,
-         * the "other" allele is the reference allele.
-         */
-        score = -score;
-        effect = ref;
-
-        // This is also now the minor allele frequency.
-        effectFreq = 1 - altFreq;
-      }
-
-      lookup[variant] = {
-        variant,
-        chrom,
-        pos,
-        pvalue,
-        score,
-        altAllele: alt,
-        effectAllele: effect,
-        altFreq: altFreq,
-        effectFreq: effectFreq
-      };
-    });
-    return lookup;
-  }
-
-  isAltEffect(variant_names) {  // Some calculations are sensitive to whether alt is the minor (effect) allele
-    return variant_names.map(name => {
-      const variant_data = this._variant_lookup[name];
-      return variant_data.altAllele === variant_data.effectAllele;
-    });
-  }
-
-  getEffectFreq(variant_names) {
-    // Get the allele freq for the minor (effect) allele
-    return variant_names.map(name => this._variant_lookup[name].effectFreq);
-  }
-
-  getScores(variant_names) {
-    // Get single-variant scores
-    return variant_names.map(name => this._variant_lookup[name].score);
-  }
-
-  getGroupVariants(variant_names) {
-    // Return all that is known about a given set of variants
-    return variant_names.map(name => this._variant_lookup[name]);
+function _defineProperties(target, props) {
+  for (var i = 0; i < props.length; i++) {
+    var descriptor = props[i];
+    descriptor.enumerable = descriptor.enumerable || false;
+    descriptor.configurable = true;
+    if ("value" in descriptor) descriptor.writable = true;
+    Object.defineProperty(target, descriptor.key, descriptor);
   }
 }
 
-// Utility class. Provides helper methods to access information about groups and generate subsets
-class PortalGroupHelper {
-  constructor(groups) {
-    this._groups = groups;
-    this._lookup = this._generateLookup(groups);
-  }
-
-  get data() {  // Raw unparsed data
-    return this._groups;
-  }
-
-  byMask(selection) {  // str or array
-    // Get all groups that identify as a specific category of mask- "limit the analysis to loss of function variants
-    // in any gene"
-    if (!Array.isArray(selection)) {
-      selection = [selection]
-    }
-    selection = new Set(selection);
-
-    const subset = this._groups.filter(group => selection.has(group.mask));
-    return new this.constructor(subset);
-  }
-
-  byGroup(selection) {  // str or array
-    // Get all groups based on a specific group name, regardless of mask. Eg, "all the ways to analyze data for a
-    // given gene".
-    if (!Array.isArray(selection)) {
-      selection = [selection]
-    }
-    selection = new Set(selection);
-
-    const subset = this._groups.filter(group => selection.has(group.group));
-    return new this.constructor(subset);
-  }
-
-  _generateLookup(groups) {
-    // We don't transform data, so this is a simple name -> position mapping
-    return groups.reduce((acc, item, idx) => {
-      const key = this._getKey(item.mask, item.group);
-      acc[key] = idx;
-      return acc;
-    }, {});
-  }
-
-  _getKey(mask_name, group_name) {
-    return `${mask_name},${group_name}`;
-  }
-
-  getOne(mask_name, group_name) {
-    // Get a single group that is fully and uniquely identified by group + mask
-    const key = this._getKey(mask_name, group_name);
-    const pos = this._lookup[key];
-    return this._groups[pos];
-  }
-
-  makeCovarianceMatrix(group, is_alt_effect) {
-    // Helper method that expands the portal covariance format into a full matrix.
-    // Load the covariance matrix from the response JSON
-    const n_variants = group.variants.length;
-    let covmat = new Array(n_variants);
-    for (let i = 0; i < n_variants; i++) {
-      covmat[i] = new Array(n_variants).fill(null);
-    }
-
-    let c = 0;
-    for (let i = 0; i < n_variants; i++) {
-      for (let j = i; j < n_variants; j++) {
-        let v = group.covariance[c];
-        let iAlt = is_alt_effect[i];
-        let jAlt = is_alt_effect[j];
-
-        /**
-         * The API spec codes variant genotypes towards the alt allele. If the alt allele frequency
-         * is > 0.5, that means we're not counting towards the minor (rare) allele, and we need to flip it around.
-         * We don't flip when i == j because that element represents the variance of the variant's score, which is
-         * invariant to which allele we code towards (but covariance is not.)
-         *
-         * We also don't flip when both the i variant and j variant need to be flipped (the ^ is XOR) because it would
-         * just cancel out.
-         */
-        if (i !== j) {
-          if ((!iAlt) ^ (!jAlt)) {
-            v = -v;
-          }
-        }
-
-        covmat[i][j] = v;
-        covmat[j][i] = v;
-
-        c += 1;
-      }
-    }
-
-    covmat = __WEBPACK_IMPORTED_MODULE_0_numeric___default.a.mul(group.nSamples, covmat);
-    return covmat;
-  }
+function _createClass(Constructor, protoProps, staticProps) {
+  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+  if (staticProps) _defineProperties(Constructor, staticProps);
+  return Constructor;
 }
 
-// Helper method that coordinates multiple tests on a series of masks
-class PortalTestRunner {
-  constructor(groups, variants, test_names=[]) {
-    this.groups = groups;
-    this.variants = variants;
-    this._tests = [];
+module.exports = _createClass;
 
-    test_names.forEach(name => this.addTest(name));
-  }
+/***/ }),
+/* 4 */
+/***/ (function(module, exports) {
 
-  addTest(test) {
-    // Add a new test by name, or directly from an instance
-    // TODO Find a way to do this without using the registry
-    if (typeof test === 'string') {
-      let type = AGGREGATION_TESTS[test];
-      if (!type) {
-        throw new Error(`Cannot make unknown test type: ${test}`);
-      }
-      test = new type.constructor();
-    } else if (!(test instanceof __WEBPACK_IMPORTED_MODULE_2__stats__["_AggregationTest"])) {
-      throw new Error('Must specify test as name or instance');
-    }
+function _typeof2(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof2 = function _typeof2(obj) { return typeof obj; }; } else { _typeof2 = function _typeof2(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof2(obj); }
 
-
-    this._tests.push(test);
-    return test;
-  }
-
-  run() {
-    // Run every test on every group in the container and return results
-    let results = [];
-
-    this._tests.forEach(test => {
-      this.groups.data.forEach(group => {
-        results.push(this._runOne(test, group));
-      });
-    });
-
-    return results;
-  }
-
-  _runOne(test, group) {
-    // Helper method that translates portal data into the format expected by a test.
-    const variants = group.variants;
-    const scores = this.variants.getScores(variants);
-
-    // Most calculations will require adjusting API data to ensure that minor allele is the effect allele
-    const isAltEffect = this.variants.isAltEffect(variants);
-
-    const cov = this.groups.makeCovarianceMatrix(group, isAltEffect);
-    const mafs = this.variants.getEffectFreq(variants);
-    let weights;  // TODO: The runner never actually uses the weights argument. Should it allow this?
-
-    const [ stat, pvalue ] = test.run(scores, cov, weights, mafs);
-
-    // The results describe the group + several new fields for calculation results.
-    return {
-      groupType: group.groupType,
-      group: group.group,
-      mask: group.mask,
-      variants: group.variants,
-
-      test: test.key,
-      stat,
-      pvalue
+function _typeof(obj) {
+  if (typeof Symbol === "function" && _typeof2(Symbol.iterator) === "symbol") {
+    module.exports = _typeof = function _typeof(obj) {
+      return _typeof2(obj);
+    };
+  } else {
+    module.exports = _typeof = function _typeof(obj) {
+      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : _typeof2(obj);
     };
   }
 
-  toJSON(results) {
-    // Output calculation results in a format that matches the "precomputed results" endpoint
-    // By passing in an argument, user can format any set of results (even combining multiple runs)
-    if (!results) {
-      results = this.run();
-    }
+  return _typeof(obj);
+}
 
-    return {
-      data: {
-        variants: this.variants.data,
-        groups: results,
-      }
-    };
+module.exports = _typeof;
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var arrayWithoutHoles = __webpack_require__(11);
+
+var iterableToArray = __webpack_require__(12);
+
+var nonIterableSpread = __webpack_require__(13);
+
+function _toConsumableArray(arr) {
+  return arrayWithoutHoles(arr) || iterableToArray(arr) || nonIterableSpread();
+}
+
+module.exports = _toConsumableArray;
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _typeof = __webpack_require__(4);
+
+var assertThisInitialized = __webpack_require__(18);
+
+function _possibleConstructorReturn(self, call) {
+  if (call && (_typeof(call) === "object" || typeof call === "function")) {
+    return call;
   }
+
+  return assertThisInitialized(self);
 }
 
+module.exports = _possibleConstructorReturn;
 
-function parsePortalJSON(json) {
-  const data = json.data || json;
-  const groups = new PortalGroupHelper(data.groups.map(item => {
-    // Each group should have access to fields that, in portal json, are defined once globally
-    item.nSamples = data.nSamples;
-    item.sigmaSquared = data.sigmaSquared;
-    return item;
-  }));
-  const variants = new PortalVariantsHelper(data.variants);
-  return [groups, variants];
+/***/ }),
+/* 7 */
+/***/ (function(module, exports) {
+
+function _getPrototypeOf(o) {
+  module.exports = _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) {
+    return o.__proto__ || Object.getPrototypeOf(o);
+  };
+  return _getPrototypeOf(o);
 }
 
- // testing only
+module.exports = _getPrototypeOf;
 
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var setPrototypeOf = __webpack_require__(19);
+
+function _inherits(subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function");
+  }
+
+  subClass.prototype = Object.create(superClass && superClass.prototype, {
+    constructor: {
+      value: subClass,
+      writable: true,
+      configurable: true
+    }
+  });
+  if (superClass) setPrototypeOf(subClass, superClass);
+}
+
+module.exports = _inherits;
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports) {
 
 
 
 /***/ }),
-/* 4 */
+/* 10 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(process, __dirname) {/* harmony import */ var _babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(4);
+/* harmony import */ var _babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_0__);
+
+
+var mvtdstpack = function () {
+  var _scriptDir = typeof document !== 'undefined' && document.currentScript ? document.currentScript.src : undefined;
+
+  return function (mvtdstpack) {
+    mvtdstpack = mvtdstpack || {};
+    var Module = typeof mvtdstpack !== "undefined" ? mvtdstpack : {};
+    var moduleOverrides = {};
+    var key;
+
+    for (key in Module) {
+      if (Module.hasOwnProperty(key)) {
+        moduleOverrides[key] = Module[key];
+      }
+    }
+
+    Module["arguments"] = [];
+    Module["thisProgram"] = "./this.program";
+
+    Module["quit"] = function (status, toThrow) {
+      throw toThrow;
+    };
+
+    Module["preRun"] = [];
+    Module["postRun"] = [];
+    var ENVIRONMENT_IS_WEB = false;
+    var ENVIRONMENT_IS_WORKER = false;
+    var ENVIRONMENT_IS_NODE = false;
+    var ENVIRONMENT_IS_SHELL = false;
+    ENVIRONMENT_IS_WEB = (typeof window === "undefined" ? "undefined" : _babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_0___default()(window)) === "object";
+    ENVIRONMENT_IS_WORKER = typeof importScripts === "function";
+    ENVIRONMENT_IS_NODE = (typeof process === "undefined" ? "undefined" : _babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_0___default()(process)) === "object" && "function" === "function" && !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_WORKER;
+    ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIRONMENT_IS_WORKER;
+    var scriptDirectory = "";
+
+    function locateFile(path) {
+      if (Module["locateFile"]) {
+        return Module["locateFile"](path, scriptDirectory);
+      } else {
+        return scriptDirectory + path;
+      }
+    }
+
+    if (ENVIRONMENT_IS_NODE) {
+      scriptDirectory = __dirname + "/";
+      var nodeFS;
+      var nodePath;
+
+      Module["read"] = function shell_read(filename, binary) {
+        var ret;
+        if (!nodeFS) nodeFS = __webpack_require__(9);
+        if (!nodePath) nodePath = __webpack_require__(9);
+        filename = nodePath["normalize"](filename);
+        ret = nodeFS["readFileSync"](filename);
+        return binary ? ret : ret.toString();
+      };
+
+      Module["readBinary"] = function readBinary(filename) {
+        var ret = Module["read"](filename, true);
+
+        if (!ret.buffer) {
+          ret = new Uint8Array(ret);
+        }
+
+        assert(ret.buffer);
+        return ret;
+      };
+
+      if (process["argv"].length > 1) {
+        Module["thisProgram"] = process["argv"][1].replace(/\\/g, "/");
+      }
+
+      Module["arguments"] = process["argv"].slice(2);
+      process["on"]("uncaughtException", function (ex) {
+        if (!(ex instanceof ExitStatus)) {
+          throw ex;
+        }
+      });
+      process["on"]("unhandledRejection", abort);
+
+      Module["quit"] = function (status) {
+        process["exit"](status);
+      };
+
+      Module["inspect"] = function () {
+        return "[Emscripten Module object]";
+      };
+    } else if (ENVIRONMENT_IS_SHELL) {
+      if (typeof read != "undefined") {
+        Module["read"] = function shell_read(f) {
+          return read(f);
+        };
+      }
+
+      Module["readBinary"] = function readBinary(f) {
+        var data;
+
+        if (typeof readbuffer === "function") {
+          return new Uint8Array(readbuffer(f));
+        }
+
+        data = read(f, "binary");
+        assert(_babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_0___default()(data) === "object");
+        return data;
+      };
+
+      if (typeof scriptArgs != "undefined") {
+        Module["arguments"] = scriptArgs;
+      } else if (typeof arguments != "undefined") {
+        Module["arguments"] = arguments;
+      }
+
+      if (typeof quit === "function") {
+        Module["quit"] = function (status) {
+          quit(status);
+        };
+      }
+    } else if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
+      if (ENVIRONMENT_IS_WORKER) {
+        scriptDirectory = self.location.href;
+      } else if (document.currentScript) {
+        scriptDirectory = document.currentScript.src;
+      }
+
+      if (_scriptDir) {
+        scriptDirectory = _scriptDir;
+      }
+
+      if (scriptDirectory.indexOf("blob:") !== 0) {
+        scriptDirectory = scriptDirectory.substr(0, scriptDirectory.lastIndexOf("/") + 1);
+      } else {
+        scriptDirectory = "";
+      }
+
+      Module["read"] = function shell_read(url) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, false);
+        xhr.send(null);
+        return xhr.responseText;
+      };
+
+      if (ENVIRONMENT_IS_WORKER) {
+        Module["readBinary"] = function readBinary(url) {
+          var xhr = new XMLHttpRequest();
+          xhr.open("GET", url, false);
+          xhr.responseType = "arraybuffer";
+          xhr.send(null);
+          return new Uint8Array(xhr.response);
+        };
+      }
+
+      Module["readAsync"] = function readAsync(url, onload, onerror) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.responseType = "arraybuffer";
+
+        xhr.onload = function xhr_onload() {
+          if (xhr.status == 200 || xhr.status == 0 && xhr.response) {
+            onload(xhr.response);
+            return;
+          }
+
+          onerror();
+        };
+
+        xhr.onerror = onerror;
+        xhr.send(null);
+      };
+
+      Module["setWindowTitle"] = function (title) {
+        document.title = title;
+      };
+    } else {}
+
+    var out = Module["print"] || (typeof console !== "undefined" ? console.log.bind(console) : typeof print !== "undefined" ? print : null);
+    var err = Module["printErr"] || (typeof printErr !== "undefined" ? printErr : typeof console !== "undefined" && console.warn.bind(console) || out);
+
+    for (key in moduleOverrides) {
+      if (moduleOverrides.hasOwnProperty(key)) {
+        Module[key] = moduleOverrides[key];
+      }
+    }
+
+    moduleOverrides = undefined;
+    var asm2wasmImports = {
+      "f64-rem": function f64Rem(x, y) {
+        return x % y;
+      },
+      "debugger": function _debugger() {
+        debugger;
+      }
+    };
+    var functionPointers = new Array(0);
+    var tempRet0 = 0;
+
+    var setTempRet0 = function setTempRet0(value) {
+      tempRet0 = value;
+    };
+
+    if ((typeof WebAssembly === "undefined" ? "undefined" : _babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_0___default()(WebAssembly)) !== "object") {
+      err("no native wasm support detected");
+    }
+
+    var wasmMemory;
+    var wasmTable;
+    var ABORT = false;
+    var EXITSTATUS = 0;
+
+    function assert(condition, text) {
+      if (!condition) {
+        abort("Assertion failed: " + text);
+      }
+    }
+
+    var UTF8Decoder = typeof TextDecoder !== "undefined" ? new TextDecoder("utf8") : undefined;
+
+    function UTF8ArrayToString(u8Array, idx, maxBytesToRead) {
+      var endIdx = idx + maxBytesToRead;
+      var endPtr = idx;
+
+      while (u8Array[endPtr] && !(endPtr >= endIdx)) {
+        ++endPtr;
+      }
+
+      if (endPtr - idx > 16 && u8Array.subarray && UTF8Decoder) {
+        return UTF8Decoder.decode(u8Array.subarray(idx, endPtr));
+      } else {
+        var str = "";
+
+        while (idx < endPtr) {
+          var u0 = u8Array[idx++];
+
+          if (!(u0 & 128)) {
+            str += String.fromCharCode(u0);
+            continue;
+          }
+
+          var u1 = u8Array[idx++] & 63;
+
+          if ((u0 & 224) == 192) {
+            str += String.fromCharCode((u0 & 31) << 6 | u1);
+            continue;
+          }
+
+          var u2 = u8Array[idx++] & 63;
+
+          if ((u0 & 240) == 224) {
+            u0 = (u0 & 15) << 12 | u1 << 6 | u2;
+          } else {
+            u0 = (u0 & 7) << 18 | u1 << 12 | u2 << 6 | u8Array[idx++] & 63;
+          }
+
+          if (u0 < 65536) {
+            str += String.fromCharCode(u0);
+          } else {
+            var ch = u0 - 65536;
+            str += String.fromCharCode(55296 | ch >> 10, 56320 | ch & 1023);
+          }
+        }
+      }
+
+      return str;
+    }
+
+    function UTF8ToString(ptr, maxBytesToRead) {
+      return ptr ? UTF8ArrayToString(HEAPU8, ptr, maxBytesToRead) : "";
+    }
+
+    function stringToUTF8Array(str, outU8Array, outIdx, maxBytesToWrite) {
+      if (!(maxBytesToWrite > 0)) return 0;
+      var startIdx = outIdx;
+      var endIdx = outIdx + maxBytesToWrite - 1;
+
+      for (var i = 0; i < str.length; ++i) {
+        var u = str.charCodeAt(i);
+
+        if (u >= 55296 && u <= 57343) {
+          var u1 = str.charCodeAt(++i);
+          u = 65536 + ((u & 1023) << 10) | u1 & 1023;
+        }
+
+        if (u <= 127) {
+          if (outIdx >= endIdx) break;
+          outU8Array[outIdx++] = u;
+        } else if (u <= 2047) {
+          if (outIdx + 1 >= endIdx) break;
+          outU8Array[outIdx++] = 192 | u >> 6;
+          outU8Array[outIdx++] = 128 | u & 63;
+        } else if (u <= 65535) {
+          if (outIdx + 2 >= endIdx) break;
+          outU8Array[outIdx++] = 224 | u >> 12;
+          outU8Array[outIdx++] = 128 | u >> 6 & 63;
+          outU8Array[outIdx++] = 128 | u & 63;
+        } else {
+          if (outIdx + 3 >= endIdx) break;
+          outU8Array[outIdx++] = 240 | u >> 18;
+          outU8Array[outIdx++] = 128 | u >> 12 & 63;
+          outU8Array[outIdx++] = 128 | u >> 6 & 63;
+          outU8Array[outIdx++] = 128 | u & 63;
+        }
+      }
+
+      outU8Array[outIdx] = 0;
+      return outIdx - startIdx;
+    }
+
+    function stringToUTF8(str, outPtr, maxBytesToWrite) {
+      return stringToUTF8Array(str, HEAPU8, outPtr, maxBytesToWrite);
+    }
+
+    function lengthBytesUTF8(str) {
+      var len = 0;
+
+      for (var i = 0; i < str.length; ++i) {
+        var u = str.charCodeAt(i);
+        if (u >= 55296 && u <= 57343) u = 65536 + ((u & 1023) << 10) | str.charCodeAt(++i) & 1023;
+        if (u <= 127) ++len;else if (u <= 2047) len += 2;else if (u <= 65535) len += 3;else len += 4;
+      }
+
+      return len;
+    }
+
+    var UTF16Decoder = typeof TextDecoder !== "undefined" ? new TextDecoder("utf-16le") : undefined;
+    var WASM_PAGE_SIZE = 65536;
+    var buffer, HEAP8, HEAPU8, HEAP16, HEAPU16, HEAP32, HEAPU32, HEAPF32, HEAPF64;
+
+    function updateGlobalBufferViews() {
+      Module["HEAP8"] = HEAP8 = new Int8Array(buffer);
+      Module["HEAP16"] = HEAP16 = new Int16Array(buffer);
+      Module["HEAP32"] = HEAP32 = new Int32Array(buffer);
+      Module["HEAPU8"] = HEAPU8 = new Uint8Array(buffer);
+      Module["HEAPU16"] = HEAPU16 = new Uint16Array(buffer);
+      Module["HEAPU32"] = HEAPU32 = new Uint32Array(buffer);
+      Module["HEAPF32"] = HEAPF32 = new Float32Array(buffer);
+      Module["HEAPF64"] = HEAPF64 = new Float64Array(buffer);
+    }
+
+    var DYNAMIC_BASE = 9531216,
+        DYNAMICTOP_PTR = 4288304;
+    var TOTAL_STACK = 5242880;
+    var INITIAL_TOTAL_MEMORY = Module["TOTAL_MEMORY"] || 16777216;
+    if (INITIAL_TOTAL_MEMORY < TOTAL_STACK) err("TOTAL_MEMORY should be larger than TOTAL_STACK, was " + INITIAL_TOTAL_MEMORY + "! (TOTAL_STACK=" + TOTAL_STACK + ")");
+
+    if (Module["buffer"]) {
+      buffer = Module["buffer"];
+    } else {
+      if ((typeof WebAssembly === "undefined" ? "undefined" : _babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_0___default()(WebAssembly)) === "object" && typeof WebAssembly.Memory === "function") {
+        wasmMemory = new WebAssembly.Memory({
+          "initial": INITIAL_TOTAL_MEMORY / WASM_PAGE_SIZE,
+          "maximum": INITIAL_TOTAL_MEMORY / WASM_PAGE_SIZE
+        });
+        buffer = wasmMemory.buffer;
+      } else {
+        buffer = new ArrayBuffer(INITIAL_TOTAL_MEMORY);
+      }
+    }
+
+    updateGlobalBufferViews();
+    HEAP32[DYNAMICTOP_PTR >> 2] = DYNAMIC_BASE;
+
+    function callRuntimeCallbacks(callbacks) {
+      while (callbacks.length > 0) {
+        var callback = callbacks.shift();
+
+        if (typeof callback == "function") {
+          callback();
+          continue;
+        }
+
+        var func = callback.func;
+
+        if (typeof func === "number") {
+          if (callback.arg === undefined) {
+            Module["dynCall_v"](func);
+          } else {
+            Module["dynCall_vi"](func, callback.arg);
+          }
+        } else {
+          func(callback.arg === undefined ? null : callback.arg);
+        }
+      }
+    }
+
+    var __ATPRERUN__ = [];
+    var __ATINIT__ = [];
+    var __ATMAIN__ = [];
+    var __ATPOSTRUN__ = [];
+    var runtimeInitialized = false;
+
+    function preRun() {
+      if (Module["preRun"]) {
+        if (typeof Module["preRun"] == "function") Module["preRun"] = [Module["preRun"]];
+
+        while (Module["preRun"].length) {
+          addOnPreRun(Module["preRun"].shift());
+        }
+      }
+
+      callRuntimeCallbacks(__ATPRERUN__);
+    }
+
+    function ensureInitRuntime() {
+      if (runtimeInitialized) return;
+      runtimeInitialized = true;
+      callRuntimeCallbacks(__ATINIT__);
+    }
+
+    function preMain() {
+      callRuntimeCallbacks(__ATMAIN__);
+    }
+
+    function postRun() {
+      if (Module["postRun"]) {
+        if (typeof Module["postRun"] == "function") Module["postRun"] = [Module["postRun"]];
+
+        while (Module["postRun"].length) {
+          addOnPostRun(Module["postRun"].shift());
+        }
+      }
+
+      callRuntimeCallbacks(__ATPOSTRUN__);
+    }
+
+    function addOnPreRun(cb) {
+      __ATPRERUN__.unshift(cb);
+    }
+
+    function addOnPostRun(cb) {
+      __ATPOSTRUN__.unshift(cb);
+    }
+
+    var runDependencies = 0;
+    var runDependencyWatcher = null;
+    var dependenciesFulfilled = null;
+
+    function addRunDependency(id) {
+      runDependencies++;
+
+      if (Module["monitorRunDependencies"]) {
+        Module["monitorRunDependencies"](runDependencies);
+      }
+    }
+
+    function removeRunDependency(id) {
+      runDependencies--;
+
+      if (Module["monitorRunDependencies"]) {
+        Module["monitorRunDependencies"](runDependencies);
+      }
+
+      if (runDependencies == 0) {
+        if (runDependencyWatcher !== null) {
+          clearInterval(runDependencyWatcher);
+          runDependencyWatcher = null;
+        }
+
+        if (dependenciesFulfilled) {
+          var callback = dependenciesFulfilled;
+          dependenciesFulfilled = null;
+          callback();
+        }
+      }
+    }
+
+    Module["preloadedImages"] = {};
+    Module["preloadedAudios"] = {};
+    var dataURIPrefix = "data:application/octet-stream;base64,";
+
+    function isDataURI(filename) {
+      return String.prototype.startsWith ? filename.startsWith(dataURIPrefix) : filename.indexOf(dataURIPrefix) === 0;
+    }
+
+    var wasmBinaryFile = "mvtdstpack.wasm";
+
+    if (!isDataURI(wasmBinaryFile)) {
+      wasmBinaryFile = locateFile(wasmBinaryFile);
+    }
+
+    function getBinary() {
+      try {
+        if (Module["wasmBinary"]) {
+          return new Uint8Array(Module["wasmBinary"]);
+        }
+
+        if (Module["readBinary"]) {
+          return Module["readBinary"](wasmBinaryFile);
+        } else {
+          throw "both async and sync fetching of the wasm failed";
+        }
+      } catch (err) {
+        abort(err);
+      }
+    }
+
+    function getBinaryPromise() {
+      if (!Module["wasmBinary"] && (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) && typeof fetch === "function") {
+        return fetch(wasmBinaryFile, {
+          credentials: "same-origin"
+        }).then(function (response) {
+          if (!response["ok"]) {
+            throw "failed to load wasm binary file at '" + wasmBinaryFile + "'";
+          }
+
+          return response["arrayBuffer"]();
+        })["catch"](function () {
+          return getBinary();
+        });
+      }
+
+      return new Promise(function (resolve, reject) {
+        resolve(getBinary());
+      });
+    }
+
+    function createWasm(env) {
+      var info = {
+        "env": env,
+        "global": {
+          "NaN": NaN,
+          Infinity: Infinity
+        },
+        "global.Math": Math,
+        "asm2wasm": asm2wasmImports
+      };
+
+      function receiveInstance(instance, module) {
+        var exports = instance.exports;
+        Module["asm"] = exports;
+        removeRunDependency("wasm-instantiate");
+      }
+
+      addRunDependency("wasm-instantiate");
+
+      if (Module["instantiateWasm"]) {
+        try {
+          return Module["instantiateWasm"](info, receiveInstance);
+        } catch (e) {
+          err("Module.instantiateWasm callback failed with error: " + e);
+          return false;
+        }
+      }
+
+      function receiveInstantiatedSource(output) {
+        receiveInstance(output["instance"]);
+      }
+
+      function instantiateArrayBuffer(receiver) {
+        getBinaryPromise().then(function (binary) {
+          return WebAssembly.instantiate(binary, info);
+        }).then(receiver, function (reason) {
+          err("failed to asynchronously prepare wasm: " + reason);
+          abort(reason);
+        });
+      }
+
+      if (!Module["wasmBinary"] && typeof WebAssembly.instantiateStreaming === "function" && !isDataURI(wasmBinaryFile) && typeof fetch === "function") {
+        WebAssembly.instantiateStreaming(fetch(wasmBinaryFile, {
+          credentials: "same-origin"
+        }), info).then(receiveInstantiatedSource, function (reason) {
+          err("wasm streaming compile failed: " + reason);
+          err("falling back to ArrayBuffer instantiation");
+          instantiateArrayBuffer(receiveInstantiatedSource);
+        });
+      } else {
+        instantiateArrayBuffer(receiveInstantiatedSource);
+      }
+
+      return {};
+    }
+
+    Module["asm"] = function (global, env, providedBuffer) {
+      env["memory"] = wasmMemory;
+      env["table"] = wasmTable = new WebAssembly.Table({
+        "initial": 110,
+        "maximum": 110,
+        "element": "anyfunc"
+      });
+      env["__memory_base"] = 1024;
+      env["__table_base"] = 0;
+      var exports = createWasm(env);
+      return exports;
+    };
+
+    __ATINIT__.push({
+      func: function func() {
+        globalCtors();
+      }
+    });
+
+    function ___cxa_allocate_exception(size) {
+      return _malloc(size);
+    }
+
+    function __ZSt18uncaught_exceptionv() {
+      return !!__ZSt18uncaught_exceptionv.uncaught_exception;
+    }
+
+    function ___cxa_free_exception(ptr) {
+      try {
+        return _free(ptr);
+      } catch (e) {}
+    }
+
+    var EXCEPTIONS = {
+      last: 0,
+      caught: [],
+      infos: {},
+      deAdjust: function deAdjust(adjusted) {
+        if (!adjusted || EXCEPTIONS.infos[adjusted]) return adjusted;
+
+        for (var key in EXCEPTIONS.infos) {
+          var ptr = +key;
+          var adj = EXCEPTIONS.infos[ptr].adjusted;
+          var len = adj.length;
+
+          for (var i = 0; i < len; i++) {
+            if (adj[i] === adjusted) {
+              return ptr;
+            }
+          }
+        }
+
+        return adjusted;
+      },
+      addRef: function addRef(ptr) {
+        if (!ptr) return;
+        var info = EXCEPTIONS.infos[ptr];
+        info.refcount++;
+      },
+      decRef: function decRef(ptr) {
+        if (!ptr) return;
+        var info = EXCEPTIONS.infos[ptr];
+        assert(info.refcount > 0);
+        info.refcount--;
+
+        if (info.refcount === 0 && !info.rethrown) {
+          if (info.destructor) {
+            Module["dynCall_vi"](info.destructor, ptr);
+          }
+
+          delete EXCEPTIONS.infos[ptr];
+
+          ___cxa_free_exception(ptr);
+        }
+      },
+      clearRef: function clearRef(ptr) {
+        if (!ptr) return;
+        var info = EXCEPTIONS.infos[ptr];
+        info.refcount = 0;
+      }
+    };
+
+    function ___cxa_throw(ptr, type, destructor) {
+      EXCEPTIONS.infos[ptr] = {
+        ptr: ptr,
+        adjusted: [ptr],
+        type: type,
+        destructor: destructor,
+        refcount: 0,
+        caught: false,
+        rethrown: false
+      };
+      EXCEPTIONS.last = ptr;
+
+      if (!("uncaught_exception" in __ZSt18uncaught_exceptionv)) {
+        __ZSt18uncaught_exceptionv.uncaught_exception = 1;
+      } else {
+        __ZSt18uncaught_exceptionv.uncaught_exception++;
+      }
+
+      throw ptr;
+    }
+
+    var SYSCALLS = {
+      buffers: [null, [], []],
+      printChar: function printChar(stream, curr) {
+        var buffer = SYSCALLS.buffers[stream];
+
+        if (curr === 0 || curr === 10) {
+          (stream === 1 ? out : err)(UTF8ArrayToString(buffer, 0));
+          buffer.length = 0;
+        } else {
+          buffer.push(curr);
+        }
+      },
+      varargs: 0,
+      get: function get(varargs) {
+        SYSCALLS.varargs += 4;
+        var ret = HEAP32[SYSCALLS.varargs - 4 >> 2];
+        return ret;
+      },
+      getStr: function getStr() {
+        var ret = UTF8ToString(SYSCALLS.get());
+        return ret;
+      },
+      get64: function get64() {
+        var low = SYSCALLS.get(),
+            high = SYSCALLS.get();
+        return low;
+      },
+      getZero: function getZero() {
+        SYSCALLS.get();
+      }
+    };
+
+    function ___syscall140(which, varargs) {
+      SYSCALLS.varargs = varargs;
+
+      try {
+        var stream = SYSCALLS.getStreamFromFD(),
+            offset_high = SYSCALLS.get(),
+            offset_low = SYSCALLS.get(),
+            result = SYSCALLS.get(),
+            whence = SYSCALLS.get();
+        return 0;
+      } catch (e) {
+        if (typeof FS === "undefined" || !(e instanceof FS.ErrnoError)) abort(e);
+        return -e.errno;
+      }
+    }
+
+    function ___syscall146(which, varargs) {
+      SYSCALLS.varargs = varargs;
+
+      try {
+        var stream = SYSCALLS.get(),
+            iov = SYSCALLS.get(),
+            iovcnt = SYSCALLS.get();
+        var ret = 0;
+
+        for (var i = 0; i < iovcnt; i++) {
+          var ptr = HEAP32[iov + i * 8 >> 2];
+          var len = HEAP32[iov + (i * 8 + 4) >> 2];
+
+          for (var j = 0; j < len; j++) {
+            SYSCALLS.printChar(stream, HEAPU8[ptr + j]);
+          }
+
+          ret += len;
+        }
+
+        return ret;
+      } catch (e) {
+        if (typeof FS === "undefined" || !(e instanceof FS.ErrnoError)) abort(e);
+        return -e.errno;
+      }
+    }
+
+    function ___syscall6(which, varargs) {
+      SYSCALLS.varargs = varargs;
+
+      try {
+        var stream = SYSCALLS.getStreamFromFD();
+        return 0;
+      } catch (e) {
+        if (typeof FS === "undefined" || !(e instanceof FS.ErrnoError)) abort(e);
+        return -e.errno;
+      }
+    }
+
+    var structRegistrations = {};
+
+    function runDestructors(destructors) {
+      while (destructors.length) {
+        var ptr = destructors.pop();
+        var del = destructors.pop();
+        del(ptr);
+      }
+    }
+
+    function simpleReadValueFromPointer(pointer) {
+      return this["fromWireType"](HEAPU32[pointer >> 2]);
+    }
+
+    var awaitingDependencies = {};
+    var registeredTypes = {};
+    var typeDependencies = {};
+    var char_0 = 48;
+    var char_9 = 57;
+
+    function makeLegalFunctionName(name) {
+      if (undefined === name) {
+        return "_unknown";
+      }
+
+      name = name.replace(/[^a-zA-Z0-9_]/g, "$");
+      var f = name.charCodeAt(0);
+
+      if (f >= char_0 && f <= char_9) {
+        return "_" + name;
+      } else {
+        return name;
+      }
+    }
+
+    function createNamedFunction(name, body) {
+      name = makeLegalFunctionName(name);
+      return new Function("body", "return function " + name + "() {\n" + '    "use strict";' + "    return body.apply(this, arguments);\n" + "};\n")(body);
+    }
+
+    function extendError(baseErrorType, errorName) {
+      var errorClass = createNamedFunction(errorName, function (message) {
+        this.name = errorName;
+        this.message = message;
+        var stack = new Error(message).stack;
+
+        if (stack !== undefined) {
+          this.stack = this.toString() + "\n" + stack.replace(/^Error(:[^\n]*)?\n/, "");
+        }
+      });
+      errorClass.prototype = Object.create(baseErrorType.prototype);
+      errorClass.prototype.constructor = errorClass;
+
+      errorClass.prototype.toString = function () {
+        if (this.message === undefined) {
+          return this.name;
+        } else {
+          return this.name + ": " + this.message;
+        }
+      };
+
+      return errorClass;
+    }
+
+    var InternalError = undefined;
+
+    function throwInternalError(message) {
+      throw new InternalError(message);
+    }
+
+    function whenDependentTypesAreResolved(myTypes, dependentTypes, getTypeConverters) {
+      myTypes.forEach(function (type) {
+        typeDependencies[type] = dependentTypes;
+      });
+
+      function onComplete(typeConverters) {
+        var myTypeConverters = getTypeConverters(typeConverters);
+
+        if (myTypeConverters.length !== myTypes.length) {
+          throwInternalError("Mismatched type converter count");
+        }
+
+        for (var i = 0; i < myTypes.length; ++i) {
+          registerType(myTypes[i], myTypeConverters[i]);
+        }
+      }
+
+      var typeConverters = new Array(dependentTypes.length);
+      var unregisteredTypes = [];
+      var registered = 0;
+      dependentTypes.forEach(function (dt, i) {
+        if (registeredTypes.hasOwnProperty(dt)) {
+          typeConverters[i] = registeredTypes[dt];
+        } else {
+          unregisteredTypes.push(dt);
+
+          if (!awaitingDependencies.hasOwnProperty(dt)) {
+            awaitingDependencies[dt] = [];
+          }
+
+          awaitingDependencies[dt].push(function () {
+            typeConverters[i] = registeredTypes[dt];
+            ++registered;
+
+            if (registered === unregisteredTypes.length) {
+              onComplete(typeConverters);
+            }
+          });
+        }
+      });
+
+      if (0 === unregisteredTypes.length) {
+        onComplete(typeConverters);
+      }
+    }
+
+    function __embind_finalize_value_object(structType) {
+      var reg = structRegistrations[structType];
+      delete structRegistrations[structType];
+      var rawConstructor = reg.rawConstructor;
+      var rawDestructor = reg.rawDestructor;
+      var fieldRecords = reg.fields;
+      var fieldTypes = fieldRecords.map(function (field) {
+        return field.getterReturnType;
+      }).concat(fieldRecords.map(function (field) {
+        return field.setterArgumentType;
+      }));
+      whenDependentTypesAreResolved([structType], fieldTypes, function (fieldTypes) {
+        var fields = {};
+        fieldRecords.forEach(function (field, i) {
+          var fieldName = field.fieldName;
+          var getterReturnType = fieldTypes[i];
+          var getter = field.getter;
+          var getterContext = field.getterContext;
+          var setterArgumentType = fieldTypes[i + fieldRecords.length];
+          var setter = field.setter;
+          var setterContext = field.setterContext;
+          fields[fieldName] = {
+            read: function read(ptr) {
+              return getterReturnType["fromWireType"](getter(getterContext, ptr));
+            },
+            write: function write(ptr, o) {
+              var destructors = [];
+              setter(setterContext, ptr, setterArgumentType["toWireType"](destructors, o));
+              runDestructors(destructors);
+            }
+          };
+        });
+        return [{
+          name: reg.name,
+          "fromWireType": function fromWireType(ptr) {
+            var rv = {};
+
+            for (var i in fields) {
+              rv[i] = fields[i].read(ptr);
+            }
+
+            rawDestructor(ptr);
+            return rv;
+          },
+          "toWireType": function toWireType(destructors, o) {
+            for (var fieldName in fields) {
+              if (!(fieldName in o)) {
+                throw new TypeError("Missing field");
+              }
+            }
+
+            var ptr = rawConstructor();
+
+            for (fieldName in fields) {
+              fields[fieldName].write(ptr, o[fieldName]);
+            }
+
+            if (destructors !== null) {
+              destructors.push(rawDestructor, ptr);
+            }
+
+            return ptr;
+          },
+          "argPackAdvance": 8,
+          "readValueFromPointer": simpleReadValueFromPointer,
+          destructorFunction: rawDestructor
+        }];
+      });
+    }
+
+    function getShiftFromSize(size) {
+      switch (size) {
+        case 1:
+          return 0;
+
+        case 2:
+          return 1;
+
+        case 4:
+          return 2;
+
+        case 8:
+          return 3;
+
+        default:
+          throw new TypeError("Unknown type size: " + size);
+      }
+    }
+
+    function embind_init_charCodes() {
+      var codes = new Array(256);
+
+      for (var i = 0; i < 256; ++i) {
+        codes[i] = String.fromCharCode(i);
+      }
+
+      embind_charCodes = codes;
+    }
+
+    var embind_charCodes = undefined;
+
+    function readLatin1String(ptr) {
+      var ret = "";
+      var c = ptr;
+
+      while (HEAPU8[c]) {
+        ret += embind_charCodes[HEAPU8[c++]];
+      }
+
+      return ret;
+    }
+
+    var BindingError = undefined;
+
+    function throwBindingError(message) {
+      throw new BindingError(message);
+    }
+
+    function registerType(rawType, registeredInstance, options) {
+      options = options || {};
+
+      if (!("argPackAdvance" in registeredInstance)) {
+        throw new TypeError("registerType registeredInstance requires argPackAdvance");
+      }
+
+      var name = registeredInstance.name;
+
+      if (!rawType) {
+        throwBindingError('type "' + name + '" must have a positive integer typeid pointer');
+      }
+
+      if (registeredTypes.hasOwnProperty(rawType)) {
+        if (options.ignoreDuplicateRegistrations) {
+          return;
+        } else {
+          throwBindingError("Cannot register type '" + name + "' twice");
+        }
+      }
+
+      registeredTypes[rawType] = registeredInstance;
+      delete typeDependencies[rawType];
+
+      if (awaitingDependencies.hasOwnProperty(rawType)) {
+        var callbacks = awaitingDependencies[rawType];
+        delete awaitingDependencies[rawType];
+        callbacks.forEach(function (cb) {
+          cb();
+        });
+      }
+    }
+
+    function __embind_register_bool(rawType, name, size, trueValue, falseValue) {
+      var shift = getShiftFromSize(size);
+      name = readLatin1String(name);
+      registerType(rawType, {
+        name: name,
+        "fromWireType": function fromWireType(wt) {
+          return !!wt;
+        },
+        "toWireType": function toWireType(destructors, o) {
+          return o ? trueValue : falseValue;
+        },
+        "argPackAdvance": 8,
+        "readValueFromPointer": function readValueFromPointer(pointer) {
+          var heap;
+
+          if (size === 1) {
+            heap = HEAP8;
+          } else if (size === 2) {
+            heap = HEAP16;
+          } else if (size === 4) {
+            heap = HEAP32;
+          } else {
+            throw new TypeError("Unknown boolean type size: " + name);
+          }
+
+          return this["fromWireType"](heap[pointer >> shift]);
+        },
+        destructorFunction: null
+      });
+    }
+
+    function ClassHandle_isAliasOf(other) {
+      if (!(this instanceof ClassHandle)) {
+        return false;
+      }
+
+      if (!(other instanceof ClassHandle)) {
+        return false;
+      }
+
+      var leftClass = this.$$.ptrType.registeredClass;
+      var left = this.$$.ptr;
+      var rightClass = other.$$.ptrType.registeredClass;
+      var right = other.$$.ptr;
+
+      while (leftClass.baseClass) {
+        left = leftClass.upcast(left);
+        leftClass = leftClass.baseClass;
+      }
+
+      while (rightClass.baseClass) {
+        right = rightClass.upcast(right);
+        rightClass = rightClass.baseClass;
+      }
+
+      return leftClass === rightClass && left === right;
+    }
+
+    function shallowCopyInternalPointer(o) {
+      return {
+        count: o.count,
+        deleteScheduled: o.deleteScheduled,
+        preservePointerOnDelete: o.preservePointerOnDelete,
+        ptr: o.ptr,
+        ptrType: o.ptrType,
+        smartPtr: o.smartPtr,
+        smartPtrType: o.smartPtrType
+      };
+    }
+
+    function throwInstanceAlreadyDeleted(obj) {
+      function getInstanceTypeName(handle) {
+        return handle.$$.ptrType.registeredClass.name;
+      }
+
+      throwBindingError(getInstanceTypeName(obj) + " instance already deleted");
+    }
+
+    function ClassHandle_clone() {
+      if (!this.$$.ptr) {
+        throwInstanceAlreadyDeleted(this);
+      }
+
+      if (this.$$.preservePointerOnDelete) {
+        this.$$.count.value += 1;
+        return this;
+      } else {
+        var clone = Object.create(Object.getPrototypeOf(this), {
+          $$: {
+            value: shallowCopyInternalPointer(this.$$)
+          }
+        });
+        clone.$$.count.value += 1;
+        clone.$$.deleteScheduled = false;
+        return clone;
+      }
+    }
+
+    function runDestructor(handle) {
+      var $$ = handle.$$;
+
+      if ($$.smartPtr) {
+        $$.smartPtrType.rawDestructor($$.smartPtr);
+      } else {
+        $$.ptrType.registeredClass.rawDestructor($$.ptr);
+      }
+    }
+
+    function ClassHandle_delete() {
+      if (!this.$$.ptr) {
+        throwInstanceAlreadyDeleted(this);
+      }
+
+      if (this.$$.deleteScheduled && !this.$$.preservePointerOnDelete) {
+        throwBindingError("Object already scheduled for deletion");
+      }
+
+      this.$$.count.value -= 1;
+      var toDelete = 0 === this.$$.count.value;
+
+      if (toDelete) {
+        runDestructor(this);
+      }
+
+      if (!this.$$.preservePointerOnDelete) {
+        this.$$.smartPtr = undefined;
+        this.$$.ptr = undefined;
+      }
+    }
+
+    function ClassHandle_isDeleted() {
+      return !this.$$.ptr;
+    }
+
+    var delayFunction = undefined;
+    var deletionQueue = [];
+
+    function flushPendingDeletes() {
+      while (deletionQueue.length) {
+        var obj = deletionQueue.pop();
+        obj.$$.deleteScheduled = false;
+        obj["delete"]();
+      }
+    }
+
+    function ClassHandle_deleteLater() {
+      if (!this.$$.ptr) {
+        throwInstanceAlreadyDeleted(this);
+      }
+
+      if (this.$$.deleteScheduled && !this.$$.preservePointerOnDelete) {
+        throwBindingError("Object already scheduled for deletion");
+      }
+
+      deletionQueue.push(this);
+
+      if (deletionQueue.length === 1 && delayFunction) {
+        delayFunction(flushPendingDeletes);
+      }
+
+      this.$$.deleteScheduled = true;
+      return this;
+    }
+
+    function init_ClassHandle() {
+      ClassHandle.prototype["isAliasOf"] = ClassHandle_isAliasOf;
+      ClassHandle.prototype["clone"] = ClassHandle_clone;
+      ClassHandle.prototype["delete"] = ClassHandle_delete;
+      ClassHandle.prototype["isDeleted"] = ClassHandle_isDeleted;
+      ClassHandle.prototype["deleteLater"] = ClassHandle_deleteLater;
+    }
+
+    function ClassHandle() {}
+
+    var registeredPointers = {};
+
+    function ensureOverloadTable(proto, methodName, humanName) {
+      if (undefined === proto[methodName].overloadTable) {
+        var prevFunc = proto[methodName];
+
+        proto[methodName] = function () {
+          if (!proto[methodName].overloadTable.hasOwnProperty(arguments.length)) {
+            throwBindingError("Function '" + humanName + "' called with an invalid number of arguments (" + arguments.length + ") - expects one of (" + proto[methodName].overloadTable + ")!");
+          }
+
+          return proto[methodName].overloadTable[arguments.length].apply(this, arguments);
+        };
+
+        proto[methodName].overloadTable = [];
+        proto[methodName].overloadTable[prevFunc.argCount] = prevFunc;
+      }
+    }
+
+    function exposePublicSymbol(name, value, numArguments) {
+      if (Module.hasOwnProperty(name)) {
+        if (undefined === numArguments || undefined !== Module[name].overloadTable && undefined !== Module[name].overloadTable[numArguments]) {
+          throwBindingError("Cannot register public name '" + name + "' twice");
+        }
+
+        ensureOverloadTable(Module, name, name);
+
+        if (Module.hasOwnProperty(numArguments)) {
+          throwBindingError("Cannot register multiple overloads of a function with the same number of arguments (" + numArguments + ")!");
+        }
+
+        Module[name].overloadTable[numArguments] = value;
+      } else {
+        Module[name] = value;
+
+        if (undefined !== numArguments) {
+          Module[name].numArguments = numArguments;
+        }
+      }
+    }
+
+    function RegisteredClass(name, constructor, instancePrototype, rawDestructor, baseClass, getActualType, upcast, downcast) {
+      this.name = name;
+      this.constructor = constructor;
+      this.instancePrototype = instancePrototype;
+      this.rawDestructor = rawDestructor;
+      this.baseClass = baseClass;
+      this.getActualType = getActualType;
+      this.upcast = upcast;
+      this.downcast = downcast;
+      this.pureVirtualFunctions = [];
+    }
+
+    function upcastPointer(ptr, ptrClass, desiredClass) {
+      while (ptrClass !== desiredClass) {
+        if (!ptrClass.upcast) {
+          throwBindingError("Expected null or instance of " + desiredClass.name + ", got an instance of " + ptrClass.name);
+        }
+
+        ptr = ptrClass.upcast(ptr);
+        ptrClass = ptrClass.baseClass;
+      }
+
+      return ptr;
+    }
+
+    function constNoSmartPtrRawPointerToWireType(destructors, handle) {
+      if (handle === null) {
+        if (this.isReference) {
+          throwBindingError("null is not a valid " + this.name);
+        }
+
+        return 0;
+      }
+
+      if (!handle.$$) {
+        throwBindingError('Cannot pass "' + _embind_repr(handle) + '" as a ' + this.name);
+      }
+
+      if (!handle.$$.ptr) {
+        throwBindingError("Cannot pass deleted object as a pointer of type " + this.name);
+      }
+
+      var handleClass = handle.$$.ptrType.registeredClass;
+      var ptr = upcastPointer(handle.$$.ptr, handleClass, this.registeredClass);
+      return ptr;
+    }
+
+    function genericPointerToWireType(destructors, handle) {
+      var ptr;
+
+      if (handle === null) {
+        if (this.isReference) {
+          throwBindingError("null is not a valid " + this.name);
+        }
+
+        if (this.isSmartPointer) {
+          ptr = this.rawConstructor();
+
+          if (destructors !== null) {
+            destructors.push(this.rawDestructor, ptr);
+          }
+
+          return ptr;
+        } else {
+          return 0;
+        }
+      }
+
+      if (!handle.$$) {
+        throwBindingError('Cannot pass "' + _embind_repr(handle) + '" as a ' + this.name);
+      }
+
+      if (!handle.$$.ptr) {
+        throwBindingError("Cannot pass deleted object as a pointer of type " + this.name);
+      }
+
+      if (!this.isConst && handle.$$.ptrType.isConst) {
+        throwBindingError("Cannot convert argument of type " + (handle.$$.smartPtrType ? handle.$$.smartPtrType.name : handle.$$.ptrType.name) + " to parameter type " + this.name);
+      }
+
+      var handleClass = handle.$$.ptrType.registeredClass;
+      ptr = upcastPointer(handle.$$.ptr, handleClass, this.registeredClass);
+
+      if (this.isSmartPointer) {
+        if (undefined === handle.$$.smartPtr) {
+          throwBindingError("Passing raw pointer to smart pointer is illegal");
+        }
+
+        switch (this.sharingPolicy) {
+          case 0:
+            if (handle.$$.smartPtrType === this) {
+              ptr = handle.$$.smartPtr;
+            } else {
+              throwBindingError("Cannot convert argument of type " + (handle.$$.smartPtrType ? handle.$$.smartPtrType.name : handle.$$.ptrType.name) + " to parameter type " + this.name);
+            }
+
+            break;
+
+          case 1:
+            ptr = handle.$$.smartPtr;
+            break;
+
+          case 2:
+            if (handle.$$.smartPtrType === this) {
+              ptr = handle.$$.smartPtr;
+            } else {
+              var clonedHandle = handle["clone"]();
+              ptr = this.rawShare(ptr, __emval_register(function () {
+                clonedHandle["delete"]();
+              }));
+
+              if (destructors !== null) {
+                destructors.push(this.rawDestructor, ptr);
+              }
+            }
+
+            break;
+
+          default:
+            throwBindingError("Unsupporting sharing policy");
+        }
+      }
+
+      return ptr;
+    }
+
+    function nonConstNoSmartPtrRawPointerToWireType(destructors, handle) {
+      if (handle === null) {
+        if (this.isReference) {
+          throwBindingError("null is not a valid " + this.name);
+        }
+
+        return 0;
+      }
+
+      if (!handle.$$) {
+        throwBindingError('Cannot pass "' + _embind_repr(handle) + '" as a ' + this.name);
+      }
+
+      if (!handle.$$.ptr) {
+        throwBindingError("Cannot pass deleted object as a pointer of type " + this.name);
+      }
+
+      if (handle.$$.ptrType.isConst) {
+        throwBindingError("Cannot convert argument of type " + handle.$$.ptrType.name + " to parameter type " + this.name);
+      }
+
+      var handleClass = handle.$$.ptrType.registeredClass;
+      var ptr = upcastPointer(handle.$$.ptr, handleClass, this.registeredClass);
+      return ptr;
+    }
+
+    function RegisteredPointer_getPointee(ptr) {
+      if (this.rawGetPointee) {
+        ptr = this.rawGetPointee(ptr);
+      }
+
+      return ptr;
+    }
+
+    function RegisteredPointer_destructor(ptr) {
+      if (this.rawDestructor) {
+        this.rawDestructor(ptr);
+      }
+    }
+
+    function RegisteredPointer_deleteObject(handle) {
+      if (handle !== null) {
+        handle["delete"]();
+      }
+    }
+
+    function downcastPointer(ptr, ptrClass, desiredClass) {
+      if (ptrClass === desiredClass) {
+        return ptr;
+      }
+
+      if (undefined === desiredClass.baseClass) {
+        return null;
+      }
+
+      var rv = downcastPointer(ptr, ptrClass, desiredClass.baseClass);
+
+      if (rv === null) {
+        return null;
+      }
+
+      return desiredClass.downcast(rv);
+    }
+
+    function getInheritedInstanceCount() {
+      return Object.keys(registeredInstances).length;
+    }
+
+    function getLiveInheritedInstances() {
+      var rv = [];
+
+      for (var k in registeredInstances) {
+        if (registeredInstances.hasOwnProperty(k)) {
+          rv.push(registeredInstances[k]);
+        }
+      }
+
+      return rv;
+    }
+
+    function setDelayFunction(fn) {
+      delayFunction = fn;
+
+      if (deletionQueue.length && delayFunction) {
+        delayFunction(flushPendingDeletes);
+      }
+    }
+
+    function init_embind() {
+      Module["getInheritedInstanceCount"] = getInheritedInstanceCount;
+      Module["getLiveInheritedInstances"] = getLiveInheritedInstances;
+      Module["flushPendingDeletes"] = flushPendingDeletes;
+      Module["setDelayFunction"] = setDelayFunction;
+    }
+
+    var registeredInstances = {};
+
+    function getBasestPointer(class_, ptr) {
+      if (ptr === undefined) {
+        throwBindingError("ptr should not be undefined");
+      }
+
+      while (class_.baseClass) {
+        ptr = class_.upcast(ptr);
+        class_ = class_.baseClass;
+      }
+
+      return ptr;
+    }
+
+    function getInheritedInstance(class_, ptr) {
+      ptr = getBasestPointer(class_, ptr);
+      return registeredInstances[ptr];
+    }
+
+    function makeClassHandle(prototype, record) {
+      if (!record.ptrType || !record.ptr) {
+        throwInternalError("makeClassHandle requires ptr and ptrType");
+      }
+
+      var hasSmartPtrType = !!record.smartPtrType;
+      var hasSmartPtr = !!record.smartPtr;
+
+      if (hasSmartPtrType !== hasSmartPtr) {
+        throwInternalError("Both smartPtrType and smartPtr must be specified");
+      }
+
+      record.count = {
+        value: 1
+      };
+      return Object.create(prototype, {
+        $$: {
+          value: record
+        }
+      });
+    }
+
+    function RegisteredPointer_fromWireType(ptr) {
+      var rawPointer = this.getPointee(ptr);
+
+      if (!rawPointer) {
+        this.destructor(ptr);
+        return null;
+      }
+
+      var registeredInstance = getInheritedInstance(this.registeredClass, rawPointer);
+
+      if (undefined !== registeredInstance) {
+        if (0 === registeredInstance.$$.count.value) {
+          registeredInstance.$$.ptr = rawPointer;
+          registeredInstance.$$.smartPtr = ptr;
+          return registeredInstance["clone"]();
+        } else {
+          var rv = registeredInstance["clone"]();
+          this.destructor(ptr);
+          return rv;
+        }
+      }
+
+      function makeDefaultHandle() {
+        if (this.isSmartPointer) {
+          return makeClassHandle(this.registeredClass.instancePrototype, {
+            ptrType: this.pointeeType,
+            ptr: rawPointer,
+            smartPtrType: this,
+            smartPtr: ptr
+          });
+        } else {
+          return makeClassHandle(this.registeredClass.instancePrototype, {
+            ptrType: this,
+            ptr: ptr
+          });
+        }
+      }
+
+      var actualType = this.registeredClass.getActualType(rawPointer);
+      var registeredPointerRecord = registeredPointers[actualType];
+
+      if (!registeredPointerRecord) {
+        return makeDefaultHandle.call(this);
+      }
+
+      var toType;
+
+      if (this.isConst) {
+        toType = registeredPointerRecord.constPointerType;
+      } else {
+        toType = registeredPointerRecord.pointerType;
+      }
+
+      var dp = downcastPointer(rawPointer, this.registeredClass, toType.registeredClass);
+
+      if (dp === null) {
+        return makeDefaultHandle.call(this);
+      }
+
+      if (this.isSmartPointer) {
+        return makeClassHandle(toType.registeredClass.instancePrototype, {
+          ptrType: toType,
+          ptr: dp,
+          smartPtrType: this,
+          smartPtr: ptr
+        });
+      } else {
+        return makeClassHandle(toType.registeredClass.instancePrototype, {
+          ptrType: toType,
+          ptr: dp
+        });
+      }
+    }
+
+    function init_RegisteredPointer() {
+      RegisteredPointer.prototype.getPointee = RegisteredPointer_getPointee;
+      RegisteredPointer.prototype.destructor = RegisteredPointer_destructor;
+      RegisteredPointer.prototype["argPackAdvance"] = 8;
+      RegisteredPointer.prototype["readValueFromPointer"] = simpleReadValueFromPointer;
+      RegisteredPointer.prototype["deleteObject"] = RegisteredPointer_deleteObject;
+      RegisteredPointer.prototype["fromWireType"] = RegisteredPointer_fromWireType;
+    }
+
+    function RegisteredPointer(name, registeredClass, isReference, isConst, isSmartPointer, pointeeType, sharingPolicy, rawGetPointee, rawConstructor, rawShare, rawDestructor) {
+      this.name = name;
+      this.registeredClass = registeredClass;
+      this.isReference = isReference;
+      this.isConst = isConst;
+      this.isSmartPointer = isSmartPointer;
+      this.pointeeType = pointeeType;
+      this.sharingPolicy = sharingPolicy;
+      this.rawGetPointee = rawGetPointee;
+      this.rawConstructor = rawConstructor;
+      this.rawShare = rawShare;
+      this.rawDestructor = rawDestructor;
+
+      if (!isSmartPointer && registeredClass.baseClass === undefined) {
+        if (isConst) {
+          this["toWireType"] = constNoSmartPtrRawPointerToWireType;
+          this.destructorFunction = null;
+        } else {
+          this["toWireType"] = nonConstNoSmartPtrRawPointerToWireType;
+          this.destructorFunction = null;
+        }
+      } else {
+        this["toWireType"] = genericPointerToWireType;
+      }
+    }
+
+    function replacePublicSymbol(name, value, numArguments) {
+      if (!Module.hasOwnProperty(name)) {
+        throwInternalError("Replacing nonexistant public symbol");
+      }
+
+      if (undefined !== Module[name].overloadTable && undefined !== numArguments) {
+        Module[name].overloadTable[numArguments] = value;
+      } else {
+        Module[name] = value;
+        Module[name].argCount = numArguments;
+      }
+    }
+
+    function embind__requireFunction(signature, rawFunction) {
+      signature = readLatin1String(signature);
+
+      function makeDynCaller(dynCall) {
+        var args = [];
+
+        for (var i = 1; i < signature.length; ++i) {
+          args.push("a" + i);
+        }
+
+        var name = "dynCall_" + signature + "_" + rawFunction;
+        var body = "return function " + name + "(" + args.join(", ") + ") {\n";
+        body += "    return dynCall(rawFunction" + (args.length ? ", " : "") + args.join(", ") + ");\n";
+        body += "};\n";
+        return new Function("dynCall", "rawFunction", body)(dynCall, rawFunction);
+      }
+
+      var fp;
+
+      if (Module["FUNCTION_TABLE_" + signature] !== undefined) {
+        fp = Module["FUNCTION_TABLE_" + signature][rawFunction];
+      } else if (typeof FUNCTION_TABLE !== "undefined") {
+        fp = FUNCTION_TABLE[rawFunction];
+      } else {
+        var dc = Module["dynCall_" + signature];
+
+        if (dc === undefined) {
+          dc = Module["dynCall_" + signature.replace(/f/g, "d")];
+
+          if (dc === undefined) {
+            throwBindingError("No dynCall invoker for signature: " + signature);
+          }
+        }
+
+        fp = makeDynCaller(dc);
+      }
+
+      if (typeof fp !== "function") {
+        throwBindingError("unknown function pointer with signature " + signature + ": " + rawFunction);
+      }
+
+      return fp;
+    }
+
+    var UnboundTypeError = undefined;
+
+    function getTypeName(type) {
+      var ptr = ___getTypeName(type);
+
+      var rv = readLatin1String(ptr);
+
+      _free(ptr);
+
+      return rv;
+    }
+
+    function throwUnboundTypeError(message, types) {
+      var unboundTypes = [];
+      var seen = {};
+
+      function visit(type) {
+        if (seen[type]) {
+          return;
+        }
+
+        if (registeredTypes[type]) {
+          return;
+        }
+
+        if (typeDependencies[type]) {
+          typeDependencies[type].forEach(visit);
+          return;
+        }
+
+        unboundTypes.push(type);
+        seen[type] = true;
+      }
+
+      types.forEach(visit);
+      throw new UnboundTypeError(message + ": " + unboundTypes.map(getTypeName).join([", "]));
+    }
+
+    function __embind_register_class(rawType, rawPointerType, rawConstPointerType, baseClassRawType, getActualTypeSignature, getActualType, upcastSignature, upcast, downcastSignature, downcast, name, destructorSignature, rawDestructor) {
+      name = readLatin1String(name);
+      getActualType = embind__requireFunction(getActualTypeSignature, getActualType);
+
+      if (upcast) {
+        upcast = embind__requireFunction(upcastSignature, upcast);
+      }
+
+      if (downcast) {
+        downcast = embind__requireFunction(downcastSignature, downcast);
+      }
+
+      rawDestructor = embind__requireFunction(destructorSignature, rawDestructor);
+      var legalFunctionName = makeLegalFunctionName(name);
+      exposePublicSymbol(legalFunctionName, function () {
+        throwUnboundTypeError("Cannot construct " + name + " due to unbound types", [baseClassRawType]);
+      });
+      whenDependentTypesAreResolved([rawType, rawPointerType, rawConstPointerType], baseClassRawType ? [baseClassRawType] : [], function (base) {
+        base = base[0];
+        var baseClass;
+        var basePrototype;
+
+        if (baseClassRawType) {
+          baseClass = base.registeredClass;
+          basePrototype = baseClass.instancePrototype;
+        } else {
+          basePrototype = ClassHandle.prototype;
+        }
+
+        var constructor = createNamedFunction(legalFunctionName, function () {
+          if (Object.getPrototypeOf(this) !== instancePrototype) {
+            throw new BindingError("Use 'new' to construct " + name);
+          }
+
+          if (undefined === registeredClass.constructor_body) {
+            throw new BindingError(name + " has no accessible constructor");
+          }
+
+          var body = registeredClass.constructor_body[arguments.length];
+
+          if (undefined === body) {
+            throw new BindingError("Tried to invoke ctor of " + name + " with invalid number of parameters (" + arguments.length + ") - expected (" + Object.keys(registeredClass.constructor_body).toString() + ") parameters instead!");
+          }
+
+          return body.apply(this, arguments);
+        });
+        var instancePrototype = Object.create(basePrototype, {
+          constructor: {
+            value: constructor
+          }
+        });
+        constructor.prototype = instancePrototype;
+        var registeredClass = new RegisteredClass(name, constructor, instancePrototype, rawDestructor, baseClass, getActualType, upcast, downcast);
+        var referenceConverter = new RegisteredPointer(name, registeredClass, true, false, false);
+        var pointerConverter = new RegisteredPointer(name + "*", registeredClass, false, false, false);
+        var constPointerConverter = new RegisteredPointer(name + " const*", registeredClass, false, true, false);
+        registeredPointers[rawType] = {
+          pointerType: pointerConverter,
+          constPointerType: constPointerConverter
+        };
+        replacePublicSymbol(legalFunctionName, constructor);
+        return [referenceConverter, pointerConverter, constPointerConverter];
+      });
+    }
+
+    function heap32VectorToArray(count, firstElement) {
+      var array = [];
+
+      for (var i = 0; i < count; i++) {
+        array.push(HEAP32[(firstElement >> 2) + i]);
+      }
+
+      return array;
+    }
+
+    function __embind_register_class_constructor(rawClassType, argCount, rawArgTypesAddr, invokerSignature, invoker, rawConstructor) {
+      var rawArgTypes = heap32VectorToArray(argCount, rawArgTypesAddr);
+      invoker = embind__requireFunction(invokerSignature, invoker);
+      whenDependentTypesAreResolved([], [rawClassType], function (classType) {
+        classType = classType[0];
+        var humanName = "constructor " + classType.name;
+
+        if (undefined === classType.registeredClass.constructor_body) {
+          classType.registeredClass.constructor_body = [];
+        }
+
+        if (undefined !== classType.registeredClass.constructor_body[argCount - 1]) {
+          throw new BindingError("Cannot register multiple constructors with identical number of parameters (" + (argCount - 1) + ") for class '" + classType.name + "'! Overload resolution is currently only performed using the parameter count, not actual type info!");
+        }
+
+        classType.registeredClass.constructor_body[argCount - 1] = function unboundTypeHandler() {
+          throwUnboundTypeError("Cannot construct " + classType.name + " due to unbound types", rawArgTypes);
+        };
+
+        whenDependentTypesAreResolved([], rawArgTypes, function (argTypes) {
+          classType.registeredClass.constructor_body[argCount - 1] = function constructor_body() {
+            if (arguments.length !== argCount - 1) {
+              throwBindingError(humanName + " called with " + arguments.length + " arguments, expected " + (argCount - 1));
+            }
+
+            var destructors = [];
+            var args = new Array(argCount);
+            args[0] = rawConstructor;
+
+            for (var i = 1; i < argCount; ++i) {
+              args[i] = argTypes[i]["toWireType"](destructors, arguments[i - 1]);
+            }
+
+            var ptr = invoker.apply(null, args);
+            runDestructors(destructors);
+            return argTypes[0]["fromWireType"](ptr);
+          };
+
+          return [];
+        });
+        return [];
+      });
+    }
+
+    function new_(constructor, argumentList) {
+      if (!(constructor instanceof Function)) {
+        throw new TypeError("new_ called with constructor type " + _babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_0___default()(constructor) + " which is not a function");
+      }
+
+      var dummy = createNamedFunction(constructor.name || "unknownFunctionName", function () {});
+      dummy.prototype = constructor.prototype;
+      var obj = new dummy();
+      var r = constructor.apply(obj, argumentList);
+      return r instanceof Object ? r : obj;
+    }
+
+    function craftInvokerFunction(humanName, argTypes, classType, cppInvokerFunc, cppTargetFunc) {
+      var argCount = argTypes.length;
+
+      if (argCount < 2) {
+        throwBindingError("argTypes array size mismatch! Must at least get return value and 'this' types!");
+      }
+
+      var isClassMethodFunc = argTypes[1] !== null && classType !== null;
+      var needsDestructorStack = false;
+
+      for (var i = 1; i < argTypes.length; ++i) {
+        if (argTypes[i] !== null && argTypes[i].destructorFunction === undefined) {
+          needsDestructorStack = true;
+          break;
+        }
+      }
+
+      var returns = argTypes[0].name !== "void";
+      var argsList = "";
+      var argsListWired = "";
+
+      for (var i = 0; i < argCount - 2; ++i) {
+        argsList += (i !== 0 ? ", " : "") + "arg" + i;
+        argsListWired += (i !== 0 ? ", " : "") + "arg" + i + "Wired";
+      }
+
+      var invokerFnBody = "return function " + makeLegalFunctionName(humanName) + "(" + argsList + ") {\n" + "if (arguments.length !== " + (argCount - 2) + ") {\n" + "throwBindingError('function " + humanName + " called with ' + arguments.length + ' arguments, expected " + (argCount - 2) + " args!');\n" + "}\n";
+
+      if (needsDestructorStack) {
+        invokerFnBody += "var destructors = [];\n";
+      }
+
+      var dtorStack = needsDestructorStack ? "destructors" : "null";
+      var args1 = ["throwBindingError", "invoker", "fn", "runDestructors", "retType", "classParam"];
+      var args2 = [throwBindingError, cppInvokerFunc, cppTargetFunc, runDestructors, argTypes[0], argTypes[1]];
+
+      if (isClassMethodFunc) {
+        invokerFnBody += "var thisWired = classParam.toWireType(" + dtorStack + ", this);\n";
+      }
+
+      for (var i = 0; i < argCount - 2; ++i) {
+        invokerFnBody += "var arg" + i + "Wired = argType" + i + ".toWireType(" + dtorStack + ", arg" + i + "); // " + argTypes[i + 2].name + "\n";
+        args1.push("argType" + i);
+        args2.push(argTypes[i + 2]);
+      }
+
+      if (isClassMethodFunc) {
+        argsListWired = "thisWired" + (argsListWired.length > 0 ? ", " : "") + argsListWired;
+      }
+
+      invokerFnBody += (returns ? "var rv = " : "") + "invoker(fn" + (argsListWired.length > 0 ? ", " : "") + argsListWired + ");\n";
+
+      if (needsDestructorStack) {
+        invokerFnBody += "runDestructors(destructors);\n";
+      } else {
+        for (var i = isClassMethodFunc ? 1 : 2; i < argTypes.length; ++i) {
+          var paramName = i === 1 ? "thisWired" : "arg" + (i - 2) + "Wired";
+
+          if (argTypes[i].destructorFunction !== null) {
+            invokerFnBody += paramName + "_dtor(" + paramName + "); // " + argTypes[i].name + "\n";
+            args1.push(paramName + "_dtor");
+            args2.push(argTypes[i].destructorFunction);
+          }
+        }
+      }
+
+      if (returns) {
+        invokerFnBody += "var ret = retType.fromWireType(rv);\n" + "return ret;\n";
+      } else {}
+
+      invokerFnBody += "}\n";
+      args1.push(invokerFnBody);
+      var invokerFunction = new_(Function, args1).apply(null, args2);
+      return invokerFunction;
+    }
+
+    function __embind_register_class_function(rawClassType, methodName, argCount, rawArgTypesAddr, invokerSignature, rawInvoker, context, isPureVirtual) {
+      var rawArgTypes = heap32VectorToArray(argCount, rawArgTypesAddr);
+      methodName = readLatin1String(methodName);
+      rawInvoker = embind__requireFunction(invokerSignature, rawInvoker);
+      whenDependentTypesAreResolved([], [rawClassType], function (classType) {
+        classType = classType[0];
+        var humanName = classType.name + "." + methodName;
+
+        if (isPureVirtual) {
+          classType.registeredClass.pureVirtualFunctions.push(methodName);
+        }
+
+        function unboundTypesHandler() {
+          throwUnboundTypeError("Cannot call " + humanName + " due to unbound types", rawArgTypes);
+        }
+
+        var proto = classType.registeredClass.instancePrototype;
+        var method = proto[methodName];
+
+        if (undefined === method || undefined === method.overloadTable && method.className !== classType.name && method.argCount === argCount - 2) {
+          unboundTypesHandler.argCount = argCount - 2;
+          unboundTypesHandler.className = classType.name;
+          proto[methodName] = unboundTypesHandler;
+        } else {
+          ensureOverloadTable(proto, methodName, humanName);
+          proto[methodName].overloadTable[argCount - 2] = unboundTypesHandler;
+        }
+
+        whenDependentTypesAreResolved([], rawArgTypes, function (argTypes) {
+          var memberFunction = craftInvokerFunction(humanName, argTypes, classType, rawInvoker, context);
+
+          if (undefined === proto[methodName].overloadTable) {
+            memberFunction.argCount = argCount - 2;
+            proto[methodName] = memberFunction;
+          } else {
+            proto[methodName].overloadTable[argCount - 2] = memberFunction;
+          }
+
+          return [];
+        });
+        return [];
+      });
+    }
+
+    var emval_free_list = [];
+    var emval_handle_array = [{}, {
+      value: undefined
+    }, {
+      value: null
+    }, {
+      value: true
+    }, {
+      value: false
+    }];
+
+    function __emval_decref(handle) {
+      if (handle > 4 && 0 === --emval_handle_array[handle].refcount) {
+        emval_handle_array[handle] = undefined;
+        emval_free_list.push(handle);
+      }
+    }
+
+    function count_emval_handles() {
+      var count = 0;
+
+      for (var i = 5; i < emval_handle_array.length; ++i) {
+        if (emval_handle_array[i] !== undefined) {
+          ++count;
+        }
+      }
+
+      return count;
+    }
+
+    function get_first_emval() {
+      for (var i = 5; i < emval_handle_array.length; ++i) {
+        if (emval_handle_array[i] !== undefined) {
+          return emval_handle_array[i];
+        }
+      }
+
+      return null;
+    }
+
+    function init_emval() {
+      Module["count_emval_handles"] = count_emval_handles;
+      Module["get_first_emval"] = get_first_emval;
+    }
+
+    function __emval_register(value) {
+      switch (value) {
+        case undefined:
+          {
+            return 1;
+          }
+
+        case null:
+          {
+            return 2;
+          }
+
+        case true:
+          {
+            return 3;
+          }
+
+        case false:
+          {
+            return 4;
+          }
+
+        default:
+          {
+            var handle = emval_free_list.length ? emval_free_list.pop() : emval_handle_array.length;
+            emval_handle_array[handle] = {
+              refcount: 1,
+              value: value
+            };
+            return handle;
+          }
+      }
+    }
+
+    function __embind_register_emval(rawType, name) {
+      name = readLatin1String(name);
+      registerType(rawType, {
+        name: name,
+        "fromWireType": function fromWireType(handle) {
+          var rv = emval_handle_array[handle].value;
+
+          __emval_decref(handle);
+
+          return rv;
+        },
+        "toWireType": function toWireType(destructors, value) {
+          return __emval_register(value);
+        },
+        "argPackAdvance": 8,
+        "readValueFromPointer": simpleReadValueFromPointer,
+        destructorFunction: null
+      });
+    }
+
+    function _embind_repr(v) {
+      if (v === null) {
+        return "null";
+      }
+
+      var t = _babel_runtime_helpers_typeof__WEBPACK_IMPORTED_MODULE_0___default()(v);
+
+      if (t === "object" || t === "array" || t === "function") {
+        return v.toString();
+      } else {
+        return "" + v;
+      }
+    }
+
+    function floatReadValueFromPointer(name, shift) {
+      switch (shift) {
+        case 2:
+          return function (pointer) {
+            return this["fromWireType"](HEAPF32[pointer >> 2]);
+          };
+
+        case 3:
+          return function (pointer) {
+            return this["fromWireType"](HEAPF64[pointer >> 3]);
+          };
+
+        default:
+          throw new TypeError("Unknown float type: " + name);
+      }
+    }
+
+    function __embind_register_float(rawType, name, size) {
+      var shift = getShiftFromSize(size);
+      name = readLatin1String(name);
+      registerType(rawType, {
+        name: name,
+        "fromWireType": function fromWireType(value) {
+          return value;
+        },
+        "toWireType": function toWireType(destructors, value) {
+          if (typeof value !== "number" && typeof value !== "boolean") {
+            throw new TypeError('Cannot convert "' + _embind_repr(value) + '" to ' + this.name);
+          }
+
+          return value;
+        },
+        "argPackAdvance": 8,
+        "readValueFromPointer": floatReadValueFromPointer(name, shift),
+        destructorFunction: null
+      });
+    }
+
+    function __embind_register_function(name, argCount, rawArgTypesAddr, signature, rawInvoker, fn) {
+      var argTypes = heap32VectorToArray(argCount, rawArgTypesAddr);
+      name = readLatin1String(name);
+      rawInvoker = embind__requireFunction(signature, rawInvoker);
+      exposePublicSymbol(name, function () {
+        throwUnboundTypeError("Cannot call " + name + " due to unbound types", argTypes);
+      }, argCount - 1);
+      whenDependentTypesAreResolved([], argTypes, function (argTypes) {
+        var invokerArgsArray = [argTypes[0], null].concat(argTypes.slice(1));
+        replacePublicSymbol(name, craftInvokerFunction(name, invokerArgsArray, null, rawInvoker, fn), argCount - 1);
+        return [];
+      });
+    }
+
+    function integerReadValueFromPointer(name, shift, signed) {
+      switch (shift) {
+        case 0:
+          return signed ? function readS8FromPointer(pointer) {
+            return HEAP8[pointer];
+          } : function readU8FromPointer(pointer) {
+            return HEAPU8[pointer];
+          };
+
+        case 1:
+          return signed ? function readS16FromPointer(pointer) {
+            return HEAP16[pointer >> 1];
+          } : function readU16FromPointer(pointer) {
+            return HEAPU16[pointer >> 1];
+          };
+
+        case 2:
+          return signed ? function readS32FromPointer(pointer) {
+            return HEAP32[pointer >> 2];
+          } : function readU32FromPointer(pointer) {
+            return HEAPU32[pointer >> 2];
+          };
+
+        default:
+          throw new TypeError("Unknown integer type: " + name);
+      }
+    }
+
+    function __embind_register_integer(primitiveType, name, size, minRange, maxRange) {
+      name = readLatin1String(name);
+
+      if (maxRange === -1) {
+        maxRange = 4294967295;
+      }
+
+      var shift = getShiftFromSize(size);
+
+      var fromWireType = function fromWireType(value) {
+        return value;
+      };
+
+      if (minRange === 0) {
+        var bitshift = 32 - 8 * size;
+
+        fromWireType = function fromWireType(value) {
+          return value << bitshift >>> bitshift;
+        };
+      }
+
+      var isUnsignedType = name.indexOf("unsigned") != -1;
+      registerType(primitiveType, {
+        name: name,
+        "fromWireType": fromWireType,
+        "toWireType": function toWireType(destructors, value) {
+          if (typeof value !== "number" && typeof value !== "boolean") {
+            throw new TypeError('Cannot convert "' + _embind_repr(value) + '" to ' + this.name);
+          }
+
+          if (value < minRange || value > maxRange) {
+            throw new TypeError('Passing a number "' + _embind_repr(value) + '" from JS side to C/C++ side to an argument of type "' + name + '", which is outside the valid range [' + minRange + ", " + maxRange + "]!");
+          }
+
+          return isUnsignedType ? value >>> 0 : value | 0;
+        },
+        "argPackAdvance": 8,
+        "readValueFromPointer": integerReadValueFromPointer(name, shift, minRange !== 0),
+        destructorFunction: null
+      });
+    }
+
+    function __embind_register_memory_view(rawType, dataTypeIndex, name) {
+      var typeMapping = [Int8Array, Uint8Array, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array];
+      var TA = typeMapping[dataTypeIndex];
+
+      function decodeMemoryView(handle) {
+        handle = handle >> 2;
+        var heap = HEAPU32;
+        var size = heap[handle];
+        var data = heap[handle + 1];
+        return new TA(heap["buffer"], data, size);
+      }
+
+      name = readLatin1String(name);
+      registerType(rawType, {
+        name: name,
+        "fromWireType": decodeMemoryView,
+        "argPackAdvance": 8,
+        "readValueFromPointer": decodeMemoryView
+      }, {
+        ignoreDuplicateRegistrations: true
+      });
+    }
+
+    function __embind_register_std_string(rawType, name) {
+      name = readLatin1String(name);
+      var stdStringIsUTF8 = name === "std::string";
+      registerType(rawType, {
+        name: name,
+        "fromWireType": function fromWireType(value) {
+          var length = HEAPU32[value >> 2];
+          var str;
+
+          if (stdStringIsUTF8) {
+            var endChar = HEAPU8[value + 4 + length];
+            var endCharSwap = 0;
+
+            if (endChar != 0) {
+              endCharSwap = endChar;
+              HEAPU8[value + 4 + length] = 0;
+            }
+
+            var decodeStartPtr = value + 4;
+
+            for (var i = 0; i <= length; ++i) {
+              var currentBytePtr = value + 4 + i;
+
+              if (HEAPU8[currentBytePtr] == 0) {
+                var stringSegment = UTF8ToString(decodeStartPtr);
+                if (str === undefined) str = stringSegment;else {
+                  str += String.fromCharCode(0);
+                  str += stringSegment;
+                }
+                decodeStartPtr = currentBytePtr + 1;
+              }
+            }
+
+            if (endCharSwap != 0) HEAPU8[value + 4 + length] = endCharSwap;
+          } else {
+            var a = new Array(length);
+
+            for (var i = 0; i < length; ++i) {
+              a[i] = String.fromCharCode(HEAPU8[value + 4 + i]);
+            }
+
+            str = a.join("");
+          }
+
+          _free(value);
+
+          return str;
+        },
+        "toWireType": function toWireType(destructors, value) {
+          if (value instanceof ArrayBuffer) {
+            value = new Uint8Array(value);
+          }
+
+          var getLength;
+          var valueIsOfTypeString = typeof value === "string";
+
+          if (!(valueIsOfTypeString || value instanceof Uint8Array || value instanceof Uint8ClampedArray || value instanceof Int8Array)) {
+            throwBindingError("Cannot pass non-string to std::string");
+          }
+
+          if (stdStringIsUTF8 && valueIsOfTypeString) {
+            getLength = function getLength() {
+              return lengthBytesUTF8(value);
+            };
+          } else {
+            getLength = function getLength() {
+              return value.length;
+            };
+          }
+
+          var length = getLength();
+
+          var ptr = _malloc(4 + length + 1);
+
+          HEAPU32[ptr >> 2] = length;
+
+          if (stdStringIsUTF8 && valueIsOfTypeString) {
+            stringToUTF8(value, ptr + 4, length + 1);
+          } else {
+            if (valueIsOfTypeString) {
+              for (var i = 0; i < length; ++i) {
+                var charCode = value.charCodeAt(i);
+
+                if (charCode > 255) {
+                  _free(ptr);
+
+                  throwBindingError("String has UTF-16 code units that do not fit in 8 bits");
+                }
+
+                HEAPU8[ptr + 4 + i] = charCode;
+              }
+            } else {
+              for (var i = 0; i < length; ++i) {
+                HEAPU8[ptr + 4 + i] = value[i];
+              }
+            }
+          }
+
+          if (destructors !== null) {
+            destructors.push(_free, ptr);
+          }
+
+          return ptr;
+        },
+        "argPackAdvance": 8,
+        "readValueFromPointer": simpleReadValueFromPointer,
+        destructorFunction: function destructorFunction(ptr) {
+          _free(ptr);
+        }
+      });
+    }
+
+    function __embind_register_std_wstring(rawType, charSize, name) {
+      name = readLatin1String(name);
+      var getHeap, shift;
+
+      if (charSize === 2) {
+        getHeap = function getHeap() {
+          return HEAPU16;
+        };
+
+        shift = 1;
+      } else if (charSize === 4) {
+        getHeap = function getHeap() {
+          return HEAPU32;
+        };
+
+        shift = 2;
+      }
+
+      registerType(rawType, {
+        name: name,
+        "fromWireType": function fromWireType(value) {
+          var HEAP = getHeap();
+          var length = HEAPU32[value >> 2];
+          var a = new Array(length);
+          var start = value + 4 >> shift;
+
+          for (var i = 0; i < length; ++i) {
+            a[i] = String.fromCharCode(HEAP[start + i]);
+          }
+
+          _free(value);
+
+          return a.join("");
+        },
+        "toWireType": function toWireType(destructors, value) {
+          var HEAP = getHeap();
+          var length = value.length;
+
+          var ptr = _malloc(4 + length * charSize);
+
+          HEAPU32[ptr >> 2] = length;
+          var start = ptr + 4 >> shift;
+
+          for (var i = 0; i < length; ++i) {
+            HEAP[start + i] = value.charCodeAt(i);
+          }
+
+          if (destructors !== null) {
+            destructors.push(_free, ptr);
+          }
+
+          return ptr;
+        },
+        "argPackAdvance": 8,
+        "readValueFromPointer": simpleReadValueFromPointer,
+        destructorFunction: function destructorFunction(ptr) {
+          _free(ptr);
+        }
+      });
+    }
+
+    function __embind_register_value_object(rawType, name, constructorSignature, rawConstructor, destructorSignature, rawDestructor) {
+      structRegistrations[rawType] = {
+        name: readLatin1String(name),
+        rawConstructor: embind__requireFunction(constructorSignature, rawConstructor),
+        rawDestructor: embind__requireFunction(destructorSignature, rawDestructor),
+        fields: []
+      };
+    }
+
+    function __embind_register_value_object_field(structType, fieldName, getterReturnType, getterSignature, getter, getterContext, setterArgumentType, setterSignature, setter, setterContext) {
+      structRegistrations[structType].fields.push({
+        fieldName: readLatin1String(fieldName),
+        getterReturnType: getterReturnType,
+        getter: embind__requireFunction(getterSignature, getter),
+        getterContext: getterContext,
+        setterArgumentType: setterArgumentType,
+        setter: embind__requireFunction(setterSignature, setter),
+        setterContext: setterContext
+      });
+    }
+
+    function __embind_register_void(rawType, name) {
+      name = readLatin1String(name);
+      registerType(rawType, {
+        isVoid: true,
+        name: name,
+        "argPackAdvance": 0,
+        "fromWireType": function fromWireType() {
+          return undefined;
+        },
+        "toWireType": function toWireType(destructors, o) {
+          return undefined;
+        }
+      });
+    }
+
+    function __emval_incref(handle) {
+      if (handle > 4) {
+        emval_handle_array[handle].refcount += 1;
+      }
+    }
+
+    function requireRegisteredType(rawType, humanName) {
+      var impl = registeredTypes[rawType];
+
+      if (undefined === impl) {
+        throwBindingError(humanName + " has unknown type " + getTypeName(rawType));
+      }
+
+      return impl;
+    }
+
+    function __emval_take_value(type, argv) {
+      type = requireRegisteredType(type, "_emval_take_value");
+      var v = type["readValueFromPointer"](argv);
+      return __emval_register(v);
+    }
+
+    function _abort() {
+      Module["abort"]();
+    }
+
+    function _emscripten_get_heap_size() {
+      return HEAP8.length;
+    }
+
+    function abortOnCannotGrowMemory(requestedSize) {
+      abort("OOM");
+    }
+
+    function _emscripten_resize_heap(requestedSize) {
+      abortOnCannotGrowMemory(requestedSize);
+    }
+
+    function _emscripten_memcpy_big(dest, src, num) {
+      HEAPU8.set(HEAPU8.subarray(src, src + num), dest);
+    }
+
+    function ___setErrNo(value) {
+      if (Module["___errno_location"]) HEAP32[Module["___errno_location"]() >> 2] = value;
+      return value;
+    }
+
+    InternalError = Module["InternalError"] = extendError(Error, "InternalError");
+    embind_init_charCodes();
+    BindingError = Module["BindingError"] = extendError(Error, "BindingError");
+    init_ClassHandle();
+    init_RegisteredPointer();
+    init_embind();
+    UnboundTypeError = Module["UnboundTypeError"] = extendError(Error, "UnboundTypeError");
+    init_emval();
+    var asmGlobalArg = {};
+    var asmLibraryArg = {
+      "b": abort,
+      "u": setTempRet0,
+      "p": ___cxa_allocate_exception,
+      "l": ___cxa_throw,
+      "i": ___setErrNo,
+      "t": ___syscall140,
+      "h": ___syscall146,
+      "s": ___syscall6,
+      "r": __embind_finalize_value_object,
+      "q": __embind_register_bool,
+      "g": __embind_register_class,
+      "o": __embind_register_class_constructor,
+      "d": __embind_register_class_function,
+      "F": __embind_register_emval,
+      "n": __embind_register_float,
+      "E": __embind_register_function,
+      "e": __embind_register_integer,
+      "c": __embind_register_memory_view,
+      "m": __embind_register_std_string,
+      "D": __embind_register_std_wstring,
+      "C": __embind_register_value_object,
+      "k": __embind_register_value_object_field,
+      "B": __embind_register_void,
+      "A": __emval_decref,
+      "z": __emval_incref,
+      "j": __emval_take_value,
+      "f": _abort,
+      "y": _emscripten_get_heap_size,
+      "x": _emscripten_memcpy_big,
+      "w": _emscripten_resize_heap,
+      "v": abortOnCannotGrowMemory,
+      "a": DYNAMICTOP_PTR
+    };
+    var asm = Module["asm"](asmGlobalArg, asmLibraryArg, buffer);
+    Module["asm"] = asm;
+
+    var ___errno_location = Module["___errno_location"] = function () {
+      return Module["asm"]["G"].apply(null, arguments);
+    };
+
+    var ___getTypeName = Module["___getTypeName"] = function () {
+      return Module["asm"]["H"].apply(null, arguments);
+    };
+
+    var _free = Module["_free"] = function () {
+      return Module["asm"]["I"].apply(null, arguments);
+    };
+
+    var _malloc = Module["_malloc"] = function () {
+      return Module["asm"]["J"].apply(null, arguments);
+    };
+
+    var globalCtors = Module["globalCtors"] = function () {
+      return Module["asm"]["ca"].apply(null, arguments);
+    };
+
+    var dynCall_dii = Module["dynCall_dii"] = function () {
+      return Module["asm"]["K"].apply(null, arguments);
+    };
+
+    var dynCall_i = Module["dynCall_i"] = function () {
+      return Module["asm"]["L"].apply(null, arguments);
+    };
+
+    var dynCall_ii = Module["dynCall_ii"] = function () {
+      return Module["asm"]["M"].apply(null, arguments);
+    };
+
+    var dynCall_iidiiii = Module["dynCall_iidiiii"] = function () {
+      return Module["asm"]["N"].apply(null, arguments);
+    };
+
+    var dynCall_iii = Module["dynCall_iii"] = function () {
+      return Module["asm"]["O"].apply(null, arguments);
+    };
+
+    var dynCall_iiii = Module["dynCall_iiii"] = function () {
+      return Module["asm"]["P"].apply(null, arguments);
+    };
+
+    var dynCall_iiiid = Module["dynCall_iiiid"] = function () {
+      return Module["asm"]["Q"].apply(null, arguments);
+    };
+
+    var dynCall_iiiii = Module["dynCall_iiiii"] = function () {
+      return Module["asm"]["R"].apply(null, arguments);
+    };
+
+    var dynCall_iiiiiiiiiidd = Module["dynCall_iiiiiiiiiidd"] = function () {
+      return Module["asm"]["S"].apply(null, arguments);
+    };
+
+    var dynCall_jiji = Module["dynCall_jiji"] = function () {
+      return Module["asm"]["T"].apply(null, arguments);
+    };
+
+    var dynCall_v = Module["dynCall_v"] = function () {
+      return Module["asm"]["U"].apply(null, arguments);
+    };
+
+    var dynCall_vi = Module["dynCall_vi"] = function () {
+      return Module["asm"]["V"].apply(null, arguments);
+    };
+
+    var dynCall_vii = Module["dynCall_vii"] = function () {
+      return Module["asm"]["W"].apply(null, arguments);
+    };
+
+    var dynCall_viid = Module["dynCall_viid"] = function () {
+      return Module["asm"]["X"].apply(null, arguments);
+    };
+
+    var dynCall_viii = Module["dynCall_viii"] = function () {
+      return Module["asm"]["Y"].apply(null, arguments);
+    };
+
+    var dynCall_viiid = Module["dynCall_viiid"] = function () {
+      return Module["asm"]["Z"].apply(null, arguments);
+    };
+
+    var dynCall_viiii = Module["dynCall_viiii"] = function () {
+      return Module["asm"]["_"].apply(null, arguments);
+    };
+
+    var dynCall_viiiii = Module["dynCall_viiiii"] = function () {
+      return Module["asm"]["$"].apply(null, arguments);
+    };
+
+    var dynCall_viiiiii = Module["dynCall_viiiiii"] = function () {
+      return Module["asm"]["aa"].apply(null, arguments);
+    };
+
+    var dynCall_viiiiiiiiidd = Module["dynCall_viiiiiiiiidd"] = function () {
+      return Module["asm"]["ba"].apply(null, arguments);
+    };
+
+    Module["asm"] = asm;
+
+    Module["then"] = function (func) {
+      if (Module["calledRun"]) {
+        func(Module);
+      } else {
+        var old = Module["onRuntimeInitialized"];
+
+        Module["onRuntimeInitialized"] = function () {
+          if (old) old();
+          func(Module);
+        };
+      }
+
+      return Module;
+    };
+
+    function ExitStatus(status) {
+      this.name = "ExitStatus";
+      this.message = "Program terminated with exit(" + status + ")";
+      this.status = status;
+    }
+
+    ExitStatus.prototype = new Error();
+    ExitStatus.prototype.constructor = ExitStatus;
+
+    dependenciesFulfilled = function runCaller() {
+      if (!Module["calledRun"]) run();
+      if (!Module["calledRun"]) dependenciesFulfilled = runCaller;
+    };
+
+    function run(args) {
+      args = args || Module["arguments"];
+
+      if (runDependencies > 0) {
+        return;
+      }
+
+      preRun();
+      if (runDependencies > 0) return;
+      if (Module["calledRun"]) return;
+
+      function doRun() {
+        if (Module["calledRun"]) return;
+        Module["calledRun"] = true;
+        if (ABORT) return;
+        ensureInitRuntime();
+        preMain();
+        if (Module["onRuntimeInitialized"]) Module["onRuntimeInitialized"]();
+        postRun();
+      }
+
+      if (Module["setStatus"]) {
+        Module["setStatus"]("Running...");
+        setTimeout(function () {
+          setTimeout(function () {
+            Module["setStatus"]("");
+          }, 1);
+          doRun();
+        }, 1);
+      } else {
+        doRun();
+      }
+    }
+
+    Module["run"] = run;
+
+    function abort(what) {
+      if (Module["onAbort"]) {
+        Module["onAbort"](what);
+      }
+
+      if (what !== undefined) {
+        out(what);
+        err(what);
+        what = JSON.stringify(what);
+      } else {
+        what = "";
+      }
+
+      ABORT = true;
+      EXITSTATUS = 1;
+      throw "abort(" + what + "). Build with -s ASSERTIONS=1 for more info.";
+    }
+
+    Module["abort"] = abort;
+
+    if (Module["preInit"]) {
+      if (typeof Module["preInit"] == "function") Module["preInit"] = [Module["preInit"]];
+
+      while (Module["preInit"].length > 0) {
+        Module["preInit"].pop()();
+      }
+    }
+
+    Module["noExitRuntime"] = true;
+    run();
+    return mvtdstpack;
+  };
+}();
+
+/* harmony default export */ __webpack_exports__["a"] = (mvtdstpack);
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(20), "/"))
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports) {
+
+function _arrayWithoutHoles(arr) {
+  if (Array.isArray(arr)) {
+    for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) {
+      arr2[i] = arr[i];
+    }
+
+    return arr2;
+  }
+}
+
+module.exports = _arrayWithoutHoles;
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports) {
+
+function _iterableToArray(iter) {
+  if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter);
+}
+
+module.exports = _iterableToArray;
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports) {
+
+function _nonIterableSpread() {
+  throw new TypeError("Invalid attempt to spread non-iterable instance");
+}
+
+module.exports = _nonIterableSpread;
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports) {
+
+function _arrayWithHoles(arr) {
+  if (Array.isArray(arr)) return arr;
+}
+
+module.exports = _arrayWithHoles;
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports) {
+
+function _iterableToArrayLimit(arr, i) {
+  var _arr = [];
+  var _n = true;
+  var _d = false;
+  var _e = undefined;
+
+  try {
+    for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+      _arr.push(_s.value);
+
+      if (i && _arr.length === i) break;
+    }
+  } catch (err) {
+    _d = true;
+    _e = err;
+  } finally {
+    try {
+      if (!_n && _i["return"] != null) _i["return"]();
+    } finally {
+      if (_d) throw _e;
+    }
+  }
+
+  return _arr;
+}
+
+module.exports = _iterableToArrayLimit;
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports) {
+
+function _nonIterableRest() {
+  throw new TypeError("Invalid attempt to destructure non-iterable instance");
+}
+
+module.exports = _nonIterableRest;
+
+/***/ }),
+/* 17 */
 /***/ (function(module, exports) {
 
 var g;
@@ -5200,11 +7507,10 @@ g = (function() {
 
 try {
 	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1,eval)("this");
-} catch(e) {
+	g = g || new Function("return this")();
+} catch (e) {
 	// This works if the window reference is available
-	if(typeof window === "object")
-		g = window;
+	if (typeof window === "object") g = window;
 }
 
 // g can still be undefined, but nothing to do about it...
@@ -5215,23 +7521,322 @@ module.exports = g;
 
 
 /***/ }),
-/* 5 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/* 18 */
+/***/ (function(module, exports) {
 
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return REGEX_EPACTS; });
-/* unused harmony export REGEX_REGION */
-const REGEX_EPACTS = new RegExp("(?:chr)?(.+):(\\d+)_?(\\w+)?/?([^_]+)?_?(.*)?");
-const REGEX_REGION = new RegExp("(?:chr)?(.+):(\\d+)-(\\d+)");
+function _assertThisInitialized(self) {
+  if (self === void 0) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
 
+  return self;
+}
+
+module.exports = _assertThisInitialized;
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports) {
+
+function _setPrototypeOf(o, p) {
+  module.exports = _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) {
+    o.__proto__ = p;
+    return o;
+  };
+
+  return _setPrototypeOf(o, p);
+}
+
+module.exports = _setPrototypeOf;
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports) {
+
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 6 */
+/* 21 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return qf; });
+__webpack_require__.r(__webpack_exports__);
+var stats_namespaceObject = {};
+__webpack_require__.r(stats_namespaceObject);
+__webpack_require__.d(stats_namespaceObject, "_AggregationTest", function() { return stats_AggregationTest; });
+__webpack_require__.d(stats_namespaceObject, "_get_conditional_dist", function() { return get_conditional_dist; });
+__webpack_require__.d(stats_namespaceObject, "SkatTest", function() { return stats_SkatTest; });
+__webpack_require__.d(stats_namespaceObject, "SkatOptimalTest", function() { return stats_SkatOptimalTest; });
+__webpack_require__.d(stats_namespaceObject, "ZegginiBurdenTest", function() { return stats_ZegginiBurdenTest; });
+__webpack_require__.d(stats_namespaceObject, "VTTest", function() { return stats_VTTest; });
+__webpack_require__.d(stats_namespaceObject, "MVT_WASM_HELPERS", function() { return MVT_WASM_HELPERS; });
+__webpack_require__.d(stats_namespaceObject, "calculate_mvt_pvalue", function() { return calculate_mvt_pvalue; });
+__webpack_require__.d(stats_namespaceObject, "_skatDavies", function() { return _skatDavies; });
+__webpack_require__.d(stats_namespaceObject, "_skatLiu", function() { return _skatLiu; });
+var helpers_namespaceObject = {};
+__webpack_require__.r(helpers_namespaceObject);
+__webpack_require__.d(helpers_namespaceObject, "_PortalVariantsHelper", function() { return helpers_PortalVariantsHelper; });
+__webpack_require__.d(helpers_namespaceObject, "_PortalGroupHelper", function() { return helpers_PortalGroupHelper; });
+__webpack_require__.d(helpers_namespaceObject, "parsePortalJSON", function() { return parsePortalJSON; });
+__webpack_require__.d(helpers_namespaceObject, "PortalTestRunner", function() { return helpers_PortalTestRunner; });
+__webpack_require__.d(helpers_namespaceObject, "AGGREGATION_TESTS", function() { return AGGREGATION_TESTS; });
+
+// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/toConsumableArray.js
+var toConsumableArray = __webpack_require__(5);
+var toConsumableArray_default = /*#__PURE__*/__webpack_require__.n(toConsumableArray);
+
+// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/slicedToArray.js
+var slicedToArray = __webpack_require__(1);
+var slicedToArray_default = /*#__PURE__*/__webpack_require__.n(slicedToArray);
+
+// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/classCallCheck.js
+var classCallCheck = __webpack_require__(2);
+var classCallCheck_default = /*#__PURE__*/__webpack_require__.n(classCallCheck);
+
+// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/createClass.js
+var createClass = __webpack_require__(3);
+var createClass_default = /*#__PURE__*/__webpack_require__.n(createClass);
+
+// EXTERNAL MODULE: ./node_modules/numeric/numeric-1.2.6.js
+var numeric_1_2_6 = __webpack_require__(0);
+var numeric_1_2_6_default = /*#__PURE__*/__webpack_require__.n(numeric_1_2_6);
+
+// CONCATENATED MODULE: ./src/app/constants.js
+var REGEX_EPACTS = new RegExp("(?:chr)?(.+):(\\d+)_?(\\w+)?/?([^_]+)?_?(.*)?");
+var REGEX_REGION = new RegExp("(?:chr)?(.+):(\\d+)-(\\d+)");
+
+// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/possibleConstructorReturn.js
+var possibleConstructorReturn = __webpack_require__(6);
+var possibleConstructorReturn_default = /*#__PURE__*/__webpack_require__.n(possibleConstructorReturn);
+
+// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/getPrototypeOf.js
+var getPrototypeOf = __webpack_require__(7);
+var getPrototypeOf_default = /*#__PURE__*/__webpack_require__.n(getPrototypeOf);
+
+// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/inherits.js
+var inherits = __webpack_require__(8);
+var inherits_default = /*#__PURE__*/__webpack_require__.n(inherits);
+
+// CONCATENATED MODULE: ./src/app/linalg.js
+
+/**
+ * Return the cholesky decomposition A = GG'. The matrix G is returned.
+ * @param A
+ * @return {*}
+ */
+
+function cholesky(A) {
+  var n = A.length;
+  var G = numeric_1_2_6_default.a.rep([n, n], 0);
+
+  for (var i = 0; i < n; i++) {
+    for (var j = 0; j <= i; j++) {
+      var s = A[j][i];
+
+      for (var k = 0; k <= j - 1; k++) {
+        s = s - G[j][k] * G[i][k];
+      }
+
+      if (j < i) {
+        G[i][j] = s / G[j][j];
+      } else {
+        G[i][i] = Math.sqrt(s);
+      }
+    }
+  }
+
+  return G;
+}
+// EXTERNAL MODULE: ./src/app/mvtdstpack.js
+var mvtdstpack = __webpack_require__(10);
+
+// CONCATENATED MODULE: ./src/app/qfc.js
+
+
 /**
  * A port of Robert Davies' method for computing the distribution
  * of a linear combination of chi-squared random variables.
@@ -5249,14 +7854,10 @@ const REGEX_REGION = new RegExp("(?:chr)?(.+):(\\d+)-(\\d+)");
  * @module qfc
  * @license MIT
  */
-
-const pi = Math.PI;
-const log28 = 0.0866;
-
-let count = 0;
-let sigsq, lmax, lmin, mean, c,
-  intl, ersm, r, lim, ndtsrt,
-  fail, n, th, lb, nc;
+var pi = Math.PI;
+var log28 = 0.0866;
+var count = 0;
+var sigsq, lmax, lmin, qfc_mean, qfc_c, intl, ersm, qfc_r, lim, ndtsrt, fail, qfc_n, th, lb, nc;
 
 function exp1(x) {
   return x < -50.0 ? 0.0 : Math.exp(x);
@@ -5264,81 +7865,96 @@ function exp1(x) {
 
 function counter() {
   count += 1;
+
   if (count > lim) {
     throw new RangeError("Exceeded limit of " + lim + " calls");
   }
 }
 
-function square(x) { return x * x }
+function square(x) {
+  return x * x;
+}
 
-function cube(x) { return x * x * x }
+function cube(x) {
+  return x * x * x;
+}
 
-function log1(x,first) {
+function log1(x, first) {
   if (Math.abs(x) > 0.1) {
-    return (first ? Math.log(1.0 + x) : (Math.log(1.0 + x) - x));
-  }
-  else {
-    let s, s1, term, y, k;
+    return first ? Math.log(1.0 + x) : Math.log(1.0 + x) - x;
+  } else {
+    var s, s1, term, y, k;
     y = x / (2.0 + x);
     term = 2.0 * cube(y);
     k = 3.0;
     s = (first ? 2.0 : -x) * y;
     y = square(y);
+
     for (s1 = s + term / k; s1 !== s; s1 = s + term / k) {
       k = k + 2.0;
       term = term * y;
       s = s1;
     }
+
     return s;
   }
 }
 
 function order() {
-  let j, k;
-  outer:
-  for (let j = 0; j < r; j++) {
-    let lj = Math.abs(lb[j]);
-    for (let k = j - 1; k >= 0; k--) {
-      if (lj > Math.abs(lb[th[k]])) {
-        th[k + 1] = th[k];
-      }
-      else {
-        th[k + 1] = j;
+  var j, k;
+
+  outer: for (var _j = 0; _j < qfc_r; _j++) {
+    var lj = Math.abs(lb[_j]);
+
+    for (var _k = _j - 1; _k >= 0; _k--) {
+      if (lj > Math.abs(lb[th[_k]])) {
+        th[_k + 1] = th[_k];
+      } else {
+        th[_k + 1] = _j;
         continue outer;
       }
     }
+
     k = -1;
-    th[k + 1] = j;
+    th[k + 1] = _j;
   }
+
   ndtsrt = false;
 }
 
 function errbd(u) {
-  let sum1, lj, ncj, x, y, xconst, j, nj;
+  var sum1, lj, ncj, x, y, xconst, j, nj;
   counter();
   xconst = u * sigsq;
   sum1 = u * xconst;
   u = 2.0 * u;
-  for (j = r - 1; j >= 0; j--) {
-    nj = n[j];
+
+  for (j = qfc_r - 1; j >= 0; j--) {
+    nj = qfc_n[j];
     lj = lb[j];
     ncj = nc[j];
     x = u * lj;
     y = 1.0 - x;
     xconst = xconst + lj * (ncj / y + nj) / y;
-    sum1 = sum1 + ncj * square(x / y) + nj * (square(x) / y + log1(-x,false));
+    sum1 = sum1 + ncj * square(x / y) + nj * (square(x) / y + log1(-x, false));
   }
-  return [exp1(-0.5 * sum1), xconst]
+
+  return [exp1(-0.5 * sum1), xconst];
 }
 
 function ctff(accx, u2) {
-  let u1, u, rb, xconst, c1, c2, rerr;
+  var u1, u, rb, xconst, c1, c2, rerr;
   u1 = 0.0;
-  c1 = mean;
-  rb = 2.0 * ((u2 > 0.0) ? lmax : lmin);
+  c1 = qfc_mean;
+  rb = 2.0 * (u2 > 0.0 ? lmax : lmin);
 
   function calc_err(u) {
-    [rerr, c2] = errbd(u);
+    var _errbd = errbd(u);
+
+    var _errbd2 = slicedToArray_default()(_errbd, 2);
+
+    rerr = _errbd2[0];
+    c2 = _errbd2[1];
     return rerr;
   }
 
@@ -5348,24 +7964,31 @@ function ctff(accx, u2) {
     u2 = 2.0 * u2;
   }
 
-  for (u = (c1 - mean) / (c2 - mean); u < 0.9; u = (c1 - mean) / (c2 - mean)) {
+  for (u = (c1 - qfc_mean) / (c2 - qfc_mean); u < 0.9; u = (c1 - qfc_mean) / (c2 - qfc_mean)) {
     u = (u1 + u2) / 2.0;
-    [rerr, xconst] = errbd(u / (1.0 + u * rb))
+
+    var _errbd3 = errbd(u / (1.0 + u * rb));
+
+    var _errbd4 = slicedToArray_default()(_errbd3, 2);
+
+    rerr = _errbd4[0];
+    xconst = _errbd4[1];
+
     if (rerr > accx) {
       u1 = u;
       c1 = xconst;
-    }
-    else {
+    } else {
       u2 = u;
       c2 = xconst;
     }
   }
+
   return [c2, u2];
 }
 
 function truncation(u, tausq) {
-  let sum1, sum2, prod1, prod2, prod3, lj, ncj, x, y, err1, err2;
-  let j, nj, s;
+  var sum1, sum2, prod1, prod2, prod3, lj, ncj, x, y, err1, err2;
+  var j, nj, s;
   counter();
   sum1 = 0.0;
   prod2 = 0.0;
@@ -5374,63 +7997,81 @@ function truncation(u, tausq) {
   sum2 = (sigsq + tausq) * square(u);
   prod1 = 2.0 * sum2;
   u = 2.0 * u;
-  for (j = 0; j < r; j++) {
+
+  for (j = 0; j < qfc_r; j++) {
     lj = lb[j];
     ncj = nc[j];
-    nj = n[j];
+    nj = qfc_n[j];
     x = square(u * lj);
     sum1 = sum1 + ncj * x / (1.0 + x);
+
     if (x > 1.0) {
       prod2 = prod2 + nj * Math.log(x);
-      prod3 = prod3 + nj * log1(x,true);
+      prod3 = prod3 + nj * log1(x, true);
       s = s + nj;
-    }
-    else {
-      prod1 = prod1 + nj * log1(x,true);
+    } else {
+      prod1 = prod1 + nj * log1(x, true);
     }
   }
+
   sum1 = 0.5 * sum1;
   prod2 = prod1 + prod2;
   prod3 = prod1 + prod3;
   x = exp1(-sum1 - 0.25 * prod2) / pi;
   y = exp1(-sum1 - 0.25 * prod3) / pi;
-  err1 = (s == 0) ? 1.0 : x * 2.0 / s;
-  err2 = (prod3 > 1.0) ? 2.5 * y : 1.0;
-  if (err2 < err1) { err1 = err2; }
+  err1 = s == 0 ? 1.0 : x * 2.0 / s;
+  err2 = prod3 > 1.0 ? 2.5 * y : 1.0;
+
+  if (err2 < err1) {
+    err1 = err2;
+  }
+
   x = 0.5 * sum2;
-  err2 = (x <= y) ? 1.0 : y / x;
-  return (err1 < err2) ? err1 : err2;
+  err2 = x <= y ? 1.0 : y / x;
+  return err1 < err2 ? err1 : err2;
 }
 
 function findu(ut, accx) {
-  let u, i;
-  let divis = [2.0, 1.4, 1.2, 1.1];
+  var u, i;
+  var divis = [2.0, 1.4, 1.2, 1.1];
   u = ut / 4.0;
+
   if (truncation(u, 0.0) > accx) {
-    for (u = ut; truncation(u, 0.0) > accx; u = ut) { ut = ut * 4.0 }
-  }
-  else {
+    for (u = ut; truncation(u, 0.0) > accx; u = ut) {
+      ut = ut * 4.0;
+    }
+  } else {
     ut = u;
-    for (u = u / 4.0; truncation(u, 0.0) <= accx; u = u / 4.0) { ut = u; }
+
+    for (u = u / 4.0; truncation(u, 0.0) <= accx; u = u / 4.0) {
+      ut = u;
+    }
   }
+
   for (i = 0; i < 4; i++) {
     u = ut / divis[i];
-    if (truncation(u, 0.0) <= accx) { ut = u; }
+
+    if (truncation(u, 0.0) <= accx) {
+      ut = u;
+    }
   }
+
   return ut;
 }
 
 function integrate(nterm, interv, tausq, mainx) {
-  let inpi, u, sum1, sum2, sum3, x, y, z;
-  let k, j, nj;
+  var inpi, u, sum1, sum2, sum3, x, y, z;
+  var k, j, nj;
   inpi = interv / pi;
+
   for (k = nterm; k >= 0; k--) {
     u = (k + 0.5) * interv;
-    sum1 = -2.0 * u * c;
+    sum1 = -2.0 * u * qfc_c;
     sum2 = Math.abs(sum1);
     sum3 = -0.5 * sigsq * square(u);
-    for (j = r - 1; j >= 0; j--) {
-      nj = n[j];
+
+    for (j = qfc_r - 1; j >= 0; j--) {
+      nj = qfc_n[j];
       x = 2.0 * lb[j] * u;
       y = square(x);
       sum3 = sum3 - 0.25 * nj * log1(y, true);
@@ -5440,8 +8081,13 @@ function integrate(nterm, interv, tausq, mainx) {
       sum2 = sum2 + Math.abs(z);
       sum3 = sum3 - 0.5 * x * y;
     }
+
     x = inpi * exp1(sum3) / u;
-    if (!mainx) { x = x * (1.0 - exp1(-0.5 * tausq * square(u))) }
+
+    if (!mainx) {
+      x = x * (1.0 - exp1(-0.5 * tausq * square(u)));
+    }
+
     sum1 = Math.sin(0.5 * sum1) * x;
     sum2 = 0.5 * sum2 * x;
     intl = intl + sum1;
@@ -5450,39 +8096,44 @@ function integrate(nterm, interv, tausq, mainx) {
 }
 
 function cfe(x) {
-  let axl, axl1, axl2, sxl, sum1, lj;
-  let j, k, t;
+  var axl, axl1, axl2, sxl, sum1, lj;
+  var j, k, t;
   counter();
   if (ndtsrt) order();
   axl = Math.abs(x);
-  sxl = (x > 0.0) ? 1.0 : -1.0;
+  sxl = x > 0.0 ? 1.0 : -1.0;
   sum1 = 0.0;
-  for (j = r - 1; j >= 0; j--) {
+
+  for (j = qfc_r - 1; j >= 0; j--) {
     t = th[j];
+
     if (lb[t] * sxl > 0.0) {
       lj = Math.abs(lb[t]);
-      axl1 = axl - lj * (n[t] + nc[t]);
+      axl1 = axl - lj * (qfc_n[t] + nc[t]);
       axl2 = lj / log28;
+
       if (axl1 > axl2) {
         axl = axl1;
-      }
-      else {
+      } else {
         if (axl1 > axl2) axl = axl2;
         sum1 = (axl - axl1) / lj;
-        for (k = j - 1; k >= 0; k--) sum1 = sum1 + (n[th[k]] + nc[th[k]]);
+
+        for (k = j - 1; k >= 0; k--) {
+          sum1 = sum1 + (qfc_n[th[k]] + nc[th[k]]);
+        }
+
         break;
       }
     }
   }
+
   if (sum1 > 100.0) {
     fail = true;
     return 1.0;
-  }
-  else {
-    return Math.pow(2.0,(sum1 / 4.0)) / (pi * square(axl));
+  } else {
+    return Math.pow(2.0, sum1 / 4.0) / (pi * square(axl));
   }
 }
-
 /**
  * Mixture chi-square distribution function. <p>
  *
@@ -5501,42 +8152,42 @@ function cfe(x) {
  * @param acc {number} Maximum error.
  * @return {number} Cumulative lower-tail probability.
  */
-function qf(lb1, nc1, n1, r1, sigma, c1, lim1, acc)  {
 
-/*  distribution function of a linear combination of non-central
-    chi-squared random variables :
 
-    input:
-    lb[j]            coefficient of j-th chi-squared variable
-    nc[j]            non-centrality parameter
-    n[j]             degrees of freedom
-    j = 0, 2 ... r-1
-    sigma            coefficient of standard normal variable
-    c                point at which df is to be evaluated
-    lim              maximum number of terms in integration
-    acc              maximum error
-
-    output:
-    ifault = 1       required accuracy NOT achieved
-    2       round-off error possibly significant
-    3       invalid parameters
-    4       unable to locate integration parameters
-    5       out of memory
-
-    trace[0]         absolute sum
-    trace[1]         total number of integration terms
-    trace[2]         number of integrations
-    trace[3]         integration interval in final integration
-    trace[4]         truncation point in initial integration
-    trace[5]         s.d. of initial convergence factor
-    trace[6]         cycles to locate integration parameters     */
-
-  let j, nj, nt, ntm;
-  let acc1, almx, xlim, xnt, xntm;
-  let utx, tausq, sd, intv, intv1, x, up, un, d1, d2, lj, ncj;
-  let qfval, ifault;
-  let trace = new Array(7).fill(0.0);
-  let rats = [1, 2, 4, 8];
+function qf(lb1, nc1, n1, r1, sigma, c1, lim1, acc) {
+  /*  distribution function of a linear combination of non-central
+      chi-squared random variables :
+  
+      input:
+      lb[j]            coefficient of j-th chi-squared variable
+      nc[j]            non-centrality parameter
+      n[j]             degrees of freedom
+      j = 0, 2 ... r-1
+      sigma            coefficient of standard normal variable
+      c                point at which df is to be evaluated
+      lim              maximum number of terms in integration
+      acc              maximum error
+  
+      output:
+      ifault = 1       required accuracy NOT achieved
+      2       round-off error possibly significant
+      3       invalid parameters
+      4       unable to locate integration parameters
+      5       out of memory
+  
+      trace[0]         absolute sum
+      trace[1]         total number of integration terms
+      trace[2]         number of integrations
+      trace[3]         integration interval in final integration
+      trace[4]         truncation point in initial integration
+      trace[5]         s.d. of initial convergence factor
+      trace[6]         cycles to locate integration parameters     */
+  var j, nj, nt, ntm;
+  var acc1, almx, xlim, xnt, xntm;
+  var utx, tausq, sd, intv, intv1, x, up, un, d1, d2, lj, ncj;
+  var qfval, ifault;
+  var trace = new Array(7).fill(0.0);
+  var rats = [1, 2, 4, 8];
 
   function done() {
     trace[6] = count;
@@ -5544,10 +8195,10 @@ function qf(lb1, nc1, n1, r1, sigma, c1, lim1, acc)  {
   }
 
   count = 0;
-  r = r1;
+  qfc_r = r1;
   lim = lim1;
-  c = c1;
-  n = n1;
+  qfc_c = c1;
+  qfc_n = n1;
   lb = lb1;
   nc = nc1;
   ifault = 0;
@@ -5558,168 +8209,355 @@ function qf(lb1, nc1, n1, r1, sigma, c1, lim1, acc)  {
   ndtsrt = true;
   fail = false;
   xlim = lim;
-  th = new Array(r).fill(NaN);
-
+  th = new Array(qfc_r).fill(NaN);
   /* find mean, sd, max and min of lb,
      check that parameter values are valid */
+
   sigsq = square(sigma);
   sd = sigsq;
   lmax = 0.0;
   lmin = 0.0;
-  mean = 0.0;
-  for (j = 0; j < r; j++) {
-    nj = n[j];
+  qfc_mean = 0.0;
+
+  for (j = 0; j < qfc_r; j++) {
+    nj = qfc_n[j];
     lj = lb[j];
     ncj = nc[j];
+
     if (nj < 0 || ncj < 0.0) {
       ifault = 3;
       return done();
     }
+
     sd = sd + square(lj) * (2 * nj + 4.0 * ncj);
-    mean = mean + lj * (nj + ncj);
-    if (lmax < lj)
-      lmax = lj;
-    else if (lmin > lj)
-      lmin = lj;
+    qfc_mean = qfc_mean + lj * (nj + ncj);
+    if (lmax < lj) lmax = lj;else if (lmin > lj) lmin = lj;
   }
+
   if (sd == 0.0) {
-    qfval = (c > 0.0) ? 1.0 : 0.0;
+    qfval = qfc_c > 0.0 ? 1.0 : 0.0;
     return done();
   }
+
   if (lmin == 0.0 && lmax == 0.0 && sigma == 0.0) {
     ifault = 3;
     return done();
   }
-  sd = Math.sqrt(sd);
-  almx = (lmax < -lmin) ? -lmin : lmax;
 
+  sd = Math.sqrt(sd);
+  almx = lmax < -lmin ? -lmin : lmax;
   /* starting values for findu, ctff */
+
   utx = 16.0 / sd;
   up = 4.5 / sd;
   un = -up;
 
   try {
-    /* truncation point with no convergence factor */
-    utx = findu(utx, 0.5 * acc1);
+    var l1 = function l1() {
+      var _ctff = ctff(acc1, up);
 
-    /* does convergence factor help */
-    if (c != 0.0 && (almx > 0.07 * sd)) {
-      tausq = .25 * acc1 / cfe(c);
-      if (fail)
-        fail = false;
-      else if (truncation(utx, tausq) < .2 * acc1) {
-        sigsq = sigsq + tausq;
-        utx = findu(utx, 0.25 * acc1);
-        trace[5] = Math.sqrt(tausq);
-      }
-    }
-    trace[4] = utx;
-    acc1 = 0.5 * acc1;
+      var _ctff2 = slicedToArray_default()(_ctff, 2);
 
-    /* find RANGE of distribution, quit if outside this */
-    let ctffx;
+      ctffx = _ctff2[0];
+      up = _ctff2[1];
+      d1 = ctffx - qfc_c;
 
-    function l1() {
-      [ctffx, up] = ctff(acc1, up);
-      d1 = ctffx - c;
       if (d1 < 0.0) {
         qfval = 1.0;
         return done();
       }
-      [ctffx, un] = ctff(acc1, un);
-      d2 = c - ctffx;
+
+      var _ctff3 = ctff(acc1, un);
+
+      var _ctff4 = slicedToArray_default()(_ctff3, 2);
+
+      ctffx = _ctff4[0];
+      un = _ctff4[1];
+      d2 = qfc_c - ctffx;
+
       if (d2 < 0.0) {
         qfval = 0.0;
         return done();
       }
-
       /* find integration interval */
-      intv = 2.0 * pi / ((d1 > d2) ? d1 : d2);
 
+
+      intv = 2.0 * pi / (d1 > d2 ? d1 : d2);
       /* calculate number of terms required for main and
          auxillary integrations */
+
       xnt = utx / intv;
       xntm = 3.0 / Math.sqrt(acc1);
+
       if (xnt > xntm * 1.5) {
         /* parameters for auxillary integration */
         if (xntm > xlim) {
           ifault = 1;
           return done();
         }
+
         ntm = Math.floor(xntm + 0.5);
         intv1 = utx / ntm;
         x = 2.0 * pi / intv1;
-        if (x <= Math.abs(c)) return l2();
-
+        if (x <= Math.abs(qfc_c)) return l2();
         /* calculate convergence factor */
-        tausq = .33 * acc1 / (1.1 * (cfe(c - x) + cfe(c + x)));
+
+        tausq = .33 * acc1 / (1.1 * (cfe(qfc_c - x) + cfe(qfc_c + x)));
         if (fail) return l2();
         acc1 = .67 * acc1;
-
         /* auxillary integration */
+
         integrate(ntm, intv1, tausq, false);
         xlim = xlim - xntm;
         sigsq = sigsq + tausq;
         trace[2] = trace[2] + 1;
         trace[1] = trace[1] + ntm + 1;
-
         /* find truncation point with new convergence factor */
+
         utx = findu(utx, .25 * acc1);
         acc1 = 0.75 * acc1;
         return l1();
       }
 
       return l2();
-    }
-
+    };
     /* main integration */
-    function l2() {
+
+
+    var l2 = function l2() {
       trace[3] = intv;
+
       if (xnt > xlim) {
         ifault = 1;
         return done();
       }
+
       nt = Math.floor(xnt + 0.5);
       integrate(nt, intv, 0.0, true);
       trace[2] = trace[2] + 1;
       trace[1] = trace[1] + nt + 1;
       qfval = 0.5 - intl;
       trace[0] = ersm;
-
       /* test whether round-off error could be significant
          allow for radix 8 or 16 machines */
+
       up = ersm;
       x = up + acc / 10.0;
+
       for (j = 0; j < 4; j++) {
         if (rats[j] * x === rats[j] * up) ifault = 2;
       }
 
       return done();
+    };
+
+    /* truncation point with no convergence factor */
+    utx = findu(utx, 0.5 * acc1);
+    /* does convergence factor help */
+
+    if (qfc_c != 0.0 && almx > 0.07 * sd) {
+      tausq = .25 * acc1 / cfe(qfc_c);
+      if (fail) fail = false;else if (truncation(utx, tausq) < .2 * acc1) {
+        sigsq = sigsq + tausq;
+        utx = findu(utx, 0.25 * acc1);
+        trace[5] = Math.sqrt(tausq);
+      }
     }
 
+    trace[4] = utx;
+    acc1 = 0.5 * acc1;
+    /* find RANGE of distribution, quit if outside this */
+
+    var ctffx;
     return l1();
-  }
-  catch (error) {
+  } catch (error) {
     if (error.name === "RangeError") {
       ifault = 4;
       return done();
-    }
-    else {
+    } else {
       throw error;
     }
   }
 }
 
 
+// CONCATENATED MODULE: ./src/app/quadrature.js
 
-/***/ }),
-/* 7 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
-"use strict";
-/* harmony export (immutable) */ __webpack_exports__["b"] = pchisq;
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return _pnorm; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return _dbeta; });
+
+var GAUSS_KRONROD_ABSCISSA = {
+  21: [0.00000000000000000000000000000000000e+00, 1.48874338981631210884826001129719985e-01, 2.94392862701460198131126603103865566e-01, 4.33395394129247190799265943165784162e-01, 5.62757134668604683339000099272694141e-01, 6.79409568299024406234327365114873576e-01, 7.80817726586416897063717578345042377e-01, 8.65063366688984510732096688423493049e-01, 9.30157491355708226001207180059508346e-01, 9.73906528517171720077964012084452053e-01, 9.95657163025808080735527280689002848e-01],
+  31: [0.00000000000000000000000000000000000e+00, 1.01142066918717499027074231447392339e-01, 2.01194093997434522300628303394596208e-01, 2.99180007153168812166780024266388963e-01, 3.94151347077563369897207370981045468e-01, 4.85081863640239680693655740232350613e-01, 5.70972172608538847537226737253910641e-01, 6.50996741297416970533735895313274693e-01, 7.24417731360170047416186054613938010e-01, 7.90418501442465932967649294817947347e-01, 8.48206583410427216200648320774216851e-01, 8.97264532344081900882509656454495883e-01, 9.37273392400705904307758947710209471e-01, 9.67739075679139134257347978784337225e-01, 9.87992518020485428489565718586612581e-01, 9.98002298693397060285172840152271209e-01],
+  61: [0.00000000000000000000000000000000000e+00, 5.14718425553176958330252131667225737e-02, 1.02806937966737030147096751318000592e-01, 1.53869913608583546963794672743255920e-01, 2.04525116682309891438957671002024710e-01, 2.54636926167889846439805129817805108e-01, 3.04073202273625077372677107199256554e-01, 3.52704725530878113471037207089373861e-01, 4.00401254830394392535476211542660634e-01, 4.47033769538089176780609900322854000e-01, 4.92480467861778574993693061207708796e-01, 5.36624148142019899264169793311072794e-01, 5.79345235826361691756024932172540496e-01, 6.20526182989242861140477556431189299e-01, 6.60061064126626961370053668149270753e-01, 6.97850494793315796932292388026640068e-01, 7.33790062453226804726171131369527646e-01, 7.67777432104826194917977340974503132e-01, 7.99727835821839083013668942322683241e-01, 8.29565762382768397442898119732501916e-01, 8.57205233546061098958658510658943857e-01, 8.82560535792052681543116462530225590e-01, 9.05573307699907798546522558925958320e-01, 9.26200047429274325879324277080474004e-01, 9.44374444748559979415831324037439122e-01, 9.60021864968307512216871025581797663e-01, 9.73116322501126268374693868423706885e-01, 9.83668123279747209970032581605662802e-01, 9.91630996870404594858628366109485725e-01, 9.96893484074649540271630050918695283e-01, 9.99484410050490637571325895705810819e-01]
+};
+var GAUSS_KRONROD_WEIGHTS = {
+  21: [1.49445554002916905664936468389821204e-01, 1.47739104901338491374841515972068046e-01, 1.42775938577060080797094273138717061e-01, 1.34709217311473325928054001771706833e-01, 1.23491976262065851077958109831074160e-01, 1.09387158802297641899210590325804960e-01, 9.31254545836976055350654650833663444e-02, 7.50396748109199527670431409161900094e-02, 5.47558965743519960313813002445801764e-02, 3.25581623079647274788189724593897606e-02, 1.16946388673718742780643960621920484e-02],
+  31: [1.01330007014791549017374792767492547e-01, 1.00769845523875595044946662617569722e-01, 9.91735987217919593323931734846031311e-02, 9.66427269836236785051799076275893351e-02, 9.31265981708253212254868727473457186e-02, 8.85644430562117706472754436937743032e-02, 8.30805028231330210382892472861037896e-02, 7.68496807577203788944327774826590067e-02, 6.98541213187282587095200770991474758e-02, 6.20095678006706402851392309608029322e-02, 5.34815246909280872653431472394302968e-02, 4.45897513247648766082272993732796902e-02, 3.53463607913758462220379484783600481e-02, 2.54608473267153201868740010196533594e-02, 1.50079473293161225383747630758072681e-02, 5.37747987292334898779205143012764982e-03],
+  61: [5.14947294294515675583404336470993075e-02, 5.14261285374590259338628792157812598e-02, 5.12215478492587721706562826049442083e-02, 5.08817958987496064922974730498046919e-02, 5.04059214027823468408930856535850289e-02, 4.97956834270742063578115693799423285e-02, 4.90554345550297788875281653672381736e-02, 4.81858617570871291407794922983045926e-02, 4.71855465692991539452614781810994865e-02, 4.60592382710069881162717355593735806e-02, 4.48148001331626631923555516167232438e-02, 4.34525397013560693168317281170732581e-02, 4.19698102151642461471475412859697578e-02, 4.03745389515359591119952797524681142e-02, 3.86789456247275929503486515322810503e-02, 3.68823646518212292239110656171359677e-02, 3.49793380280600241374996707314678751e-02, 3.29814470574837260318141910168539275e-02, 3.09072575623877624728842529430922726e-02, 2.87540487650412928439787853543342111e-02, 2.65099548823331016106017093350754144e-02, 2.41911620780806013656863707252320268e-02, 2.18280358216091922971674857383389934e-02, 1.94141411939423811734089510501284559e-02, 1.69208891890532726275722894203220924e-02, 1.43697295070458048124514324435800102e-02, 1.18230152534963417422328988532505929e-02, 9.27327965951776342844114689202436042e-03, 6.63070391593129217331982636975016813e-03, 3.89046112709988405126720184451550328e-03, 1.38901369867700762455159122675969968e-03]
+}; // const GAUSS_ABSCISSA = {
+//   10: [
+//     1.48874338981631210884826001129719985e-01,
+//     4.33395394129247190799265943165784162e-01,
+//     6.79409568299024406234327365114873576e-01,
+//     8.65063366688984510732096688423493049e-01,
+//     9.73906528517171720077964012084452053e-01
+//   ],
+//   15: [
+//     0.00000000000000000000000000000000000e+00,
+//     2.01194093997434522300628303394596208e-01,
+//     3.94151347077563369897207370981045468e-01,
+//     5.70972172608538847537226737253910641e-01,
+//     7.24417731360170047416186054613938010e-01,
+//     8.48206583410427216200648320774216851e-01,
+//     9.37273392400705904307758947710209471e-01,
+//     9.87992518020485428489565718586612581e-01,
+//   ],
+//   30: [
+//     5.14718425553176958330252131667225737e-02,
+//     1.53869913608583546963794672743255920e-01,
+//     2.54636926167889846439805129817805108e-01,
+//     3.52704725530878113471037207089373861e-01,
+//     4.47033769538089176780609900322854000e-01,
+//     5.36624148142019899264169793311072794e-01,
+//     6.20526182989242861140477556431189299e-01,
+//     6.97850494793315796932292388026640068e-01,
+//     7.67777432104826194917977340974503132e-01,
+//     8.29565762382768397442898119732501916e-01,
+//     8.82560535792052681543116462530225590e-01,
+//     9.26200047429274325879324277080474004e-01,
+//     9.60021864968307512216871025581797663e-01,
+//     9.83668123279747209970032581605662802e-01,
+//     9.96893484074649540271630050918695283e-01,
+//   ]
+// };
+
+var GAUSS_WEIGHTS = {
+  10: [2.95524224714752870173892994651338329e-01, 2.69266719309996355091226921569469353e-01, 2.19086362515982043995534934228163192e-01, 1.49451349150580593145776339657697332e-01, 6.66713443086881375935688098933317929e-02],
+  15: [2.02578241925561272880620199967519315e-01, 1.98431485327111576456118326443839325e-01, 1.86161000015562211026800561866422825e-01, 1.66269205816993933553200860481208811e-01, 1.39570677926154314447804794511028323e-01, 1.07159220467171935011869546685869303e-01, 7.03660474881081247092674164506673385e-02, 3.07532419961172683546283935772044177e-02],
+  30: [1.02852652893558840341285636705415044e-01, 1.01762389748405504596428952168554045e-01, 9.95934205867952670627802821035694765e-02, 9.63687371746442596394686263518098651e-02, 9.21225222377861287176327070876187672e-02, 8.68997872010829798023875307151257026e-02, 8.07558952294202153546949384605297309e-02, 7.37559747377052062682438500221907342e-02, 6.59742298821804951281285151159623612e-02, 5.74931562176190664817216894020561288e-02, 4.84026728305940529029381404228075178e-02, 3.87991925696270495968019364463476920e-02, 2.87847078833233693497191796112920436e-02, 1.84664683110909591423021319120472691e-02, 7.96819249616660561546588347467362245e-03]
+};
+var ROOT_EPSILON = Math.sqrt(Number.EPSILON);
+
+var quadrature_GaussKronrod =
+/*#__PURE__*/
+function () {
+  function GaussKronrod() {
+    var N = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 21;
+    var maxDepth = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 15;
+    var maxRelativeError = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : ROOT_EPSILON;
+
+    classCallCheck_default()(this, GaussKronrod);
+
+    this.N = N;
+    this.maxDepth = maxDepth;
+    this.maxRelativeError = maxRelativeError;
+    this.error = 0;
+  }
+
+  createClass_default()(GaussKronrod, [{
+    key: "_integrateNonAdaptive",
+    value: function _integrateNonAdaptive(f) {
+      var N = this.N;
+      var gauss_start = 2;
+      var kronrod_start = 1;
+      var gauss_order = (N - 1) / 2;
+      var kronrod_result = 0;
+      var gauss_result = 0;
+      var fp, fm;
+
+      if (gauss_order & 1) {
+        fp = f(0);
+        kronrod_result = fp * GAUSS_KRONROD_WEIGHTS[N][0];
+        gauss_result += fp * GAUSS_WEIGHTS[(N - 1) / 2][0];
+      } else {
+        fp = f(0);
+        kronrod_result = fp * GAUSS_KRONROD_WEIGHTS[N][0];
+        gauss_start = 1;
+        kronrod_start = 2;
+      }
+
+      for (var i = gauss_start; i < GAUSS_KRONROD_ABSCISSA[N].length; i += 2) {
+        fp = f(GAUSS_KRONROD_ABSCISSA[N][i]);
+        fm = f(-GAUSS_KRONROD_ABSCISSA[N][i]);
+        kronrod_result += (fp + fm) * GAUSS_KRONROD_WEIGHTS[N][i];
+        gauss_result += (fp + fm) * GAUSS_WEIGHTS[(N - 1) / 2][Math.floor(i / 2)];
+      }
+
+      for (var _i = kronrod_start; _i < GAUSS_KRONROD_ABSCISSA[N].length; _i += 2) {
+        fp = f(GAUSS_KRONROD_ABSCISSA[N][_i]);
+        fm = f(-GAUSS_KRONROD_ABSCISSA[N][_i]);
+        kronrod_result += (fp + fm) * GAUSS_KRONROD_WEIGHTS[N][_i];
+      }
+
+      var error = Math.max(Math.abs(kronrod_result - gauss_result), Math.abs(kronrod_result * Number.EPSILON * 2));
+      return [kronrod_result, error];
+    }
+  }, {
+    key: "_recursiveAdaptiveIntegrate",
+    value: function _recursiveAdaptiveIntegrate(f, a, b, max_levels, abs_tol) {
+      var error_local;
+      var estimate;
+      var mean = (b + a) / 2;
+      var scale = (b - a) / 2;
+
+      var ff = function ff(x) {
+        return f(scale * x + mean);
+      };
+
+      var _this$_integrateNonAd = this._integrateNonAdaptive(ff);
+
+      var _this$_integrateNonAd2 = slicedToArray_default()(_this$_integrateNonAd, 2);
+
+      estimate = _this$_integrateNonAd2[0];
+      error_local = _this$_integrateNonAd2[1];
+      estimate *= scale;
+      var abs_tol1 = Math.abs(estimate * this.maxRelativeError);
+
+      if (!abs_tol) {
+        abs_tol = abs_tol1;
+      }
+
+      if (max_levels && abs_tol < error_local) {
+        var mid = (a + b) / 2;
+
+        var _this$_recursiveAdapt = this._recursiveAdaptiveIntegrate(f, a, mid, max_levels - 1, abs_tol / 2);
+
+        var _this$_recursiveAdapt2 = slicedToArray_default()(_this$_recursiveAdapt, 1);
+
+        estimate = _this$_recursiveAdapt2[0];
+
+        var result = this._recursiveAdaptiveIntegrate(f, mid, b, max_levels - 1, abs_tol / 2);
+
+        estimate += result[0];
+        this.error += result[1];
+        return [estimate, error_local];
+      }
+
+      this.error = error_local; //let dbg = `${a.toString().padEnd(15)} ${b.toString().padEnd(15)} ${max_levels.toString().padEnd(5)} ${abs_tol.toExponential(2).padEnd(11)} ${estimate.toExponential(2).padEnd(11)} ${error_local.toExponential(2).padStart(5).padEnd(11)}\n`;
+      //this.stream.write(dbg);
+
+      return [estimate, error_local];
+    }
+  }, {
+    key: "integrate",
+    value: function integrate(f, a, b) {
+      var result;
+
+      if (isFinite(a) && isFinite(b)) {
+        result = this._recursiveAdaptiveIntegrate(f, a, b, this.maxDepth, 0);
+      } else {
+        throw new Error("Additional integration limits not implemented");
+      }
+
+      return result;
+    }
+  }]);
+
+  return GaussKronrod;
+}();
+
+
+// CONCATENATED MODULE: ./src/app/rstats.js
 /**
  * JavaScript port of Rmath functions. <p>
  *
@@ -5735,59 +8573,63 @@ function qf(lb1, nc1, n1, r1, sigma, c1, lim1, acc)  {
  * @author Ryan Welch
  * @license LGPL-2.1
  */
-
 // Constants
+var DBL_EPSILON = 2.2204460492503130808472633361816e-16;
+var DBL_MIN = Number.MIN_VALUE;
+var DBL_MAX_EXP = 308;
+var DBL_MIN_EXP = -323;
+var DBL_MAX = Number.MAX_VALUE;
+var SCALE_FACTOR = 1.157920892373162e+77;
+var EULERS_CONST = 0.5772156649015328606065120900824024;
+var TOL_LOGCF = 1e-14;
+var LGAMMA_C = 0.2273736845824652515226821577978691e-12;
+var DXREL = 1.490116119384765625e-8;
+var M_LN2 = Math.LN2; //0.693147180559945309417232121458;
 
-const DBL_EPSILON = 2.2204460492503130808472633361816e-16;
-const DBL_MIN = Number.MIN_VALUE;
-const DBL_MAX_EXP = 308;
-const DBL_MIN_EXP = -323;
-const DBL_MAX = Number.MAX_VALUE;
-const SCALE_FACTOR = 1.157920892373162e+77;
-const EULERS_CONST = 0.5772156649015328606065120900824024;
-const TOL_LOGCF = 1e-14;
-const LGAMMA_C = 0.2273736845824652515226821577978691e-12;
+var M_LN10 = Math.LN10; //2.302585092994045684017991454684;
 
-const DXREL = 1.490116119384765625e-8;
+var M_PI = Math.PI;
+var M_2PI = 2 * M_PI;
+var M_LN_2PI = Math.log(2 * Math.PI);
+var M_LN_SQRT_2PI = Math.log(Math.sqrt(M_2PI));
+var M_SQRT_32 = 5.656854249492380195206754896838;
+var M_1_SQRT_2PI = 0.398942280401432677939946059934;
+var M_CUTOFF = M_LN2 * DBL_MAX_EXP / DBL_EPSILON;
 
-const M_LN2 = Math.LN2; //0.693147180559945309417232121458;
-const M_LN10 = Math.LN10; //2.302585092994045684017991454684;
-const M_PI = Math.PI;
-const M_2PI = 2 * M_PI;
-const M_LN_2PI = Math.log(2 * Math.PI);
-const M_LN_SQRT_2PI = Math.log(Math.sqrt(M_2PI));
-const M_SQRT_32 = 5.656854249492380195206754896838;
-const M_1_SQRT_2PI = 0.398942280401432677939946059934;
-const M_CUTOFF = M_LN2 * DBL_MAX_EXP / DBL_EPSILON;
+var _dbl_min_exp = M_LN2 * DBL_MIN_EXP;
 
-const _dbl_min_exp = M_LN2 * DBL_MIN_EXP;
-
-const ME_DOMAIN = 1;
-const ME_RANGE = 2;
-const ME_NOCONV = 4;
-const ME_PRECISION = 8;
-const ME_UNDERFLOW = 16;
+var ME_DOMAIN = 1;
+var ME_RANGE = 2;
+var ME_NOCONV = 4;
+var ME_PRECISION = 8;
+var ME_UNDERFLOW = 16;
 
 function ML_ERROR(x, s) {
   if (x > ME_DOMAIN) {
-    let msg = "";
-    switch(x) {
+    var msg = "";
+
+    switch (x) {
       case ME_DOMAIN:
-        msg = `argument out of domain in ${s}`;
+        msg = "argument out of domain in ".concat(s);
         break;
+
       case ME_RANGE:
-        msg = `value out of range in ${s}`;
+        msg = "value out of range in ".concat(s);
         break;
+
       case ME_NOCONV:
-        msg = `convergence failed in ${s}`;
+        msg = "convergence failed in ".concat(s);
         break;
+
       case ME_PRECISION:
-        msg = `full precision may not have been achieved in ${s}`;
+        msg = "full precision may not have been achieved in ".concat(s);
         break;
+
       case ME_UNDERFLOW:
-        msg = `underflow occurred in ${s}`;
+        msg = "underflow occurred in ".concat(s);
         break;
     }
+
     console.error(msg);
   }
 }
@@ -5797,259 +8639,261 @@ function ML_ERR_return_NAN() {
   return NaN;
 }
 
-const S0 = 0.083333333333333333333;
+var S0 = 0.083333333333333333333;
 /* 1/12 */
-const S1 = 0.00277777777777777777778;
+
+var S1 = 0.00277777777777777777778;
 /* 1/360 */
-const S2 = 0.00079365079365079365079365;
+
+var S2 = 0.00079365079365079365079365;
 /* 1/1260 */
-const S3 = 0.000595238095238095238095238;
+
+var S3 = 0.000595238095238095238095238;
 /* 1/1680 */
-const S4 = 0.0008417508417508417508417508;
+
+var S4 = 0.0008417508417508417508417508;
 /* 1/1188 */
 
-const SFERR_HALVES = [
-  0.0, /* n=0 - wrong, place holder only */
-  0.1534264097200273452913848, /* 0.5 */
-  0.0810614667953272582196702, /* 1.0 */
-  0.0548141210519176538961390, /* 1.5 */
-  0.0413406959554092940938221, /* 2.0 */
-  0.03316287351993628748511048, /* 2.5 */
-  0.02767792568499833914878929, /* 3.0 */
-  0.02374616365629749597132920, /* 3.5 */
-  0.02079067210376509311152277, /* 4.0 */
-  0.01848845053267318523077934, /* 4.5 */
-  0.01664469118982119216319487, /* 5.0 */
-  0.01513497322191737887351255, /* 5.5 */
-  0.01387612882307074799874573, /* 6.0 */
-  0.01281046524292022692424986, /* 6.5 */
-  0.01189670994589177009505572, /* 7.0 */
-  0.01110455975820691732662991, /* 7.5 */
-  0.010411265261972096497478567, /* 8.0 */
-  0.009799416126158803298389475, /* 8.5 */
-  0.009255462182712732917728637, /* 9.0 */
-  0.008768700134139385462952823, /* 9.5 */
-  0.008330563433362871256469318, /* 10.0 */
-  0.007934114564314020547248100, /* 10.5 */
-  0.007573675487951840794972024, /* 11.0 */
-  0.007244554301320383179543912, /* 11.5 */
-  0.006942840107209529865664152, /* 12.0 */
-  0.006665247032707682442354394, /* 12.5 */
-  0.006408994188004207068439631, /* 13.0 */
-  0.006171712263039457647532867, /* 13.5 */
-  0.005951370112758847735624416, /* 14.0 */
-  0.005746216513010115682023589, /* 14.5 */
-  0.005554733551962801371038690  /* 15.0 */
+var SFERR_HALVES = [0.0,
+/* n=0 - wrong, place holder only */
+0.1534264097200273452913848,
+/* 0.5 */
+0.0810614667953272582196702,
+/* 1.0 */
+0.0548141210519176538961390,
+/* 1.5 */
+0.0413406959554092940938221,
+/* 2.0 */
+0.03316287351993628748511048,
+/* 2.5 */
+0.02767792568499833914878929,
+/* 3.0 */
+0.02374616365629749597132920,
+/* 3.5 */
+0.02079067210376509311152277,
+/* 4.0 */
+0.01848845053267318523077934,
+/* 4.5 */
+0.01664469118982119216319487,
+/* 5.0 */
+0.01513497322191737887351255,
+/* 5.5 */
+0.01387612882307074799874573,
+/* 6.0 */
+0.01281046524292022692424986,
+/* 6.5 */
+0.01189670994589177009505572,
+/* 7.0 */
+0.01110455975820691732662991,
+/* 7.5 */
+0.010411265261972096497478567,
+/* 8.0 */
+0.009799416126158803298389475,
+/* 8.5 */
+0.009255462182712732917728637,
+/* 9.0 */
+0.008768700134139385462952823,
+/* 9.5 */
+0.008330563433362871256469318,
+/* 10.0 */
+0.007934114564314020547248100,
+/* 10.5 */
+0.007573675487951840794972024,
+/* 11.0 */
+0.007244554301320383179543912,
+/* 11.5 */
+0.006942840107209529865664152,
+/* 12.0 */
+0.006665247032707682442354394,
+/* 12.5 */
+0.006408994188004207068439631,
+/* 13.0 */
+0.006171712263039457647532867,
+/* 13.5 */
+0.005951370112758847735624416,
+/* 14.0 */
+0.005746216513010115682023589,
+/* 14.5 */
+0.005554733551962801371038690
+/* 15.0 */
 ];
-
-const LGAMMA_COEFS = [0.3224670334241132182362075833230126e-0,
-  0.6735230105319809513324605383715000e-1, /* = (zeta(3)-1)/3 */
-  0.2058080842778454787900092413529198e-1,
-  0.7385551028673985266273097291406834e-2,
-  0.2890510330741523285752988298486755e-2,
-  0.1192753911703260977113935692828109e-2,
-  0.5096695247430424223356548135815582e-3,
-  0.2231547584535793797614188036013401e-3,
-  0.9945751278180853371459589003190170e-4,
-  0.4492623673813314170020750240635786e-4,
-  0.2050721277567069155316650397830591e-4,
-  0.9439488275268395903987425104415055e-5,
-  0.4374866789907487804181793223952411e-5,
-  0.2039215753801366236781900709670839e-5,
-  0.9551412130407419832857179772951265e-6,
-  0.4492469198764566043294290331193655e-6,
-  0.2120718480555466586923135901077628e-6,
-  0.1004322482396809960872083050053344e-6,
-  0.4769810169363980565760193417246730e-7,
-  0.2271109460894316491031998116062124e-7,
-  0.1083865921489695409107491757968159e-7,
-  0.5183475041970046655121248647057669e-8,
-  0.2483674543802478317185008663991718e-8,
-  0.1192140140586091207442548202774640e-8,
-  0.5731367241678862013330194857961011e-9,
-  0.2759522885124233145178149692816341e-9,
-  0.1330476437424448948149715720858008e-9,
-  0.6422964563838100022082448087644648e-10,
-  0.3104424774732227276239215783404066e-10,
-  0.1502138408075414217093301048780668e-10,
-  0.7275974480239079662504549924814047e-11,
-  0.3527742476575915083615072228655483e-11,
-  0.1711991790559617908601084114443031e-11,
-  0.8315385841420284819798357793954418e-12,
-  0.4042200525289440065536008957032895e-12,
-  0.1966475631096616490411045679010286e-12,
-  0.9573630387838555763782200936508615e-13,
-  0.4664076026428374224576492565974577e-13,
-  0.2273736960065972320633279596737272e-13,
-  0.1109139947083452201658320007192334e-13/* = (zeta(40+1)-1)/(40+1) */
+var LGAMMA_COEFS = [0.3224670334241132182362075833230126e-0, 0.6735230105319809513324605383715000e-1,
+/* = (zeta(3)-1)/3 */
+0.2058080842778454787900092413529198e-1, 0.7385551028673985266273097291406834e-2, 0.2890510330741523285752988298486755e-2, 0.1192753911703260977113935692828109e-2, 0.5096695247430424223356548135815582e-3, 0.2231547584535793797614188036013401e-3, 0.9945751278180853371459589003190170e-4, 0.4492623673813314170020750240635786e-4, 0.2050721277567069155316650397830591e-4, 0.9439488275268395903987425104415055e-5, 0.4374866789907487804181793223952411e-5, 0.2039215753801366236781900709670839e-5, 0.9551412130407419832857179772951265e-6, 0.4492469198764566043294290331193655e-6, 0.2120718480555466586923135901077628e-6, 0.1004322482396809960872083050053344e-6, 0.4769810169363980565760193417246730e-7, 0.2271109460894316491031998116062124e-7, 0.1083865921489695409107491757968159e-7, 0.5183475041970046655121248647057669e-8, 0.2483674543802478317185008663991718e-8, 0.1192140140586091207442548202774640e-8, 0.5731367241678862013330194857961011e-9, 0.2759522885124233145178149692816341e-9, 0.1330476437424448948149715720858008e-9, 0.6422964563838100022082448087644648e-10, 0.3104424774732227276239215783404066e-10, 0.1502138408075414217093301048780668e-10, 0.7275974480239079662504549924814047e-11, 0.3527742476575915083615072228655483e-11, 0.1711991790559617908601084114443031e-11, 0.8315385841420284819798357793954418e-12, 0.4042200525289440065536008957032895e-12, 0.1966475631096616490411045679010286e-12, 0.9573630387838555763782200936508615e-13, 0.4664076026428374224576492565974577e-13, 0.2273736960065972320633279596737272e-13, 0.1109139947083452201658320007192334e-13
+/* = (zeta(40+1)-1)/(40+1) */
 ];
+var POIS_COEFS_A = [-1e99,
+/* placeholder used for 1-indexing */
+2 / 3., -4 / 135., 8 / 2835., 16 / 8505., -8992 / 12629925., -334144 / 492567075., 698752 / 1477701225.];
+var POIS_COEFS_B = [-1e99,
+/* placeholder */
+1 / 12., 1 / 288., -139 / 51840., -571 / 2488320., 163879 / 209018880., 5246819 / 75246796800., -534703531 / 902961561600.];
+var GAMCS = [+.8571195590989331421920062399942e-2, +.4415381324841006757191315771652e-2, +.5685043681599363378632664588789e-1, -.4219835396418560501012500186624e-2, +.1326808181212460220584006796352e-2, -.1893024529798880432523947023886e-3, +.3606925327441245256578082217225e-4, -.6056761904460864218485548290365e-5, +.1055829546302283344731823509093e-5, -.1811967365542384048291855891166e-6, +.3117724964715322277790254593169e-7, -.5354219639019687140874081024347e-8, +.9193275519859588946887786825940e-9, -.1577941280288339761767423273953e-9, +.2707980622934954543266540433089e-10, -.4646818653825730144081661058933e-11, +.7973350192007419656460767175359e-12, -.1368078209830916025799499172309e-12, +.2347319486563800657233471771688e-13, -.4027432614949066932766570534699e-14, +.6910051747372100912138336975257e-15, -.1185584500221992907052387126192e-15, +.2034148542496373955201026051932e-16, -.3490054341717405849274012949108e-17, +.5987993856485305567135051066026e-18, -.1027378057872228074490069778431e-18, +.1762702816060529824942759660748e-19, -.3024320653735306260958772112042e-20, +.5188914660218397839717833550506e-21, -.8902770842456576692449251601066e-22, +.1527474068493342602274596891306e-22, -.2620731256187362900257328332799e-23, +.4496464047830538670331046570666e-24, -.7714712731336877911703901525333e-25, +.1323635453126044036486572714666e-25, -.2270999412942928816702313813333e-26, +.3896418998003991449320816639999e-27, -.6685198115125953327792127999999e-28, +.1146998663140024384347613866666e-28, -.1967938586345134677295103999999e-29, +.3376448816585338090334890666666e-30, -.5793070335782135784625493333333e-31];
+var ALGMCS = [+.1666389480451863247205729650822e+0, -.1384948176067563840732986059135e-4, +.9810825646924729426157171547487e-8, -.1809129475572494194263306266719e-10, +.6221098041892605227126015543416e-13, -.3399615005417721944303330599666e-15, +.2683181998482698748957538846666e-17, -.2868042435334643284144622399999e-19, +.3962837061046434803679306666666e-21, -.6831888753985766870111999999999e-23, +.1429227355942498147573333333333e-24, -.3547598158101070547199999999999e-26, +.1025680058010470912000000000000e-27, -.3401102254316748799999999999999e-29, +.1276642195630062933333333333333e-30];
+var PNORM_A = [2.2352520354606839287, 161.02823106855587881, 1067.6894854603709582, 18154.981253343561249, 0.065682337918207449113];
+var PNORM_B = [47.20258190468824187, 976.09855173777669322, 10260.932208618978205, 45507.789335026729956];
+var PNORM_C = [0.39894151208813466764, 8.8831497943883759412, 93.506656132177855979, 597.27027639480026226, 2494.5375852903726711, 6848.1904505362823326, 11602.651437647350124, 9842.7148383839780218, 1.0765576773720192317e-8];
+var PNORM_D = [22.266688044328115691, 235.38790178262499861, 1519.377599407554805, 6485.558298266760755, 18615.571640885098091, 34900.952721145977266, 38912.003286093271411, 19685.429676859990727];
+var PNORM_P = [0.21589853405795699, 0.1274011611602473639, 0.022235277870649807, 0.001421619193227893466, 2.9112874951168792e-5, 0.02307344176494017303];
+var PNORM_Q = [1.28426009614491121, 0.468238212480865118, 0.0659881378689285515, 0.00378239633202758244, 7.29751555083966205e-5];
 
-const POIS_COEFS_A = [
-  -1e99, /* placeholder used for 1-indexing */
-  2 / 3.,
-  -4 / 135.,
-  8 / 2835.,
-  16 / 8505.,
-  -8992 / 12629925.,
-  -334144 / 492567075.,
-  698752 / 1477701225.
-];
+var R_D__0 = function R_D__0(log_p) {
+  return log_p ? -Infinity : 0.0;
+};
 
-const POIS_COEFS_B = [
-  -1e99, /* placeholder */
-  1 / 12.,
-  1 / 288.,
-  -139 / 51840.,
-  -571 / 2488320.,
-  163879 / 209018880.,
-  5246819 / 75246796800.,
-  -534703531 / 902961561600.
-];
+var R_D__1 = function R_D__1(log_p) {
+  return log_p ? 0.0 : 1.0;
+};
 
-const GAMCS = [
-  +.8571195590989331421920062399942e-2,
-  +.4415381324841006757191315771652e-2,
-  +.5685043681599363378632664588789e-1,
-  -.4219835396418560501012500186624e-2,
-  +.1326808181212460220584006796352e-2,
-  -.1893024529798880432523947023886e-3,
-  +.3606925327441245256578082217225e-4,
-  -.6056761904460864218485548290365e-5,
-  +.1055829546302283344731823509093e-5,
-  -.1811967365542384048291855891166e-6,
-  +.3117724964715322277790254593169e-7,
-  -.5354219639019687140874081024347e-8,
-  +.9193275519859588946887786825940e-9,
-  -.1577941280288339761767423273953e-9,
-  +.2707980622934954543266540433089e-10,
-  -.4646818653825730144081661058933e-11,
-  +.7973350192007419656460767175359e-12,
-  -.1368078209830916025799499172309e-12,
-  +.2347319486563800657233471771688e-13,
-  -.4027432614949066932766570534699e-14,
-  +.6910051747372100912138336975257e-15,
-  -.1185584500221992907052387126192e-15,
-  +.2034148542496373955201026051932e-16,
-  -.3490054341717405849274012949108e-17,
-  +.5987993856485305567135051066026e-18,
-  -.1027378057872228074490069778431e-18,
-  +.1762702816060529824942759660748e-19,
-  -.3024320653735306260958772112042e-20,
-  +.5188914660218397839717833550506e-21,
-  -.8902770842456576692449251601066e-22,
-  +.1527474068493342602274596891306e-22,
-  -.2620731256187362900257328332799e-23,
-  +.4496464047830538670331046570666e-24,
-  -.7714712731336877911703901525333e-25,
-  +.1323635453126044036486572714666e-25,
-  -.2270999412942928816702313813333e-26,
-  +.3896418998003991449320816639999e-27,
-  -.6685198115125953327792127999999e-28,
-  +.1146998663140024384347613866666e-28,
-  -.1967938586345134677295103999999e-29,
-  +.3376448816585338090334890666666e-30,
-  -.5793070335782135784625493333333e-31
-];
+var R_DT_0 = function R_DT_0(lower_tail, log_p) {
+  return lower_tail ? R_D__0(log_p) : R_D__1(log_p);
+};
 
-const ALGMCS = [
-  +.1666389480451863247205729650822e+0,
-  -.1384948176067563840732986059135e-4,
-  +.9810825646924729426157171547487e-8,
-  -.1809129475572494194263306266719e-10,
-  +.6221098041892605227126015543416e-13,
-  -.3399615005417721944303330599666e-15,
-  +.2683181998482698748957538846666e-17,
-  -.2868042435334643284144622399999e-19,
-  +.3962837061046434803679306666666e-21,
-  -.6831888753985766870111999999999e-23,
-  +.1429227355942498147573333333333e-24,
-  -.3547598158101070547199999999999e-26,
-  +.1025680058010470912000000000000e-27,
-  -.3401102254316748799999999999999e-29,
-  +.1276642195630062933333333333333e-30
-];
+var R_DT_1 = function R_DT_1(lower_tail, log_p) {
+  return lower_tail ? R_D__1(log_p) : R_D__0(log_p);
+}; // const R_D_half = () => (log_p ? -M_LN2 : 0.5);
+// This is some sort of trick by using 0.5 - p + 0.5 to "perhaps gain 1 bit of accuracy"
 
-const PNORM_A = [
-  2.2352520354606839287,
-  161.02823106855587881,
-  1067.6894854603709582,
-  18154.981253343561249,
-  0.065682337918207449113
-];
 
-const PNORM_B = [
-  47.20258190468824187,
-  976.09855173777669322,
-  10260.932208618978205,
-  45507.789335026729956
-];
+var R_D_Lval = function R_D_Lval(p, lower_tail) {
+  return lower_tail ? p : 0.5 - p + 0.5;
+};
 
-const PNORM_C = [
-  0.39894151208813466764,
-  8.8831497943883759412,
-  93.506656132177855979,
-  597.27027639480026226,
-  2494.5375852903726711,
-  6848.1904505362823326,
-  11602.651437647350124,
-  9842.7148383839780218,
-  1.0765576773720192317e-8
-];
+var R_D_Cval = function R_D_Cval(p, lower_tail) {
+  return lower_tail ? 0.5 - p + 0.5 : p;
+};
 
-const PNORM_D = [
-  22.266688044328115691,
-  235.38790178262499861,
-  1519.377599407554805,
-  6485.558298266760755,
-  18615.571640885098091,
-  34900.952721145977266,
-  38912.003286093271411,
-  19685.429676859990727
-];
+var R_D_val = function R_D_val(x, log_p) {
+  return log_p ? Math.log(x) : x;
+};
 
-const PNORM_P = [
-  0.21589853405795699,
-  0.1274011611602473639,
-  0.022235277870649807,
-  0.001421619193227893466,
-  2.9112874951168792e-5,
-  0.02307344176494017303
-];
+var R_D_log = function R_D_log(p, log_p) {
+  return log_p ? p : Math.log(p);
+};
 
-const PNORM_Q = [
-  1.28426009614491121,
-  0.468238212480865118,
-  0.0659881378689285515,
-  0.00378239633202758244,
-  7.29751555083966205e-5
-];
+var R_D_Clog = function R_D_Clog(p, log_p) {
+  return log_p ? Math.log1p(-p) : 0.5 - p + 0.5;
+};
 
-const R_D__0 = (log_p) => (log_p ? -Infinity : 0.0);
-const R_D__1 = (log_p) => (log_p ? 0.0 : 1.0);
-const R_DT_0 = (lower_tail, log_p) => (lower_tail ? R_D__0(log_p) : R_D__1(log_p));
-const R_DT_1 = (lower_tail, log_p) => (lower_tail ? R_D__1(log_p) : R_D__0(log_p));
-// const R_D_half = () => (log_p ? -M_LN2 : 0.5);
+var R_DT_val = function R_DT_val(x, lower_tail, log_p) {
+  return lower_tail ? R_D_val(x, log_p) : R_D_Clog(x, log_p);
+};
 
-const R_D_val = (x, log_p)	=> (log_p ? Math.log(x) : (x));
-const R_D_Clog = (p, log_p) => (log_p ? Math.log1p(-(p)) : (0.5 - (p) + 0.5));
-const R_DT_val = (x, lower_tail, log_p) => ((lower_tail ? R_D_val(x, log_p) : R_D_Clog(x, log_p)));
+var R_D_LExp = function R_D_LExp(x, log_p) {
+  return log_p ? R_Log1_Exp(x) : Math.log1p(-x);
+}; // Be careful, for some reason they named two functions off by only 1 capital letter...
+// R_DT_log != R_DT_Log
+
+
+var R_DT_log = function R_DT_log(p, lower_tail) {
+  return lower_tail ? R_D_log(p) : R_D_LExp(p);
+};
+
+var R_DT_Clog = function R_DT_Clog(p, lower_tail) {
+  return lower_tail ? R_D_LExp(p) : R_D_log(p);
+}; //const R_DT_Log = (p, lower_tail) => (lower_tail ? p : R_Log1_Exp(p));
+
+/**
+ * See warning for R_Q_P01_boundaries (this function should be wrapped in try/catch.)
+ */
+
+
+function R_Q_P01_check(p, log_p) {
+  if (log_p && p > 0 || !log_p && (p < 0 || p > 1)) {
+    throw ML_ERR_return_NAN();
+  }
+}
+/**
+ * Note this has changed from the R implementation which was a C macro.
+ * You should wrap this in a try catch, like:
+ * try {
+ *   boundaries(...)
+ * }
+ * catch (e) { return e; }
+ */
+
+
+function R_Q_P01_boundaries(p, lower_tail, log_p, left, right) {
+  if (log_p) {
+    if (p > 0) {
+      throw ML_ERR_return_NAN();
+    }
+
+    if (p === 0) {
+      throw lower_tail ? right : left;
+    }
+
+    if (p === Number.NEGATIVE_INFINITY) {
+      throw lower_tail ? left : right;
+    }
+  } else {
+    if (p < 0 || p > 1) {
+      throw ML_ERR_return_NAN();
+    }
+
+    if (p === 0) {
+      throw lower_tail ? left : right;
+    }
+
+    if (p === 1) {
+      throw lower_tail ? right : left;
+    }
+  }
+}
+
+function R_P_bounds_01(x, x_min, x_max, lower_tail, log_p) {
+  if (x <= x_min) {
+    throw R_DT_0(lower_tail, log_p);
+  }
+
+  if (x >= x_max) {
+    throw R_DT_1(lower_tail, log_p);
+  }
+}
+
+function R_DT_qIv(p, lower_tail, log_p) {
+  if (log_p) {
+    if (lower_tail) {
+      return Math.exp(p);
+    } else {
+      return -Math.expm1(p);
+    }
+  } else {
+    return R_D_Lval(p, lower_tail);
+  }
+}
+
+function R_DT_CIv(p, lower_tail, log_p) {
+  if (log_p) {
+    if (lower_tail) {
+      return -Math.expm1(p);
+    } else {
+      return Math.exp(p);
+    }
+  } else {
+    return R_D_Cval(p);
+  }
+}
 
 function fmin2(x, y) {
   if (isNaN(x) || isNaN(y)) {
     return x + y;
   }
-  return (x < y) ? x : y;
+
+  return x < y ? x : y;
 }
 
 function fmax2(x, y) {
   if (isNaN(x) || isNaN(y)) {
     return x + y;
   }
-  return (x < y) ? y : x;
+
+  return x < y ? y : x;
 }
 
 function expm1(x) {
-  let y, a = Math.abs(x);
+  var y,
+      a = Math.abs(x);
 
   if (a < DBL_EPSILON) {
     return x;
@@ -6060,9 +8904,8 @@ function expm1(x) {
   }
 
   if (a > 1e-8) {
-    y = Math.exp(x) - 1
-  }
-  else {
+    y = Math.exp(x) - 1;
+  } else {
     y = (x / 2 + 1) * x;
   }
 
@@ -6071,7 +8914,7 @@ function expm1(x) {
 }
 
 function R_Log1_Exp(x) {
-  return ((x) > -M_LN2 ? Math.log(-Math.expm1(x)) : Math.log1p(-Math.exp(x)));
+  return x > -M_LN2 ? Math.log(-Math.expm1(x)) : Math.log1p(-Math.exp(x));
 }
 
 function R_D_exp(x, log_p) {
@@ -6086,24 +8929,31 @@ function sinpi(x) {
   if (isNaN(x)) {
     return x;
   }
+
   if (!Number.isFinite(x)) {
     return NaN;
   }
+
   x = x % 2;
+
   if (x <= -1) {
     x += 2.0;
   } else if (x > 1.0) {
     x -= 2.0;
   }
+
   if (x == 0.0 || x == 1.0) {
     return 0.0;
   }
+
   if (x == 0.5) {
     return 1.0;
   }
+
   if (x == -0.5) {
     return -1.0;
   }
+
   return Math.sin(M_PI * x);
 }
 
@@ -6113,17 +8963,21 @@ function chebyshev_eval(x, a, n) {
   if (n < 1 || n > 1000) {
     return NaN;
   }
+
   if (x < -1.1 || x > 1.1) {
     return NaN;
   }
+
   twox = x * 2;
   b2 = b1 = 0;
   b0 = 0;
+
   for (i = 1; i <= n; i++) {
     b2 = b1;
     b1 = b0;
     b0 = twox * b1 - b2 + a[n - i];
   }
+
   return (b0 - b2) * 0.5;
 }
 
@@ -6136,104 +8990,119 @@ function lgammacor(x) {
   if (x < 10) {
     return NaN;
   } else if (x > xmax) {
-    throw ("lgammacor underflow");
+    throw "lgammacor underflow";
   } else if (x < xbig) {
     tmp = 10 / x;
     return chebyshev_eval(tmp * tmp * 2 - 1, ALGMCS, nalgm) / x;
   }
+
   return 1 / (x * 12);
 }
 
 function gammafn(x) {
   var i, n, y, sinpiy, value;
-
   var ngam = 22;
   var xmin = -170.5674972726612;
   var xmax = 171.61447887182298;
   var xsml = 2.2474362225598545e-308;
 
   if (isNaN(x)) {
-    return (x);
+    return x;
   }
 
-  if (x == 0 || (x < 0 && x == Math.round(x))) {
+  if (x == 0 || x < 0 && x == Math.round(x)) {
     return NaN;
   }
 
   y = Math.abs(x);
+
   if (y <= 10) {
     n = parseInt(x, 10);
+
     if (x < 0) {
       n--;
     }
+
     y = x - n;
     n--;
     value = chebyshev_eval(y * 2 - 1, GAMCS, ngam) + .9375;
+
     if (n == 0) {
       return value;
     }
+
     if (n < 0) {
       if (x < -0.5 && Math.abs(x - parseInt(x - 0.5, 10) / x) < DXREL) {
-        throw("gammafn precision error");
+        throw "gammafn precision error";
       }
+
       if (x < xsml) {
-        return (x > 0) ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY;
+        return x > 0 ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY;
       }
 
       n = -n;
 
       for (i = 0; i < n; i++) {
-        value /= (x + i);
+        value /= x + i;
       }
+
       return value;
     } else {
       for (i = 1; i <= n; i++) {
-        value *= (y + i);
+        value *= y + i;
       }
+
       return value;
     }
   } else {
     if (x > xmax) {
       return Number.POSITIVE_INFINITY;
     }
+
     if (x < xmin) {
       return 0;
     }
+
     if (y <= 50 && y == parseInt(y, 10)) {
       value = 1;
+
       for (i = 2; i < y; i++) {
         value *= i;
       }
     } else {
-      value = Math.exp((y - 0.5) * Math.log(y) - y - M_LN_SQRT_2PI +
-        ((2 * y == parseInt(2 * y, 10)) ? stirlerr(y) : lgammacor(y)));
+      value = Math.exp((y - 0.5) * Math.log(y) - y - M_LN_SQRT_2PI + (2 * y == parseInt(2 * y, 10) ? stirlerr(y) : lgammacor(y)));
     }
+
     if (x > 0) {
       return value;
     }
+
     if (Math.abs(x - parseInt(x - 0.5, 10) / x) < DXREL) {
-      throw("gammafn precision error");
+      throw "gammafn precision error";
     }
+
     sinpiy = sinpi(y);
+
     if (sinpiy == 0) {
       return Number.POSITIVE_INFINITY;
     }
+
     return -M_PI / (y * sinpiy * value);
   }
 }
 
 function lgammafn_sign(x) {
-  var ans, y, sinpiy;
-  //sgn = 1;
+  var ans, y, sinpiy; //sgn = 1;
+
   var xmax = 2.5327372760800758e+305;
 
   if (isNaN(x)) {
     return x;
   }
 
-  if (x < 0 && Math.floor(-x) % 2 == 0) {
-    //sgn = -1;
+  if (x < 0 && Math.floor(-x) % 2 == 0) {//sgn = -1;
   }
+
   if (x <= 0 && x == Math.trunc(x)) {
     return Number.POSITIVE_INFINITY;
   }
@@ -6245,6 +9114,7 @@ function lgammafn_sign(x) {
   if (y > xmax) {
     return Number.POSITIVE_INFINITY;
   }
+
   if (x > 0) {
     if (x > 1e17) {
       return x * (Math.log(x) - 1);
@@ -6254,6 +9124,7 @@ function lgammafn_sign(x) {
       return M_LN_SQRT_2PI + (x - 0.5) * Math.log(x) - x + lgammacor(x);
     }
   }
+
   sinpiy = Math.abs(sinpi(y));
 
   if (sinpiy == 0) {
@@ -6261,8 +9132,9 @@ function lgammafn_sign(x) {
   }
 
   if (Math.abs((x - Math.trunc(x - 0.5)) * ans / x) < DXREL) {
-    throw("lgamma precision error");
+    throw "lgamma precision error";
   }
+
   return ans;
 }
 
@@ -6272,24 +9144,31 @@ function lgammafn(x) {
 
 function stirlerr(n) {
   var nn;
+
   if (n <= 15) {
     nn = n + n;
+
     if (nn == Math.floor(nn)) {
       return SFERR_HALVES[Math.floor(nn)];
     }
+
     return lgammafn(n + 1.0) - (n + 0.5) * Math.log(n) + n - M_LN_SQRT_2PI;
   }
 
   nn = n * n;
+
   if (n > 500) {
     return (S0 - S1 / nn) / n;
   }
+
   if (n > 80) {
     return (S0 - (S1 - S2 / nn) / nn) / n;
   }
+
   if (n > 35) {
     return (S0 - (S1 - (S2 - S3 / nn) / nn) / nn) / n;
   }
+
   return (S0 - (S1 - (S2 - (S3 - S4 / nn) / nn) / nn) / nn) / n;
 }
 
@@ -6299,42 +9178,54 @@ function bd0(x, np) {
   if (!Number.isFinite(x) || !Number.isFinite(np) || np == 0) {
     return NaN;
   }
+
   if (Math.abs(x - np) < 0.1 * (x + np)) {
     v = (x - np) / (x + np);
     s = (x - np) * v;
+
     if (Math.abs(s) < DBL_MIN) {
       return s;
     }
+
     ej = 2 * x * v;
     v = v * v;
+
     for (j = 1; j < 1000; j++) {
       ej *= v;
-      s1 = s + ej / ((j * 2) + 1);
+      s1 = s + ej / (j * 2 + 1);
+
       if (s1 == s) {
         return s1;
       }
+
       s = s1;
     }
   }
+
   return x * Math.log(x / np) + np - x;
 }
 
 function dpois_raw(x, lambda, give_log) {
   if (lambda == 0) {
-    return (x == 1) ? R_D(1, give_log) : R_D(0, give_log);
+    return x == 1 ? R_D(1, give_log) : R_D(0, give_log);
   }
+
   if (!Number.isFinite(lambda)) {
     return R_D(0, give_log);
   }
+
   if (x < 0) {
     return R_D(0, give_log);
   }
+
   if (x <= lambda * DBL_MIN) {
     return R_D_exp(-lambda, give_log);
   }
+
   if (lambda < x * DBL_MIN) {
     return R_D_exp(-lambda + x * Math.log(lambda) - lgammafn(x + 1), give_log);
   }
+
   return R_D_fexp(M_2PI * x, -stirlerr(x) - bd0(x, lambda), give_log);
 }
 
@@ -6347,15 +9238,14 @@ function logcf(x, i, d, eps) {
   var b1 = i * (c2 - i * x);
   var b2 = d * d * x;
   var a2 = c4 * c2 - b2;
-
   b2 = c4 * b1 - i * b2;
+
   while (Math.abs(a2 * b1 - a1 * b2) > Math.abs(eps * b1 * b2)) {
     c3 = c2 * c2 * x;
     c2 += d;
     c4 += d;
     a1 = c4 * a2 - c3 * a1;
     b1 = c4 * b2 - c3 * b1;
-
     c3 = c1 * c1 * x;
     c1 += d;
     c4 += d;
@@ -6374,16 +9264,19 @@ function logcf(x, i, d, eps) {
       b2 *= SCALE_FACTOR;
     }
   }
+
   return a2 / b2;
 }
 
 function log1pmx(x) {
   var minLog1Value = -0.79149064;
+
   if (x > 1 || x < minLog1Value) {
     return Math.log1p(x) - x;
   } else {
     var r = x / (2 + x);
     var y = r * r;
+
     if (Math.abs(x) < 1e-2) {
       return r * ((((2 / 9 * y + 2 / 7) * y + 2 / 5) * y + 2 / 3) * y - x);
     } else {
@@ -6396,8 +9289,10 @@ function lgamma1p(a) {
   if (Math.abs(a) >= 0.5) {
     return lgammafn(a + 1);
   }
+
   var lgam, i;
   lgam = LGAMMA_C * logcf(-a / 2, LGAMMA_COEFS.length + 2, 1, TOL_LOGCF);
+
   for (i = LGAMMA_COEFS.length - 1; i >= 0; i--) {
     lgam = LGAMMA_COEFS[i] - a * lgam;
   }
@@ -6406,13 +9301,10 @@ function lgamma1p(a) {
 }
 
 function logspace_add(logx, logy) {
-  return ((logx > logy) ? logx : logy) + Math.log1p(Math.exp(-Math.abs(logx - logy)));
-}
-
-// function logspace_sub(logx, logy) {
+  return (logx > logy ? logx : logy) + Math.log1p(Math.exp(-Math.abs(logx - logy)));
+} // function logspace_sub(logx, logy) {
 //   return logx + R_Log1_Exp(logy - logx);
 // }
-
 // function logspace_sum(logx, n) {
 //   if (n == 0) {
 //     return Number.NEGATIVE_INFINITY;
@@ -6437,39 +9329,46 @@ function logspace_add(logx, logy) {
 //   return Mx + Math.log(s);
 // }
 
+
 function dpois_wrap(x_plus_1, lambda, give_log) {
   if (!isFinite(lambda)) {
     return R_D(0, give_log);
   }
+
   if (x_plus_1 > 1) {
     return dpois_raw(x_plus_1 - 1, lambda, give_log);
   }
+
   if (lambda > Math.abs(x_plus_1 - 1) * M_CUTOFF) {
     return R_D_exp(-lambda - lgammafn(x_plus_1), give_log);
   } else {
     var d = dpois_raw(x_plus_1, lambda, give_log);
-    return (give_log) ? d + Math.log(x_plus_1 / lambda) : d * (x_plus_1 / lambda);
+    return give_log ? d + Math.log(x_plus_1 / lambda) : d * (x_plus_1 / lambda);
   }
 }
 
 function R_D(i, log_p) {
   if (i === 0) {
-    return (log_p) ? Number.NEGATIVE_INFINITY : 0;
+    return log_p ? Number.NEGATIVE_INFINITY : 0;
   } else {
-    return (log_p) ? 0 : 1;
+    return log_p ? 0 : 1;
   }
 }
 
 function R_DT(i, lower_tail, log_p) {
   if (i === 0) {
-    return (lower_tail) ? R_D(0, log_p) : R_D(1, log_p);
+    return lower_tail ? R_D(0, log_p) : R_D(1, log_p);
   } else {
-    return (lower_tail) ? R_D(1, log_p) : R_D(0, log_p);
+    return lower_tail ? R_D(1, log_p) : R_D(0, log_p);
   }
 }
 
 function pgamma_smallx(x, alph, lower_tail, log_p) {
-  var sum = 0, c = alph, n = 0, term;
+  var sum = 0,
+      c = alph,
+      n = 0,
+      term;
+
   do {
     n++;
     c *= -x / n;
@@ -6478,19 +9377,22 @@ function pgamma_smallx(x, alph, lower_tail, log_p) {
   } while (Math.abs(term) > DBL_EPSILON * Math.abs(sum));
 
   if (lower_tail) {
-    var f1 = (log_p) ? Math.log1p(sum) : 1 + sum;
+    var f1 = log_p ? Math.log1p(sum) : 1 + sum;
     var f2;
+
     if (alph > 1) {
       f2 = dpois_raw(alph, x, log_p);
-      f2 = (log_p) ? f2 + x : f2 * Math.exp(x);
+      f2 = log_p ? f2 + x : f2 * Math.exp(x);
     } else if (log_p) {
       f2 = alph * Math.log(x) - lgamma1p(alph);
     } else {
       f2 = Math.pow(x, alph) / Math.exp(lgamma1p(alph));
     }
-    return (log_p) ? f1 + f2 : f1 * f2;
+
+    return log_p ? f1 + f2 : f1 * f2;
   } else {
     var lf2 = alph * Math.log(x) - lgamma1p(alph);
+
     if (log_p) {
       return R_Log1_Exp(Math.log1p(sum) + lf2);
     } else {
@@ -6499,28 +9401,33 @@ function pgamma_smallx(x, alph, lower_tail, log_p) {
       return -(f1m1 + f2m1 + f1m1 * f2m1);
     }
   }
-
 }
 
 function pd_upper_series(x, y, log_p) {
   var term = x / y;
   var sum = term;
+
   do {
     y++;
     term *= x / y;
     sum += term;
   } while (term > sum * DBL_EPSILON);
-  return (log_p) ? Math.log(sum) : sum;
+
+  return log_p ? Math.log(sum) : sum;
 }
 
 function pd_lower_cf(y, d) {
-  var f = 0, of, f0;
+  var f = 0,
+      of,
+      f0;
   var i, c2, c3, c4, a1, b1, a2, b2;
 
   if (y == 0) {
     return 0;
   }
+
   f0 = y / d;
+
   if (Math.abs(y - 1) < Math.abs(d) * DBL_EPSILON) {
     return f0;
   }
@@ -6528,9 +9435,9 @@ function pd_lower_cf(y, d) {
   if (f0 > 1.0) {
     f0 = 1.0;
   }
+
   c2 = y;
   c4 = d;
-
   a1 = 0;
   b1 = 1;
   a2 = y;
@@ -6545,6 +9452,7 @@ function pd_lower_cf(y, d) {
 
   i = 0;
   of = -1;
+
   while (i < 200000) {
     i++;
     c2--;
@@ -6552,7 +9460,6 @@ function pd_lower_cf(y, d) {
     c4 += 2;
     a1 = c4 * a2 + c3 * a1;
     b1 = c4 * b2 + c3 * b1;
-
     i++;
     c2--;
     c3 = i * c2;
@@ -6569,27 +9476,34 @@ function pd_lower_cf(y, d) {
 
     if (b2 != 0) {
       f = a2 / b2;
-      if (Math.abs(f - of) <= DBL_EPSILON * ((Math.abs(f) > f0) ? Math.abs(f) : f0)) {
+
+      if (Math.abs(f - of) <= DBL_EPSILON * (Math.abs(f) > f0 ? Math.abs(f) : f0)) {
         return f;
       }
+
       of = f;
     }
-  }
-  //WARNING - NON CONVERGENCE
+  } //WARNING - NON CONVERGENCE
+
+
   return f;
 }
 
 function pd_lower_series(lambda, y) {
-  var term = 1, sum = 0;
+  var term = 1,
+      sum = 0;
+
   while (y >= 1 && term > sum * DBL_EPSILON) {
     term *= y / lambda;
     sum += term;
     y--;
   }
+
   if (y !== Math.floor(y)) {
     var f = pd_lower_cf(y, lambda + 1 - y);
     sum += term * f;
   }
+
   return sum;
 }
 
@@ -6601,9 +9515,10 @@ function dpnorm(x, lower_tail, lp) {
 
   if (x > 10 && !lower_tail) {
     var term = 1 / x,
-      sum = term,
-      x2 = x * x,
-      i = 1;
+        sum = term,
+        x2 = x * x,
+        i = 1;
+
     do {
       term *= -i / x2;
       sum += term;
@@ -6618,15 +9533,16 @@ function dpnorm(x, lower_tail, lp) {
 }
 
 function ppois_asymp(x, lambda, lower_tail, log_p) {
-  var coefs_a = POIS_COEFS_A, coefs_b = POIS_COEFS_B;
+  var coefs_a = POIS_COEFS_A,
+      coefs_b = POIS_COEFS_B;
   var elfb, elfb_term;
   var res12, res1_term, res1_ig, res2_term, res2_ig;
   var dfm, pt_, s2pt, f, np;
   var i;
-
   dfm = lambda - x;
   pt_ = -log1pmx(dfm / x);
   s2pt = Math.sqrt(2 * x * pt_);
+
   if (dfm < 0) {
     s2pt = -s2pt;
   }
@@ -6634,6 +9550,7 @@ function ppois_asymp(x, lambda, lower_tail, log_p) {
   res12 = 0;
   res1_ig = res1_term = Math.sqrt(x);
   res2_ig = res2_term = s2pt;
+
   for (i = 1; i < 8; i++) {
     res12 += res1_ig * coefs_a[i];
     res12 += res2_ig * coefs_b[i];
@@ -6645,6 +9562,7 @@ function ppois_asymp(x, lambda, lower_tail, log_p) {
 
   elfb = x;
   elfb_term = 1;
+
   for (i = 1; i < 8; i++) {
     elfb += elfb_term * coefs_b[i];
     elfb_term /= x;
@@ -6653,8 +9571,10 @@ function ppois_asymp(x, lambda, lower_tail, log_p) {
   if (!lower_tail) {
     elfb = -elfb;
   }
+
   f = res12 / elfb;
   np = pnorm(s2pt, 0.0, 1.0, !lower_tail, log_p);
+
   if (log_p) {
     var n_d_over_p = dpnorm(s2pt, !lower_tail, np);
     return np + Math.log1p(f * n_d_over_p);
@@ -6666,35 +9586,45 @@ function ppois_asymp(x, lambda, lower_tail, log_p) {
 
 function pgamma_raw(x, alph, lower_tail, log_p) {
   var res, d, sum;
+
+  try {
+    R_P_bounds_01(x, 0.0, Number.POSITIVE_INFINITY, lower_tail, log_p);
+  } catch (e) {
+    return e;
+  }
+
   if (x < 1) {
     res = pgamma_smallx(x, alph, lower_tail, log_p);
   } else if (x <= alph - 1 && x < 0.8 * (alph + 50)) {
     // incl large alph compared to x
     sum = pd_upper_series(x, alph, log_p);
     d = dpois_wrap(alph, x, log_p);
+
     if (!lower_tail) {
-      res = (log_p) ? R_Log1_Exp(d + sum) : 1 - d * sum;
+      res = log_p ? R_Log1_Exp(d + sum) : 1 - d * sum;
     } else {
-      res = (log_p) ? sum + d : sum * d;
+      res = log_p ? sum + d : sum * d;
     }
   } else if (alph - 1 < x && alph < 0.8 * (x + 50)) {
     // incl large x compared to alph
     d = dpois_wrap(alph, x, log_p);
+
     if (alph < 1) {
       if (x * DBL_EPSILON > 1 - alph) {
         sum = R_D(0, log_p);
       } else {
         var f = pd_lower_cf(alph, x - (alph - 1)) * x / alph;
-        sum = (log_p) ? Math.log(f) : f;
+        sum = log_p ? Math.log(f) : f;
       }
     } else {
       sum = pd_lower_series(x, alph - 1);
-      sum = (log_p) ? Math.log1p(sum) : 1 + sum;
+      sum = log_p ? Math.log1p(sum) : 1 + sum;
     }
+
     if (!lower_tail) {
-      res = (log_p) ? sum + d : sum * d;
+      res = log_p ? sum + d : sum * d;
     } else {
-      res = (log_p) ? R_Log1_Exp(d + sum) : 1 - d * sum;
+      res = log_p ? R_Log1_Exp(d + sum) : 1 - d * sum;
     }
   } else {
     //x >=1 and x near alph
@@ -6706,9 +9636,7 @@ function pgamma_raw(x, alph, lower_tail, log_p) {
   } else {
     return res;
   }
-}
-
-// function dpois(x, lambda, give_log) {
+} // function dpois(x, lambda, give_log) {
 //   if (lambda < 0) {
 //     return NaN;
 //   }
@@ -6722,17 +9650,84 @@ function pgamma_raw(x, alph, lower_tail, log_p) {
 //
 // }
 
+
 function pgamma(x, alph, scale, lower_tail, log_p) {
   if (isNaN(x) || alph < 0 || scale < 0) {
     return NaN;
   }
+
   x /= scale;
+
   if (alph == 0) {
-    return (x <= 0) ? R_DT(0, lower_tail, log_p) : R_DT(1, lower_tail, log_p);
+    return x <= 0 ? R_DT(0, lower_tail, log_p) : R_DT(1, lower_tail, log_p);
   }
+
   return pgamma_raw(x, alph, lower_tail, log_p);
 }
+/**
+ * The gamma density function.
+ * @param x
+ * @param shape
+ * @param scale
+ * @param give_log
+ * @return {number|*}
+ */
 
+
+function dgamma(x, shape, scale, give_log) {
+  x = parseNumeric(x);
+  shape = parseNumeric(shape);
+  scale = parseNumeric(scale);
+  give_log = parseBoolean(give_log);
+  var pr;
+
+  if (isNaN(x) || isNaN(shape) || isNaN(scale)) {
+    return x + shape + scale;
+  }
+
+  if (shape < 0 || scale <= 0) {
+    ML_ERR_return_NAN;
+  }
+
+  if (x < 0) {
+    return R_D__0(give_log);
+  }
+
+  if (shape === 0) {
+    return x === 0 ? Infinity : R_D__0(give_log);
+  }
+
+  if (x === 0) {
+    if (shape < 1) {
+      return Infinity;
+    }
+
+    if (shape > 1) {
+      return R_D__0(give_log);
+    }
+
+    return give_log ? -Math.log(scale) : 1 / scale;
+  }
+
+  if (shape < 1) {
+    pr = dpois_raw(shape, x / scale, give_log);
+    return give_log ? pr + Math.log(shape / x) : pr * shape / x;
+  }
+
+  pr = dpois_raw(shape - 1, x / scale, give_log);
+  return give_log ? pr - Math.log(scale) : pr / scale;
+}
+/**
+ * The chi-squared density function.
+ * @param x
+ * @param df
+ * @param give_log
+ * @return {number|*}
+ */
+
+function dchisq(x, df, give_log) {
+  return dgamma(x, df / 2.0, 2.0, give_log);
+}
 /**
  * The chi-squared cumulative distribution function.
  *
@@ -6744,28 +9739,43 @@ function pgamma(x, alph, scale, lower_tail, log_p) {
  * @param lower_tail {boolean} Return cumulative probability from lower tail?
  * @param log_p {boolean} Return log probability
  */
-function pchisq(x, df, ncp = 0, lower_tail = true, log_p = false) {
+
+function pchisq(x, df) {
+  var ncp = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+  var lower_tail = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
+  var log_p = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
   x = parseNumeric(x);
   df = parseNumeric(df);
   ncp = parseNumeric(ncp);
   lower_tail = parseBoolean(lower_tail);
   log_p = parseBoolean(log_p);
 
-  if (ncp === 0) { return pgamma(x, df / 2.0, 2.0, lower_tail, log_p); }
-  else { return pnchisq(x, df, ncp, lower_tail, log_p) }
+  if (ncp === 0) {
+    return pgamma(x, df / 2.0, 2.0, lower_tail, log_p);
+  } else {
+    return pnchisq(x, df, ncp, lower_tail, log_p);
+  }
 }
 
-function pnchisq(q, df, ncp = 0, lower_tail = true, log_p = false) {
-  if (df < 0 || ncp < 0) { return NaN; }
+function pnchisq(q, df) {
+  var ncp = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+  var lower_tail = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
+  var log_p = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
 
-  let ans = pnchisq_raw(q, df, ncp, 1e-12, 8 * DBL_EPSILON, 1000000, lower_tail, log_p);
+  if (df < 0 || ncp < 0) {
+    return NaN;
+  }
+
+  var ans = pnchisq_raw(q, df, ncp, 1e-12, 8 * DBL_EPSILON, 1000000, lower_tail, log_p);
+
   if (ncp >= 80) {
     if (lower_tail) {
       ans = fmin2(ans, R_D__1(log_p));
     } else {
-      if (ans < (log_p ? (-10.0 * M_LN10) : 1e-10)) {
+      if (ans < (log_p ? -10.0 * M_LN10 : 1e-10)) {
         ML_ERROR(ME_PRECISION, "pnchisq");
       }
+
       if (!log_p) {
         ans = fmax2(ans, 0.0);
       }
@@ -6774,64 +9784,85 @@ function pnchisq(q, df, ncp = 0, lower_tail = true, log_p = false) {
 
   if (!log_p || ans < -1e-8) {
     return ans;
-  }
-  else {
+  } else {
     ans = pnchisq_raw(q, df, ncp, 1e-12, 8 * DBL_EPSILON, 1000000, !lower_tail, false);
     return Math.log1p(-ans);
   }
 }
 
 function pnchisq_raw(x, f, theta, errmax, reltol, itrmax, lower_tail, log_p) {
-  let lam, x2, f2, term, bound, f_x_2n, f_2n;
-  let l_lam = -1.0;
-  let l_x = -1.0;
-  let n;
-  let lamSml, tSml, is_r, is_b, is_it;
-  let ans, u, v, t, lt, lu = -1;
+  var lam, x2, f2, term, bound, f_x_2n, f_2n;
+  var l_lam = -1.0;
+  var l_x = -1.0;
+  var n;
+  var lamSml, tSml, is_r, is_b, is_it;
+  var ans,
+      u,
+      v,
+      t,
+      lt,
+      lu = -1;
 
   if (x <= 0.0) {
     if (x === 0.0 && f === 0.0) {
-      const _L = -0.5 * theta;
-      return lower_tail ? R_D_exp(_L, log_p) : (log_p ? R_Log1_Exp(_L) : -expm1(_L));
+      var _L = -0.5 * theta;
+
+      return lower_tail ? R_D_exp(_L, log_p) : log_p ? R_Log1_Exp(_L) : -expm1(_L);
     }
+
     return R_DT_0(lower_tail, log_p);
   }
 
-  if (!isFinite(x)) { return R_DT_1(lower_tail, log_p) }
+  if (!isFinite(x)) {
+    return R_DT_1(lower_tail, log_p);
+  }
 
   if (theta < 80) {
-    let ans;
+    var _ans;
+
     if (lower_tail && f > 0.0 && Math.log(x) < M_LN2 + 2 / f * (lgammafn(f / 2.0 + 1) + _dbl_min_exp)) {
-      let lambda = 0.5 * theta;
-      let sum, sum2, pr = -lambda;
+      var lambda = 0.5 * theta;
+      var sum,
+          sum2,
+          pr = -lambda;
       sum = sum2 = -Infinity;
-      for (let i = 0; i < 110; pr === Math.log(lambda) - Math.log(++i)) {
+
+      for (var i = 0; i < 110; pr === Math.log(lambda) - Math.log(++i)) {
         sum2 = logspace_add(sum2, pr);
         sum = logspace_add(sum, pr + pchisq(x, f + 2 * i, 0, lower_tail, true));
         if (sum2 >= -1e-15) break;
       }
-      ans = sum - sum2;
-      return log_p ? ans : Math.exp(ans);
-    }
-    else {
-      let lambda = 0.5 * theta;
-      let sum = 0, sum2 = 0, pr = Math.exp(-lambda);
+
+      _ans = sum - sum2;
+      return log_p ? _ans : Math.exp(_ans);
+    } else {
+      var _lambda = 0.5 * theta;
+
+      var _sum = 0,
+          _sum2 = 0,
+          _pr = Math.exp(-_lambda);
       /* we need to renormalize here: the result could be very close to 1 */
-      for (let i = 0; i < 110; pr *= lambda / ++i) {
-        sum2 += pr;
-        sum += pr * pchisq(x, f + 2 * i, 0, lower_tail, false);
-        if (sum2 >= 1 - 1e-15) break;
+
+
+      for (var _i = 0; _i < 110; _pr *= _lambda / ++_i) {
+        _sum2 += _pr;
+        _sum += _pr * pchisq(x, f + 2 * _i, 0, lower_tail, false);
+        if (_sum2 >= 1 - 1e-15) break;
       }
-      ans = sum / sum2;
-      return log_p ? Math.log(ans) : ans;
+
+      _ans = _sum / _sum2;
+      return log_p ? Math.log(_ans) : _ans;
     }
   }
 
   lam = .5 * theta;
-  lamSml = (-lam < _dbl_min_exp);
+  lamSml = -lam < _dbl_min_exp;
+
   if (lamSml) {
     u = 0;
-    lu = -lam;/* == ln(u) */
+    lu = -lam;
+    /* == ln(u) */
+
     l_lam = Math.log(lam);
   } else {
     u = Math.exp(-lam);
@@ -6848,11 +9879,13 @@ function pnchisq_raw(x, f, theta, errmax, reltol, itrmax, lower_tail, log_p) {
     lt = f2 * Math.log(x2) - x2 - lgammafn(f2 + 1);
   }
 
-  tSml = (lt < _dbl_min_exp);
+  tSml = lt < _dbl_min_exp;
+
   if (tSml) {
     if (x > f + theta + 5 * Math.sqrt(2 * (f + 2 * theta))) {
       return R_DT_1(lower_tail, log_p);
     }
+
     l_x = Math.log(x);
     ans = term = 0.;
     t = 0;
@@ -6863,36 +9896,47 @@ function pnchisq_raw(x, f, theta, errmax, reltol, itrmax, lower_tail, log_p) {
 
   for (n = 1, f_2n = f + 2., f_x_2n += 2.;; n++, f_2n += 2, f_x_2n += 2) {
     if (f_x_2n > 0) {
-      bound = (t * x / f_x_2n);
+      bound = t * x / f_x_2n;
       is_b = bound <= errmax;
       is_r = term <= reltol * ans;
       is_it = n > itrmax;
+
       if (is_b && is_r || is_it) {
         break;
       }
     }
 
     if (lamSml) {
-      lu += l_lam - Math.log(n); /* u = u* lam / n */
+      lu += l_lam - Math.log(n);
+      /* u = u* lam / n */
+
       if (lu >= _dbl_min_exp) {
         /* no underflow anymore ==> change regime */
-        v = u = Math.exp(lu); /* the first non-0 'u' */
+        v = u = Math.exp(lu);
+        /* the first non-0 'u' */
+
         lamSml = false;
       }
     } else {
       u *= lam / n;
       v += u;
     }
+
     if (tSml) {
-      lt += l_x - Math.log(f_2n);/* t <- t * (x / f2n) */
+      lt += l_x - Math.log(f_2n);
+      /* t <- t * (x / f2n) */
+
       if (lt >= _dbl_min_exp) {
         /* no underflow anymore ==> change regime */
-        t = Math.exp(lt); /* the first non-0 't' */
+        t = Math.exp(lt);
+        /* the first non-0 't' */
+
         tSml = false;
       }
     } else {
       t *= x / f_2n;
     }
+
     if (!lamSml && !tSml) {
       term = v * t;
       ans += term;
@@ -6900,34 +9944,348 @@ function pnchisq_raw(x, f, theta, errmax, reltol, itrmax, lower_tail, log_p) {
   }
 
   if (is_it) {
-    console.error(`pnchisq(x=${x},...) not converged in ${itrmax}`);
+    console.error("pnchisq(x=".concat(x, ",...) not converged in ").concat(itrmax));
   }
 
-  let dans = ans;
+  var dans = ans;
   return R_DT_val(dans, lower_tail, log_p);
+}
+
+function qnorm(p, mu, sigma, lower_tail, log_p) {
+  var p_, q, r, val;
+
+  if (isNaN(p) || isNaN(mu) || isNaN(sigma)) {
+    return p + mu + sigma;
+  }
+
+  try {
+    R_Q_P01_boundaries(p, lower_tail, log_p, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
+  } catch (e) {
+    return e;
+  }
+
+  if (sigma < 0) {
+    return ML_ERR_return_NAN();
+  }
+
+  if (sigma === 0) {
+    return mu;
+  }
+
+  p_ = R_DT_qIv(p, lower_tail, log_p);
+  q = p_ - 0.5;
+
+  if (Math.abs(q) <= .425) {
+    /* 0.075 <= p <= 0.925 */
+    r = .180625 - q * q;
+    val = q * (((((((r * 2509.0809287301226727 + 33430.575583588128105) * r + 67265.770927008700853) * r + 45921.953931549871457) * r + 13731.693765509461125) * r + 1971.5909503065514427) * r + 133.14166789178437745) * r + 3.387132872796366608) / (((((((r * 5226.495278852854561 + 28729.085735721942674) * r + 39307.89580009271061) * r + 21213.794301586595867) * r + 5394.1960214247511077) * r + 687.1870074920579083) * r + 42.313330701600911252) * r + 1.);
+  } else {
+    /* closer than 0.075 from {0,1} boundary */
+
+    /* r = min(p, 1-p) < 0.075 */
+    if (q > 0) {
+      r = R_DT_CIv(p, lower_tail, log_p);
+      /* 1-p */
+    } else {
+      r = p_;
+      /* = R_DT_Iv(p) ^=  p */
+    }
+
+    r = Math.sqrt(-(log_p && (lower_tail && q <= 0 || !lower_tail && q > 0) ? p :
+    /* else */
+    Math.log(r)));
+    /* r = sqrt(-log(r))  <==>  min(p, 1-p) = exp( - r^2 ) */
+
+    if (r <= 5.) {
+      /* <==> min(p,1-p) >= exp(-25) ~= 1.3888e-11 */
+      r += -1.6;
+      val = (((((((r * 7.7454501427834140764e-4 + .0227238449892691845833) * r + .24178072517745061177) * r + 1.27045825245236838258) * r + 3.64784832476320460504) * r + 5.7694972214606914055) * r + 4.6303378461565452959) * r + 1.42343711074968357734) / (((((((r * 1.05075007164441684324e-9 + 5.475938084995344946e-4) * r + .0151986665636164571966) * r + .14810397642748007459) * r + .68976733498510000455) * r + 1.6763848301838038494) * r + 2.05319162663775882187) * r + 1.);
+    } else {
+      /* very close to  0 or 1 */
+      r += -5.;
+      val = (((((((r * 2.01033439929228813265e-7 + 2.71155556874348757815e-5) * r + .0012426609473880784386) * r + .026532189526576123093) * r + .29656057182850489123) * r + 1.7848265399172913358) * r + 5.4637849111641143699) * r + 6.6579046435011037772) / (((((((r * 2.04426310338993978564e-15 + 1.4215117583164458887e-7) * r + 1.8463183175100546818e-5) * r + 7.868691311456132591e-4) * r + .0148753612908506148525) * r + .13692988092273580531) * r + .59983220655588793769) * r + 1.);
+    }
+
+    if (q < 0.0) {
+      val = -val;
+    }
+    /* return (q >= 0.)? r : -r ;*/
+
+  }
+
+  return mu + sigma * val;
+}
+
+function qchisq_appr(p, nu, g, lower_tail, log_p, tol) {
+  var C7 = 4.67;
+  var C8 = 6.66;
+  var C9 = 6.73;
+  var C10 = 13.32;
+  var alpha, a, c, ch, p1;
+  var p2, q, t, x;
+
+  if (isNaN(p) || isNaN(nu)) {
+    return p + nu;
+  }
+
+  try {
+    R_Q_P01_check(p, log_p);
+  } catch (e) {
+    return e;
+  }
+
+  if (nu <= 0) {
+    return ML_ERR_return_NAN();
+  }
+
+  alpha = 0.5 * nu;
+  c = alpha - 1;
+
+  if (nu < -1.24 * (p1 = R_DT_log(p))) {
+    var lgam1pa = alpha < 0.5 ? lgamma1p(alpha) : Math.log(alpha) + g;
+    ch = Math.exp((lgam1pa + p1) / alpha + M_LN2);
+  } else if (nu > 0.32) {
+    x = qnorm(p, 0, 1, lower_tail, log_p);
+    p1 = 2.0 / (9 * nu);
+    ch = nu * Math.pow(x * Math.sqrt(p1) + 1 - p1, 3);
+
+    if (ch > 2.2 * nu + 6) {
+      ch = -2 * (R_DT_Clog(p, lower_tail) - c * Math.log(0.5 * ch) + g);
+    }
+  } else {
+    ch = 0.4;
+    a = R_DT_Clog(p, lower_tail) + g + c * M_LN2;
+
+    do {
+      q = ch;
+      p1 = 1.0 / (1 + ch * (C7 + ch));
+      p2 = ch * (C9 + ch * (C8 + ch));
+      t = -0.5 + (C7 + 2 * ch) * p1 - (C9 + ch * (C10 + 3 * ch)) / p2;
+      ch -= (1 - Math.exp(a + 0.5 * ch) * p2 * p1) / t;
+    } while (Math.abs(q - ch) > tol * Math.abs(ch));
+  }
+
+  return ch;
+}
+/**
+ * Inverse CDF / quantile function of gamma distribution.
+ * @param p
+ * @param alpha
+ * @param scale
+ * @param lower_tail
+ * @param log_p
+ * @return {*|number|number|*}
+ */
+
+
+function qgamma(p, alpha, scale, lower_tail, log_p) {
+  var EPS1 = 1e-2;
+  var EPS2 = 5e-7;
+  var EPS_N = 1e-15; //const LN_EPS = -36.043653389117156;
+
+  var MAXIT = 1000;
+  var pMIN = 1e-100;
+  var pMAX = 1 - 1e-14;
+  var i420 = 1.0 / 420.0;
+  var i2520 = 1.0 / 2520.0;
+  var i5040 = 1.0 / 5040.0;
+  var p_, a, b, c, g, ch, ch0, p1;
+  var p2, q, s1, s2, s3, s4, s5, s6, t, x;
+  var max_it_Newton = 1;
+
+  if (isNaN(p) || isNaN(alpha) || isNaN(scale)) {
+    return p + alpha + scale;
+  }
+
+  try {
+    R_Q_P01_boundaries(p, lower_tail, log_p, 0.0, Number.POSITIVE_INFINITY);
+  } catch (e) {
+    return e;
+  }
+
+  if (alpha < 0 || scale <= 0) {
+    return ML_ERR_return_NAN();
+  }
+
+  if (alpha === 0) {
+    return 0.0;
+  }
+
+  if (alpha < 1e-10) {
+    max_it_Newton = 7;
+  }
+
+  p_ = R_DT_qIv(p, lower_tail, log_p);
+  g = lgammafn(alpha); // Closure to mimic the ugly 'goto END' everywhere
+
+  function end() {
+    x = 0.5 * scale * ch;
+
+    if (max_it_Newton) {
+      if (!log_p) {
+        p = Math.log(p);
+        log_p = true;
+      }
+
+      if (x === 0) {
+        var _1_p = 1.0 + 1e-7;
+
+        var _1_m = 1.0 - 1e-7;
+
+        x = DBL_MIN;
+        p_ = pgamma(x, alpha, scale, lower_tail, log_p);
+
+        if (lower_tail && p_ > p * _1_p || !lower_tail && p_ < p * _1_m) {
+          return 0.0;
+        }
+      } else {
+        p_ = pgamma(x, alpha, scale, lower_tail, log_p);
+      }
+
+      if (p_ === Number.NEGATIVE_INFINITY) {
+        return 0;
+      }
+    }
+
+    for (var i = 1; i <= max_it_Newton; i++) {
+      p1 = p_ - p;
+
+      if (Math.abs(p1) < Math.abs(EPS_N * p)) {
+        break;
+      }
+
+      if ((g = dgamma(x, alpha, scale, log_p)) === R_D__0(log_p)) {
+        break;
+      }
+
+      t = log_p ? p1 * Math.exp(p_ - g) : p1 / g;
+      t = lower_tail ? x - t : x + t;
+      p_ = pgamma(t, alpha, scale, lower_tail, log_p);
+
+      if (Math.abs(p_ - p) > Math.abs(p1) || i > 1 && Math.abs(p_ - p) === Math.abs(p1)) {
+        break;
+      }
+      /*
+      // This code appears to be never triggered in R, or rather I'm unable to find where
+      // Harmful_notably_if_max_it_Newton_is_1 is ever defined
+      if (t > 1.1*x) { t = 1.1 * x; }
+      else if (t < 0.9*x) { t = 0.9 * x; }
+       */
+
+
+      x = t;
+    }
+
+    return x;
+  }
+
+  ch = qchisq_appr(p, 2 * alpha, g, lower_tail, log_p, EPS1);
+
+  if (!isFinite(ch)) {
+    max_it_Newton = 0;
+    return end();
+  }
+
+  if (ch < EPS2) {
+    max_it_Newton = 20;
+    return end();
+  }
+
+  if (p_ > pMAX || p_ < pMIN) {
+    max_it_Newton = 20;
+    return end();
+  }
+
+  c = alpha - 1;
+  s6 = (120 + c * (346 + 127 * c)) * i5040;
+  ch0 = ch;
+
+  for (var i = 1; i <= MAXIT; i++) {
+    q = ch;
+    p1 = 0.5 * ch;
+    p2 = p_ - pgamma_raw(p1, alpha, true, false);
+
+    if (!isFinite(p2) || ch <= 0) {
+      ch = ch0;
+      max_it_Newton = 27;
+      return end();
+    }
+
+    t = p2 * Math.exp(alpha * M_LN2 + g + p1 - c * Math.log(ch));
+    b = t / ch;
+    a = 0.5 * t - b * c;
+    s1 = (210 + a * (140 + a * (105 + a * (84 + a * (70 + 60 * a))))) * i420;
+    s2 = (420 + a * (735 + a * (966 + a * (1141 + 1278 * a)))) * i2520;
+    s3 = (210 + a * (462 + a * (707 + 932 * a))) * i2520;
+    s4 = (252 + a * (672 + 1182 * a) + c * (294 + a * (889 + 1740 * a))) * i5040;
+    s5 = (84 + 2264 * a + c * (1175 + 606 * a)) * i2520;
+    ch += t * (1 + 0.5 * t * s1 - b * c * (s1 - b * (s2 - b * (s3 - b * (s4 - b * (s5 - b * s6))))));
+
+    if (Math.abs(q - ch) < EPS2 * ch) {
+      return end();
+    }
+
+    if (Math.abs(q - ch) > 0.1 * ch) {
+      if (ch < q) {
+        ch = 0.9 * q;
+      } else {
+        ch = 1.1 * q;
+      }
+    }
+  }
+
+  return end();
+}
+/**
+ * Inverse CDF / quantile function for chi-squared distribution.
+ * @param p
+ * @param df
+ * @param lower_tail
+ * @param log_p
+ * @return {*|number}
+ */
+
+function qchisq(p, df) {
+  var ncp = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+  var lower_tail = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
+  var log_p = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
+
+  if (ncp !== 0) {
+    throw 'Non-central chi-squared not yet supported';
+  }
+
+  return qgamma(p, 0.5 * df, 2.0, lower_tail, log_p);
 }
 
 function pnorm_both(x, i_tail, log_p) {
   var cum, ccum;
   var xden, xnum, temp, del, eps, xsq, y;
   var i, lower, upper;
-  var a = PNORM_A, b = PNORM_B, c = PNORM_C,
-    d = PNORM_D, p = PNORM_P, q = PNORM_Q;
+  var a = PNORM_A,
+      b = PNORM_B,
+      c = PNORM_C,
+      d = PNORM_D,
+      p = PNORM_P,
+      q = PNORM_Q;
 
   if (isNaN(x)) {
-    return { cum: NaN, ccum: NaN };
+    return {
+      cum: NaN,
+      ccum: NaN
+    };
   }
 
   eps = DBL_EPSILON * 0.5;
   lower = i_tail != 1;
   upper = i_tail != 0;
-
   y = Math.abs(x);
+
   if (y <= 0.67448975) {
     if (y > eps) {
       xsq = x * x;
       xnum = a[4] * xsq;
       xden = xsq;
+
       for (i = 0; i < 3; ++i) {
         xnum = (xnum + a[i]) * xsq;
         xden = (xden + b[i]) * xsq;
@@ -6935,17 +10293,22 @@ function pnorm_both(x, i_tail, log_p) {
     } else {
       xnum = xden = 0.0;
     }
+
     temp = x * (xnum + a[3]) / (xden + b[3]);
+
     if (lower) {
       cum = 0.5 + temp;
     }
+
     if (upper) {
       ccum = 0.5 - temp;
     }
+
     if (log_p) {
       if (lower) {
         cum = Math.log(cum);
       }
+
       if (upper) {
         ccum = Math.log(ccum);
       }
@@ -6953,66 +10316,73 @@ function pnorm_both(x, i_tail, log_p) {
   } else if (y <= M_SQRT_32) {
     xnum = c[8] * y;
     xden = y;
+
     for (i = 0; i < 7; ++i) {
       xnum = (xnum + c[i]) * y;
       xden = (xden + d[i]) * y;
     }
-    temp = (xnum + c[7]) / (xden + d[7]);
-    //do del (x)
+
+    temp = (xnum + c[7]) / (xden + d[7]); //do del (x)
+
     xsq = Math.trunc(y * 16) / 16;
     del = (y - xsq) * (y + xsq);
+
     if (log_p) {
-      cum = (-xsq * xsq * 0.5) + (-del * 0.5) + Math.log(temp);
-      if ((lower && x > 0.0) || (upper && x <= 0.0)) {
-        ccum = Math.log1p(-Math.exp(-xsq * xsq * 0.5) *
-          Math.exp(-del * 0.5) * temp);
+      cum = -xsq * xsq * 0.5 + -del * 0.5 + Math.log(temp);
+
+      if (lower && x > 0.0 || upper && x <= 0.0) {
+        ccum = Math.log1p(-Math.exp(-xsq * xsq * 0.5) * Math.exp(-del * 0.5) * temp);
       }
     } else {
-      cum = Math.exp(-xsq * xsq * 0.5) *
-        Math.exp(-del * 0.5) * temp;
+      cum = Math.exp(-xsq * xsq * 0.5) * Math.exp(-del * 0.5) * temp;
       ccum = 1.0 - cum;
-    }
-    //swap tail
+    } //swap tail
+
+
     if (x > 0.) {
       temp = cum;
+
       if (lower) {
         cum = ccum;
       }
+
       ccum = temp;
     }
-  } else if ((log_p && y < 1e170) ||
-    (lower && -37.5193 < x && x < 8.2924) ||
-    (upper && -8.2924 && x < 37.5193)) {
-
+  } else if (log_p && y < 1e170 || lower && -37.5193 < x && x < 8.2924 || upper && -8.2924 && x < 37.5193) {
     xsq = 1.0 / (x * x);
     xnum = p[5] * xsq;
     xden = xsq;
+
     for (i = 0; i < 4; ++i) {
       xnum = (xnum + p[i]) * xsq;
       xden = (xden + q[i]) * xsq;
     }
+
     temp = xsq * (xnum + p[4]) / (xden + q[4]);
-    temp = (M_1_SQRT_2PI - temp) / y;
-    //do del(x)
+    temp = (M_1_SQRT_2PI - temp) / y; //do del(x)
+
     xsq = Math.trunc(x * 16) / 16;
     del = (x - xsq) * (x + xsq);
+
     if (log_p) {
-      cum = (-xsq * xsq * 0.5) + (-del * 0.5) + Math.log(temp);
-      if ((lower && x > 0.0) || (upper && x <= 0.0)) {
-        ccum = Math.log1p(-Math.exp(-xsq * xsq * 0.5) *
-          Math.exp(-del * 0.5) * temp);
+      cum = -xsq * xsq * 0.5 + -del * 0.5 + Math.log(temp);
+
+      if (lower && x > 0.0 || upper && x <= 0.0) {
+        ccum = Math.log1p(-Math.exp(-xsq * xsq * 0.5) * Math.exp(-del * 0.5) * temp);
       }
     } else {
-      cum = Math.exp(-xsq * xsq * 0.5) *
-        Math.exp(-del * 0.5) * temp;
+      cum = Math.exp(-xsq * xsq * 0.5) * Math.exp(-del * 0.5) * temp;
       ccum = 1.0 - cum;
-    }
-    //swap tail
+    } //swap tail
+
+
     if (x > 0.) {
       temp = cum;
+
       if (lower) {
         cum = ccum;
       }
+
       ccum = temp;
     }
   } else {
@@ -7023,37 +10393,44 @@ function pnorm_both(x, i_tail, log_p) {
       cum = R_D(0, log_p);
       ccum = R_D(1, log_p);
     }
+  } //TODO left off here
 
-  }
 
-  //TODO left off here
-  return { cum: cum, ccum: ccum };
+  return {
+    cum: cum,
+    ccum: ccum
+  };
 }
 
 function pnorm(x, mu, sigma, lower_tail, log_p) {
   var p;
+
   if (isNaN(x) || isNaN(mu) || isNaN(sigma)) {
     return NaN;
   }
+
   if (!Number.isFinite(x) && mu === x) {
     return NaN;
   }
+
   if (sigma <= 0) {
     if (sigma < 0) {
       return NaN;
     }
-    return (x < mu) ? R_DT_0(lower_tail, log_p) : R_DT_1(lower_tail, log_p);
+
+    return x < mu ? R_DT_0(lower_tail, log_p) : R_DT_1(lower_tail, log_p);
   }
+
   p = (x - mu) / sigma;
+
   if (!Number.isFinite(p)) {
-    return (x < mu) ? R_DT_0(lower_tail, log_p) : R_DT_1(lower_tail, log_p);
+    return x < mu ? R_DT_0(lower_tail, log_p) : R_DT_1(lower_tail, log_p);
   }
+
   x = p;
-
-  var r = pnorm_both(x, (lower_tail) ? 0 : 1, log_p);
-  return (lower_tail) ? r.cum : r.ccum;
+  var r = pnorm_both(x, lower_tail ? 0 : 1, log_p);
+  return lower_tail ? r.cum : r.ccum;
 }
-
 /**
  * The normal cumulative distribution function.
  *
@@ -7064,6 +10441,8 @@ function pnorm(x, mu, sigma, lower_tail, log_p) {
  * @param lower_tail {boolean} Should the cumulative probability returned be calculated as the lower tail?
  * @param give_log {boolean} Return log probability
  */
+
+
 function _pnorm(x, mu, sigma, lower_tail, give_log) {
   x = parseNumeric(x);
   mu = parseNumeric(mu, 0);
@@ -7079,80 +10458,85 @@ function dnorm(x, mu, sigma, give_log) {
   if (isNaN(x) || isNaN(mu) || isNaN(sigma)) {
     return x + mu + sigma;
   }
+
   if (!Number.isFinite(sigma)) {
     return R_D(0, give_log);
   }
+
   if (!Number.isFinite(x) && mu == x) {
     return NaN;
   }
+
   if (sigma <= 0) {
     if (sigma < 0) {
       return NaN;
     }
-    return (x == mu) ? Number.POSITIVE_INFINITY : R_D(0, give_log);
+
+    return x == mu ? Number.POSITIVE_INFINITY : R_D(0, give_log);
   }
+
   x = (x - mu) / sigma;
+
   if (!Number.isFinite(x)) {
     return R_D(0, give_log);
   }
+
   x = Math.abs(x);
+
   if (x >= 2 * Math.sqrt(DBL_MAX)) {
     return R_D(0, give_log);
   }
+
   if (give_log) {
     return -(M_LN_SQRT_2PI + 0.5 * x * x + Math.log(sigma));
-  }
-  //fast version
+  } //fast version
+
+
   return M_1_SQRT_2PI * Math.exp(-0.5 * x * x) / sigma;
 }
 
 function lbeta(a, b) {
-  let corr, p, q;
+  var corr, p, q;
   p = q = a;
   if (b < p) p = b;
   if (b > q) q = b;
 
   if (p < 0) {
     return ML_ERR_return_NAN();
-  }
-  else if (p === 0) {
+  } else if (p === 0) {
     return Number.POSITIVE_INFINITY;
-  }
-  else if (!isFinite(q)) {
+  } else if (!isFinite(q)) {
     return Number.NEGATIVE_INFINITY;
   }
 
   if (p >= 10) {
     corr = lgammacor(p) + lgammacor(q) - lgammacor(p + q);
     return Math.log(q) * -0.5 + M_LN_SQRT_2PI + corr + (p - 0.5) * Math.log(p / (p + q)) + q * Math.log1p(-p / (p + q));
-  }
-  else if (q >= 10) {
+  } else if (q >= 10) {
     corr = lgammacor(q) - lgammacor(p + q);
     return lgammafn(p) + corr + p - p * Math.log(p + q) + (q - 0.5) * Math.log1p(-p / (p + q));
-  }
-  else {
-    if (p < 1e-306) return lgammafn(p) + (lgammafn(q) - lgammafn(p + q));
-    else return Math.log(gammafn(p) * (gammafn(q) / gammafn(p + q)));
+  } else {
+    if (p < 1e-306) return lgammafn(p) + (lgammafn(q) - lgammafn(p + q));else return Math.log(gammafn(p) * (gammafn(q) / gammafn(p + q)));
   }
 }
 
 function dbinom_raw(x, n, p, q, give_log) {
-  let lf, lc;
-
-  if (p === 0) return (x === 0 ? R_D__1(give_log) : R_D__0(give_log));
-  if (q === 0) return (x === n ? R_D__1(give_log) : R_D__0(give_log));
+  var lf, lc;
+  if (p === 0) return x === 0 ? R_D__1(give_log) : R_D__0(give_log);
+  if (q === 0) return x === n ? R_D__1(give_log) : R_D__0(give_log);
 
   if (x === 0) {
     if (n === 0) return R_D__1(give_log);
     lc = p < 0.1 ? -bd0(n, n * q) - n * p : n * Math.log(q);
     return R_D_exp(lc, give_log);
   }
+
   if (x === n) {
     lc = q < 0.1 ? -bd0(n, n * p) - n * q : n * Math.log(p);
     return R_D_exp(lc, give_log);
   }
-  if (x < 0 || x > n) return R_D__0(give_log);
 
+  if (x < 0 || x > n) return R_D__0(give_log);
   lc = stirlerr(n) - stirlerr(x) - stirlerr(n - x) - bd0(x, n * p) - bd0(n - x, n * q);
   lf = M_LN_2PI + Math.log(x) + Math.log1p(-x / n);
   return R_D_exp(lc - 0.5 * lf, give_log);
@@ -7162,17 +10546,20 @@ function dbeta(x, a, b, give_log) {
   if (a < 0 || b < 0) ML_ERR_return_NAN();
   if (x < 0 || x > 1) return R_D__0(give_log);
 
-  if (a === 0 || b ===0 || !isFinite(a) || !isFinite(b)) {
+  if (a === 0 || b === 0 || !isFinite(a) || !isFinite(b)) {
     if (a === 0 && b === 0) {
-      if (x === 0 || x === 1) return Number.POSITIVE_INFINITY; else return R_D__0(give_log);
+      if (x === 0 || x === 1) return Number.POSITIVE_INFINITY;else return R_D__0(give_log);
     }
+
     if (a === 0 || a / b === 0) {
-      if (x === 0) return Number.POSITIVE_INFINITY; else return R_D__0(give_log);
+      if (x === 0) return Number.POSITIVE_INFINITY;else return R_D__0(give_log);
     }
+
     if (b === 0 || b / a === 0) {
-      if (x === 1) return Number.POSITIVE_INFINITY; else return R_D__0(give_log);
+      if (x === 1) return Number.POSITIVE_INFINITY;else return R_D__0(give_log);
     }
-    if (x === 0.5) return Number.POSITIVE_INFINITY; else return R_D__0(give_log);
+
+    if (x === 0.5) return Number.POSITIVE_INFINITY;else return R_D__0(give_log);
   }
 
   if (x === 0) {
@@ -7180,23 +10567,23 @@ function dbeta(x, a, b, give_log) {
     if (a < 1) return Number.POSITIVE_INFINITY;
     return R_D_val(b, give_log);
   }
+
   if (x === 1) {
     if (b > 1) return R_D__0(give_log);
     if (b < 1) return Number.POSITIVE_INFINITY;
     return R_D_val(a, give_log);
   }
 
-  let lval;
+  var lval;
+
   if (a <= 2 || b <= 2) {
     lval = (a - 1) * Math.log(x) + (b - 1) * Math.log1p(-x) - lbeta(a, b);
-  }
-  else {
+  } else {
     lval = Math.log(a + b - 1) + dbinom_raw(a - 1, a + b - 2, x, 1 - x, true);
   }
 
   return R_D_exp(lval, give_log);
 }
-
 /**
  * The beta density function.
  *
@@ -7209,11 +10596,13 @@ function dbeta(x, a, b, give_log) {
  * @param log {boolean} Should the result be returned in log scale.
  * @return {number} Probability density evaluated at x.
  */
+
+
 function _dbeta(x, shape1, shape2, log) {
   x = parseNumeric(x);
   shape1 = parseNumeric(shape1);
-  shape2 = parseNumeric(shape2);
-  //ncp = parseNumeric(ncp, 0);
+  shape2 = parseNumeric(shape2); //ncp = parseNumeric(ncp, 0);
+
   log = parseBoolean(log, false);
   return dbeta(x, shape1, shape2, log);
 }
@@ -7221,20 +10610,20 @@ function _dbeta(x, shape1, shape2, log) {
 
 
 function parseNumeric(x, default_value) {
-  if (typeof(x) === "undefined") {
+  if (typeof x === "undefined") {
     return default_value;
   }
+
   return +x;
 }
 
 function parseBoolean(x, default_value) {
-  if (typeof(x) === "undefined") {
+  if (typeof x === "undefined") {
     return default_value;
   }
-  return !!((x || "false") != "false");
-}
 
-// Will slowly roll this into export statements as-needed
+  return !!((x || "false") != "false");
+} // Will slowly roll this into export statements as-needed
 // const rollup = {
 //   dnorm: function (x, mu, sigma, give_log) {
 //     x = +x;
@@ -7274,6 +10663,1917 @@ function parseBoolean(x, default_value) {
 //     return dpois(x, lambda, log);
 //   }
 // };
+// CONCATENATED MODULE: ./src/app/stats.js
+
+
+
+
+
+
+
+
+/**
+ * Calculate group-based tests from score statistics.
+ *
+ * @module stats
+ * @license MIT
+ */
+
+
+
+
+
+ // Functions using WASM will be defined inside a single promise- sort of a meta-module
+//   Because the webassembly code is loaded asynchronously, anything using any module method will need to be
+//   resolved asynchronously as well.
+
+var MVT_WASM_HELPERS = new Promise(function (resolve, reject) {
+  // The emscripten "module" doesn't return a true promise, so it can't be chained in the traditional sense.
+  // This syntax is a hack that allows us to wrap the wasm module with our helper functions and access those helpers.
+  try {
+    Object(mvtdstpack["a" /* default */])().then(function (module) {
+      function makeDoubleVec(size) {
+        var v = new module.DoubleVec();
+        v.resize(size, NaN);
+        return v;
+      }
+
+      function makeIntVec(size) {
+        var v = new module.IntVec();
+        v.resize(size, NaN);
+        return v;
+      }
+
+      function copyToDoubleVec(arr) {
+        var constructor = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : module.DoubleVec;
+        var v = new constructor();
+
+        for (var i = 0; i < arr.length; i++) {
+          v.push_back(arr[i]);
+        }
+
+        return v;
+      }
+
+      function pmvnorm(lower, upper, mean, sigma) {
+        var n = sigma.length;
+        var infin = makeIntVec(n);
+        var delta = makeDoubleVec(n);
+        var corrF = makeDoubleVec(n * (n - 1) / 2);
+        var corr = cov2cor(sigma); // Populate corrF
+
+        for (var j = 0; j < n; j++) {
+          for (var i = j + 1; i < n; i++) {
+            var k = j + 1 + (i - 1) * i / 2 - 1;
+            corrF.set(k, corr[i][j]);
+          }
+        } // Calculate limits
+
+
+        for (var _i = 0; _i < n; _i++) {
+          delta.set(_i, 0.0);
+
+          if (lower[_i] !== Infinity && lower[_i] !== -Infinity) {
+            lower[_i] = (lower[_i] - mean[_i]) / Math.sqrt(sigma[_i][_i]);
+          }
+
+          if (upper[_i] !== Infinity && upper[_i] !== -Infinity) {
+            upper[_i] = (upper[_i] - mean[_i]) / Math.sqrt(sigma[_i][_i]);
+          }
+
+          if (lower[_i] === -Infinity) {
+            infin.set(_i, 0);
+          }
+
+          if (upper[_i] === Infinity) {
+            infin.set(_i, 1);
+          }
+
+          if (lower[_i] === -Infinity && upper[_i] === Infinity) {
+            infin.set(_i, -1);
+          }
+
+          if (lower[_i] !== -Infinity && upper[_i] !== Infinity) {
+            infin.set(_i, 2);
+          }
+
+          if (lower[_i] === -Infinity) {
+            lower[_i] = 0;
+          }
+
+          if (upper[_i] === Infinity) {
+            upper[_i] = 0;
+          }
+        }
+
+        var inform = 0;
+        var value = 0.0;
+        var error = 0.0;
+        var df = 0;
+        var maxpts = 50000;
+        var abseps = 0.001;
+        var releps = 0.0;
+        var sum = 0;
+
+        for (var _i2 = 0; _i2 < n; _i2++) {
+          sum += infin.get(_i2);
+        }
+
+        if (sum === -n) {
+          inform = 0;
+          value = 1.0;
+        } else {
+          var _module$mvtdst = module.mvtdst(n, df, copyToDoubleVec(lower), copyToDoubleVec(upper), infin, corrF, delta, maxpts, abseps, releps);
+
+          error = _module$mvtdst.error;
+          inform = _module$mvtdst.inform;
+          value = _module$mvtdst.value;
+        }
+
+        if (inform === 3) {
+          // Need to make correlation matrix positive definite
+          var trial = 0;
+
+          while (inform > 1 && trial < 100) {
+            var eig = numeric_1_2_6_default.a.eig(corr, 100000);
+            var lambdas = eig.lambda.x;
+
+            for (var _i3 = 0; _i3 < n; _i3++) {
+              if (lambdas[_i3] < 0) {
+                lambdas[_i3] = 0.0;
+              }
+            }
+
+            var D = numeric_1_2_6_default.a.diag(lambdas);
+            var V = eig.E.x;
+            corr = numeric_1_2_6_default.a.dot(numeric_1_2_6_default.a.dot(V, D), numeric_1_2_6_default.a.transpose(V));
+            var corr_diag = Array(n);
+
+            for (var _i4 = 0; _i4 < n; _i4++) {
+              corr_diag[_i4] = corr[_i4][_i4];
+            }
+
+            var norm = numeric_1_2_6_default.a.dot(numeric_1_2_6_default.a.transpose([corr_diag]), [corr_diag]);
+
+            for (var _j = 0; _j < n; _j++) {
+              for (var _i5 = _j + 1; _i5 < n; _i5++) {
+                var _k = _j + 1 + (_i5 - 1) * _i5 / 2 - 1;
+
+                corrF.set(_k, corr[_i5][_j] / Math.sqrt(norm[_i5][_j]));
+              }
+            }
+
+            var _module$mvtdst2 = module.mvtdst(n, df, copyToDoubleVec(lower), copyToDoubleVec(upper), infin, corrF, delta, maxpts, abseps, releps);
+
+            error = _module$mvtdst2.error;
+            inform = _module$mvtdst2.inform;
+            value = _module$mvtdst2.value;
+          }
+
+          if (inform > 1) {
+            value = -1.0;
+          }
+        }
+
+        return {
+          error: error,
+          inform: inform,
+          value: value
+        };
+      }
+
+      var helper_module = {
+        makeDoubleVec: makeDoubleVec,
+        makeIntVec: makeIntVec,
+        copyToDoubleVec: copyToDoubleVec,
+        pmvnorm: pmvnorm
+      };
+      resolve(helper_module);
+    });
+  } catch (error) {
+    reject(error);
+  }
+});
+
+function emptyRowMatrix(nrows, ncols) {
+  var m = new Array(nrows);
+
+  for (var i = 0; i < nrows; i++) {
+    m[i] = new Array(ncols).fill(NaN);
+  }
+
+  return m;
+}
+
+function cov2cor(sigma) {
+  var corr = emptyRowMatrix(sigma.length, sigma[0].length);
+
+  for (var i = 0; i < sigma.length; i++) {
+    for (var j = i; j < sigma[0].length; j++) {
+      if (i === j) {
+        corr[i][j] = 1.0;
+      } else {
+        var v = sigma[i][j] / (Math.sqrt(sigma[i][i]) * Math.sqrt(sigma[j][j]));
+        corr[i][j] = v;
+        corr[j][i] = v;
+      }
+    }
+  }
+
+  return corr;
+}
+
+function get_conditional_dist(scores, cov, comb) {
+  var result = new Array(2).fill(0.0);
+  var mu2 = [];
+  var dim = comb.length - 1;
+  var sub_cov = emptyRowMatrix(dim, dim);
+
+  for (var i = 0; i < dim; i++) {
+    var idx1 = comb[i + 1];
+    mu2[i] = scores[idx1];
+
+    for (var j = 0; j < dim; j++) {
+      var idx2 = comb[j + 1];
+      sub_cov[i][j] = cov[idx1][idx2];
+    }
+  }
+
+  var inv = numeric_1_2_6_default.a.inv(sub_cov);
+  var sigma12 = new Array(dim).fill(NaN);
+
+  for (var _i6 = 0; _i6 < dim; _i6++) {
+    var _idx = comb[0];
+    var _idx2 = comb[_i6 + 1];
+    sigma12[_i6] = cov[_idx][_idx2];
+  }
+
+  var tmp = new Array(dim).fill(0.0);
+
+  for (var _i7 = 0; _i7 < dim; _i7++) {
+    tmp[_i7] += numeric_1_2_6_default.a.dot(sigma12, inv[_i7]);
+  }
+
+  result[0] = numeric_1_2_6_default.a.dot(tmp, mu2);
+  result[1] = 1.0 - numeric_1_2_6_default.a.dot(tmp, sigma12);
+
+  if (result[1] < 0) {
+    result[1] = Math.abs(result[1]);
+  }
+
+  return result;
+}
+/**
+ * Calculates MVT p-value directly from scores/covariance and maximum test statistic.
+ * TODO: ask Shaung or Goncalo where this comes from?
+ * @param scores
+ * @param cov_t
+ * @param t_max
+ * @return {*|number}
+ */
+
+
+function calculate_mvt_pvalue(scores, cov_t, t_max) {
+  var pvalue = 0.0;
+  var dim = scores.length;
+  var chisq = t_max * t_max;
+  var jointProbHash = {};
+
+  if (dim === 1) {
+    pvalue = pchisq(chisq, 1, 0, 0);
+    return pvalue;
+  }
+
+  var uni = pchisq(chisq, 1, 0, 0);
+  pvalue += dim * uni;
+  var indx = [];
+
+  var alpha = toConsumableArray_default()(Array(dim).keys()); // 0, 1, 2, 3... dim
+
+
+  for (var r = 2; r <= dim; r++) {
+    var j = r;
+    var k = r;
+    var comb = [];
+    var par = [];
+
+    for (var twk = j; twk <= k; twk++) {
+      var _r = twk;
+      var done = true;
+
+      for (var iwk = 0; iwk < _r; iwk++) {
+        indx.push(iwk);
+      }
+
+      while (done) {
+        done = false;
+
+        for (var owk = 0; owk < _r; owk++) {
+          comb.push(alpha[indx[owk]]);
+        }
+
+        par = get_conditional_dist(scores, cov_t, comb);
+
+        var _chisq = void 0,
+            condProb = void 0,
+            prob = void 0;
+
+        if (par[1] === 0.0) {
+          condProb = 0.0;
+        } else {
+          _chisq = (t_max - par[0]) * (t_max - par[0]) / par[1];
+
+          if (_chisq < 0) {
+            _chisq = -_chisq;
+          }
+
+          condProb = pchisq(_chisq, 1, 0, 0);
+        }
+
+        var hashKey = "";
+
+        if (_r === 2) {
+          hashKey += comb[0];
+          hashKey += comb[1];
+          prob = condProb * uni;
+          jointProbHash[hashKey] = prob;
+          hashKey = "";
+        } else {
+          for (var i = 1; i < _r; i++) {
+            hashKey += comb[i];
+          }
+
+          prob = jointProbHash[hashKey];
+          prob *= condProb;
+          var newKey = "";
+          newKey += comb[0];
+          newKey += hashKey;
+          jointProbHash[newKey] = prob;
+          hashKey = "";
+        }
+
+        pvalue -= prob;
+        comb = [];
+
+        for (var _iwk = _r - 1; _iwk >= 0; _iwk--) {
+          if (indx[_iwk] <= dim - 1 - (_r - _iwk)) {
+            indx[_iwk]++;
+
+            for (var swk = _iwk + 1; swk < _r; swk++) {
+              indx[swk] = indx[swk - 1] + 1;
+            }
+
+            _iwk = -1;
+            done = true;
+          }
+        }
+      }
+
+      indx = [];
+    }
+  }
+
+  return pvalue;
+}
+/**
+ * Base class for all aggregation tests.
+ */
+
+
+var stats_AggregationTest =
+/*#__PURE__*/
+function () {
+  function AggregationTest() {
+    classCallCheck_default()(this, AggregationTest);
+
+    this.label = '';
+    this.key = '';
+    this.requiresMaf = false;
+  }
+
+  createClass_default()(AggregationTest, [{
+    key: "run",
+    value: function run(u, v, w, mafs) {
+      // todo update docstrings and call sigs
+      throw new Error("Method must be implemented in a subclass");
+    }
+  }]);
+
+  return AggregationTest;
+}();
+/**
+ * Standard burden test that collapses rare variants into a total count of rare alleles observed per sample
+ * in a group (e.g. gene). <p>
+ *
+ * See {@link https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#BURDEN_META_ANALYSIS|our wiki page} for more information.
+ * Also see the {@link https://www.ncbi.nlm.nih.gov/pubmed/19810025|paper} describing the method.
+ *
+ * @extends AggregationTest
+ */
+
+
+var stats_ZegginiBurdenTest =
+/*#__PURE__*/
+function (_AggregationTest) {
+  inherits_default()(ZegginiBurdenTest, _AggregationTest);
+
+  function ZegginiBurdenTest() {
+    var _this;
+
+    classCallCheck_default()(this, ZegginiBurdenTest);
+
+    _this = possibleConstructorReturn_default()(this, getPrototypeOf_default()(ZegginiBurdenTest).apply(this, arguments));
+    _this.key = 'burden';
+    _this.label = 'Burden';
+    return _this;
+  }
+  /**
+   * Default weight function for burden test. All variants weighted equally. Only requires the number of variants
+   * since they are all given the same weight value.
+   * @param n {number} Number of variants.
+   * @return {number[]} An array of weights, one per variant.
+   */
+
+
+  createClass_default()(ZegginiBurdenTest, [{
+    key: "run",
+
+    /**
+     * Calculate burden test from vector of score statistics and variances.
+     *
+     * @param {Number[]} u Vector of score statistics (length m, number of variants)
+     * @param {Number[]} v Covariance matrix of score statistics
+     * @param {Number[]} w Weight vector (length m, number of variants)
+     * @return {Number[]} Burden test statistic z and p-value
+     */
+    value: function run(u, v, w) {
+      for (var _i8 = 0, _arr = [u, v]; _i8 < _arr.length; _i8++) {
+        var e = _arr[_i8];
+
+        if (!Array.isArray(e) || !e.length) {
+          throw 'Please provide all required arrays';
+        }
+      }
+
+      if (!(u.length === v.length)) {
+        throw 'u and v must be same length';
+      }
+
+      if (w != null) {
+        if (w.length !== u.length) {
+          throw 'w vector must be same length as score vector u';
+        }
+      } else {
+        w = ZegginiBurdenTest.weights(u.length);
+      } // This is taken from:
+      // https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#BURDEN_META_ANALYSIS
+
+
+      var over = numeric_1_2_6_default.a.dot(w, u);
+      var under = Math.sqrt(numeric_1_2_6_default.a.dot(numeric_1_2_6_default.a.dot(w, v), w));
+      var z = over / under; // The -Math.abs(z) is because pnorm returns the lower tail probability from the normal dist
+      // The * 2 is for a two-sided p-value.
+
+      var p = _pnorm(-Math.abs(z), 0, 1) * 2;
+      return [z, p];
+    }
+  }], [{
+    key: "weights",
+    value: function weights(n) {
+      return new Array(n).fill(1 / n);
+    }
+  }]);
+
+  return ZegginiBurdenTest;
+}(stats_AggregationTest);
+
+function _vt(maf_cutoffs, u, v, mafs) {
+  // Calculate score statistic and cov weight matrix for each MAF cutoff.
+  var cov_weight = emptyRowMatrix(maf_cutoffs.length, u.length);
+  var t_max = -Infinity;
+  var scores = Array(maf_cutoffs.length).fill(0.0);
+  maf_cutoffs.map(function (m, i) {
+    // Weight is 1 if MAF < cutoff, otherwise 0.
+    var w = mafs.map(function (maf) {
+      return maf <= m ? 1 : 0;
+    });
+    cov_weight[i] = w; // Calculate burden t-statistic for this maf cutoff
+
+    var numer = numeric_1_2_6_default.a.dot(w, u);
+    var denom = numeric_1_2_6_default.a.dot(numeric_1_2_6_default.a.dot(w, v), w);
+    var t_stat = Math.abs(numer / Math.sqrt(denom));
+    scores[i] = t_stat;
+
+    if (t_stat > t_max) {
+      t_max = t_stat;
+    }
+  }); // Did we calculate any valid scores?
+
+  if (Math.max.apply(Math, toConsumableArray_default()(scores)) === 0.0) {
+    throw 'No scores were able to be calculated for this group';
+  } // Calculate covariance matrix
+
+
+  var cov_u = numeric_1_2_6_default.a.dot(numeric_1_2_6_default.a.dot(cov_weight, v), numeric_1_2_6_default.a.transpose(cov_weight));
+  var cov_t = cov2cor(cov_u);
+  return [scores, cov_t, t_max];
+}
+/**
+ * Variable threshold test (VT). <p>
+ */
+
+
+var stats_VTTest =
+/*#__PURE__*/
+function (_AggregationTest2) {
+  inherits_default()(VTTest, _AggregationTest2);
+
+  function VTTest() {
+    var _this2;
+
+    classCallCheck_default()(this, VTTest);
+
+    _this2 = possibleConstructorReturn_default()(this, getPrototypeOf_default()(VTTest).apply(this, arguments));
+    _this2.label = 'Variable Threshold';
+    _this2.key = 'vt';
+    _this2.requiresMaf = true;
+    _this2._method = 'auto';
+    return _this2;
+  }
+  /**
+   * This code corresponds roughly to: https://github.com/statgen/raremetal/blob/2c82cfc5710dbd9fd56ef67a7ca5f74772d4e70d/raremetal/src/Meta.cpp#L3456
+   * @param u
+   * @param v
+   * @param w This parameter is ignored for VT. Weights are calculated automatically from mafs.
+   * @param mafs
+   * @return Promise
+   */
+
+
+  createClass_default()(VTTest, [{
+    key: "run",
+    value: function run(u, v, w, mafs) {
+      // Uses wasm, returns a promise
+      if (w != null) {
+        throw 'w vector is not accepted in with VT test';
+      } // Figure out MAF cutoffs. This tries every possible MAF cutoff given a list of all MAFs.
+
+
+      var maf_cutoffs = [];
+
+      var sorted_mafs = toConsumableArray_default()(mafs).sort();
+
+      for (var i = 0; i < mafs.length; i++) {
+        if (sorted_mafs[i] > maf_cutoffs.slice(-1)) {
+          maf_cutoffs.push(sorted_mafs[i]);
+        }
+      } // Try calculating scores/t-stat covariance the first time (may need refinement later).
+
+
+      var _vt2 = _vt(maf_cutoffs, u, v, mafs),
+          _vt3 = slicedToArray_default()(_vt2, 3),
+          scores = _vt3[0],
+          cov_t = _vt3[1],
+          t_max = _vt3[2];
+
+      var lower = new Array(maf_cutoffs.length).fill(-t_max);
+      var upper = new Array(maf_cutoffs.length).fill(t_max);
+      var mean = new Array(maf_cutoffs.length).fill(0);
+      return MVT_WASM_HELPERS.then(function (module) {
+        var result = module.pmvnorm(lower, upper, mean, cov_t);
+        var pvalue;
+
+        if (result.value === -1.0) {
+          throw 'Error: correlation matrix is not positive semi-definite';
+        } else if (result.value === 1.0) {
+          // Use Shuang's algorithm
+          if (maf_cutoffs.length > 20) {
+            maf_cutoffs = maf_cutoffs.slice(-20);
+
+            var _vt4 = _vt(maf_cutoffs, u, v, mafs),
+                _vt5 = slicedToArray_default()(_vt4, 3),
+                _scores = _vt5[0],
+                _cov_t = _vt5[1],
+                _t_max = _vt5[2];
+
+            pvalue = calculate_mvt_pvalue(_scores, _cov_t, _t_max);
+          } else {
+            pvalue = calculate_mvt_pvalue(scores, cov_t, t_max);
+          }
+        } else {
+          pvalue = 1.0 - result.value;
+        }
+
+        if (pvalue > 1.0) {
+          pvalue = 1.0;
+        }
+
+        return [t_max, pvalue];
+      });
+    }
+  }]);
+
+  return VTTest;
+}(stats_AggregationTest);
+/**
+ * Sequence kernel association test (SKAT). <p>
+ *
+ * See the {@link https://www.cell.com/ajhg/fulltext/S0002-9297%2811%2900222-9|original paper} for details on the
+ * method, and {@link https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#SKAT_META_ANALYSIS|our wiki} for information
+ * on how the test is calculated using scores/covariances. <p>
+ *
+ * @extends AggregationTest
+ */
+
+
+var stats_SkatTest =
+/*#__PURE__*/
+function (_AggregationTest3) {
+  inherits_default()(SkatTest, _AggregationTest3);
+
+  function SkatTest() {
+    var _this3;
+
+    classCallCheck_default()(this, SkatTest);
+
+    _this3 = possibleConstructorReturn_default()(this, getPrototypeOf_default()(SkatTest).apply(this, arguments));
+    _this3.label = 'SKAT';
+    _this3.key = 'skat';
+    _this3.requiresMaf = true;
+    /**
+     * Skat test method. Only used for dev/testing.
+     * Should not be set by user.
+     * @private
+     * @type {string}
+     */
+
+    _this3._method = 'auto';
+    return _this3;
+  }
+  /**
+   * Calculate typical SKAT weights using beta density function.
+   *
+   * @function
+   * @param mafs {number[]} Array of minor allele frequencies.
+   * @param a {number} alpha defaults to 1.
+   * @param b {number} beta defaults to 25.
+   */
+
+
+  createClass_default()(SkatTest, [{
+    key: "run",
+
+    /**
+     * Calculate SKAT test. <p>
+     *
+     * The distribution function of the SKAT test statistic is evaluated using Davies' method by default.
+     * In the special case where there is only 1 lambda, the Liu moment matching approximation method is used. <p>
+     *
+     * @function
+     * @param {Number[]} u Vector of score statistics (length m, number of variants).
+     * @param {Number[]} v Covariance matrix of score statistics (m x m).
+     * @param {Number[]} w Weight vector (length m, number of variants). If weights are not provided, they will
+     *  be calculated using the default weights() method of this object.
+     * @param {Number[]} mafs A vector of minor allele frequencies. These will be used to calculate weights if
+     *  they were not provided.
+     * @return {Number[]} SKAT p-value.
+     */
+    value: function run(u, v, w, mafs) {
+      // Calculate weights (if necessary)
+      if (w === undefined || w === null) {
+        w = SkatTest.weights(mafs);
+      } // Calculate Q
+
+
+      var q = numeric_1_2_6_default.a.dot(numeric_1_2_6_default.a.dot(u, numeric_1_2_6_default.a.diag(w)), u);
+      /**
+       * Code to calculate eigenvalues from V^(1/2) * W * V^(1/2)
+       * This first decomposes V = U * S * U' (SVD on symmetric normal matrix results in this, instead of U * S * V').
+       * If we take sqrt(S), then U * sqrt(S) * U' is a square root of the original matrix V. For a diagonal matrix,
+       * sqrt(S) is just the sqrt(s_i) of each individual diagonal element.
+       * Then we just take the dot product of (U * sqrt(S) * U') * W * (U * sqrt(S) * U'), which is V^(1/2) * W * V^(1/2).
+       * Finally we compute SVD of that matrix, and take the singular values as the eigenvalues.
+       */
+
+      var lambdas;
+
+      try {
+        var svd = numeric_1_2_6_default.a.svd(v);
+        var sqrtS = numeric_1_2_6_default.a.sqrt(svd.S);
+        var uT = numeric_1_2_6_default.a.transpose(svd.U);
+        var eigenRhs = numeric_1_2_6_default.a.dot(numeric_1_2_6_default.a.dot(svd.U, numeric_1_2_6_default.a.diag(sqrtS)), uT);
+        var eigenLhs = numeric_1_2_6_default.a.dot(eigenRhs, numeric_1_2_6_default.a.diag(w));
+        var eigen = numeric_1_2_6_default.a.dot(eigenLhs, eigenRhs);
+        var finalSvd = numeric_1_2_6_default.a.svd(eigen);
+        lambdas = numeric_1_2_6_default.a.abs(finalSvd.S);
+      } catch (error) {
+        console.log(error);
+        return [NaN, NaN];
+      }
+
+      if (numeric_1_2_6_default.a.sum(lambdas) < 0.0000000001) {
+        console.error("Sum of lambda values for SKAT test is essentially zero");
+        return [NaN, NaN];
+      } // P-value method
+
+
+      if (this._method === 'liu') {
+        // Only for debug purposes
+        return _skatLiu(lambdas, q);
+      } else if (this._method === 'davies') {
+        return _skatDavies(lambdas, q);
+      } else if (this._method === 'auto') {
+        if (lambdas.length === 1) {
+          // Davies method does not support 1 lambda
+          // This is what raremetal does
+          return _skatLiu(lambdas, q);
+        } else {
+          var daviesResult = _skatDavies(lambdas, q);
+
+          if (isNaN(daviesResult[1])) {
+            // Davies' method could not converge. Use R-SKAT's approach instead.
+            return _skatLiu(lambdas, q);
+          } else {
+            return daviesResult;
+          }
+        }
+      } else {
+        throw new Error("Skat method ".concat(this._method, " not implemented"));
+      }
+    }
+  }], [{
+    key: "weights",
+    value: function weights(mafs) {
+      var a = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+      var b = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 25;
+      var weights = Array(mafs.length).fill(null);
+
+      for (var i = 0; i < mafs.length; i++) {
+        var w = _dbeta(mafs[i], a, b, false);
+        w *= w;
+        weights[i] = w;
+      }
+
+      return weights;
+    }
+  }]);
+
+  return SkatTest;
+}(stats_AggregationTest);
+/**
+ * Calculate SKAT p-value using Davies method.
+ * @function
+ * @param lambdas Eigenvalues of sqrtV * W * sqrtV.
+ * @param qstat SKAT test statistic U.T * W * U.
+ * @return {Number[]} Array of [Q statistic, p-value].
+ * @private
+ */
+
+
+function _skatDavies(lambdas, qstat) {
+  /**
+   * lambdas - coefficient of jth chi-squared variable
+   * nc1 - non-centrality parameters
+   * n1 - degrees of freedom
+   * n - number of chi-squared variables
+   * sigma - coefficient of standard normal variable
+   * qstat - point at which cdf is to be evaluated (this is SKAT Q stat usually)
+   * lim1 - max number of terms in integration
+   * acc - maximum error
+   * trace - array into which the following is stored:
+   *   trace[0]	absolute sum
+   *   trace[1]	total number of integration terms
+   *   trace[2]	number of integrations
+   *   trace[3]	integration interval in final integration
+   *   trace[4]	truncation point in initial integration
+   *   trace[5]	s.d. of initial convergence factor
+   *   trace[6]	cycles to locate integration parameters
+   * ifault - array into which the following fault codes are stored:
+   *   0 normal operation
+   *   1 required accuracy not achieved
+   *   2 round-off error possibly significant
+   *   3 invalid parameters
+   *   4 unable to locate integration parameters
+   *   5 out of memory
+   * res - store final value into this variable
+   */
+  var n = lambdas.length;
+  var nc1 = Array(n).fill(0);
+  var n1 = Array(n).fill(1);
+  var sigma = 0.0;
+  var lim1 = 10000;
+  var acc = 0.0001;
+  var res = qf(lambdas, nc1, n1, n, sigma, qstat, lim1, acc);
+  var qfval = res[0];
+  var pval = 1.0 - qfval;
+  var converged = res[1] === 0 && pval > 0 && pval <= 1;
+
+  if (!converged) {
+    pval = NaN;
+  }
+
+  return [qstat, pval];
+}
+/**
+ * Calculate SKAT p-value using Liu method.
+ * @param lambdas Eigenvalues of sqrtV * W * sqrtV.
+ * @param qstat SKAT test statistic U.T * W * U.
+ * @return {Number[]} [qstat, pvalue]
+ * @private
+ */
+
+
+function _skatLiu(lambdas, qstat) {
+  var n = lambdas.length;
+
+  var _Array$fill = Array(4).fill(0.0),
+      _Array$fill2 = slicedToArray_default()(_Array$fill, 4),
+      c1 = _Array$fill2[0],
+      c2 = _Array$fill2[1],
+      c3 = _Array$fill2[2],
+      c4 = _Array$fill2[3];
+
+  for (var i = 0; i < n; i++) {
+    var ilambda = lambdas[i];
+    c1 += ilambda;
+    c2 += ilambda * ilambda;
+    c3 += ilambda * ilambda * ilambda;
+    c4 += ilambda * ilambda * ilambda * ilambda;
+  }
+
+  var s1 = c3 / Math.sqrt(c2 * c2 * c2);
+  var s2 = c4 / (c2 * c2);
+  var muQ = c1;
+  var sigmaQ = Math.sqrt(2.0 * c2);
+  var tStar = (qstat - muQ) / sigmaQ;
+  var delta, l, a;
+
+  if (s1 * s1 > s2) {
+    a = 1.0 / (s1 - Math.sqrt(s1 * s1 - s2));
+    delta = s1 * a * a * a - a * a;
+    l = a * a - 2.0 * delta;
+  } else {
+    a = 1.0 / s1;
+    delta = 0.0;
+    l = c2 * c2 * c2 / (c3 * c3);
+  }
+
+  var muX = l + delta;
+  var sigmaX = Math.sqrt(2.0) * a;
+  var qNew = tStar * sigmaX + muX;
+  var p;
+
+  if (delta === 0) {
+    p = pchisq(qNew, l, 0, 0);
+  } else {
+    // Non-central chi-squared
+    p = pchisq(qNew, l, delta, 0, 0);
+  }
+
+  return [qstat, p];
+}
+
+function getEigen(m) {
+  var lambdas = numeric_1_2_6_default.a.eig(m, 1000000).lambda.x.sort(function (a, b) {
+    return a - b;
+  });
+  var n = lambdas.length;
+  var numNonZero = 0;
+  var sumNonZero = 0.0;
+
+  for (var i = 0; i < n; i++) {
+    if (lambdas[i] > 0) {
+      numNonZero++;
+      sumNonZero += lambdas[i];
+    }
+  }
+
+  if (numNonZero === 0) {
+    throw new Error("All eigenvalues were 0 when calculating SKAT-O test");
+  }
+
+  var t = sumNonZero / numNonZero / 100000;
+  var numKeep = n;
+
+  for (var _i9 = 0; _i9 < n; _i9++) {
+    if (lambdas[_i9] < t) {
+      numKeep--;
+    } else {
+      break;
+    }
+  }
+
+  var keep = new Array(numKeep).fill(null);
+
+  for (var _i10 = 0; _i10 < numKeep; _i10++) {
+    keep[_i10] = lambdas[n - 1 - _i10];
+  }
+
+  return keep;
+}
+
+function getMoment(lambdas) {
+  var c = new Array(4).fill(NaN);
+  c[0] = numeric_1_2_6_default.a.sum(lambdas);
+  c[1] = numeric_1_2_6_default.a.sum(numeric_1_2_6_default.a.pow(lambdas, 2));
+  c[2] = numeric_1_2_6_default.a.sum(numeric_1_2_6_default.a.pow(lambdas, 3));
+  c[3] = numeric_1_2_6_default.a.sum(numeric_1_2_6_default.a.pow(lambdas, 4));
+  var muQ = c[0];
+  var sigmaQ = Math.sqrt(2 * c[1]);
+  var s1 = c[2] / c[1] / Math.sqrt(c[1]);
+  var s2 = c[3] / (c[1] * c[1]);
+  var a, d, l;
+
+  if (s1 * s1 > s2) {
+    a = 1 / (s1 - Math.sqrt(s1 * s1 - s2));
+    d = s1 * a - a * a;
+    l = a * a - 2 * d;
+  } else {
+    l = 1.0 / s2;
+  }
+
+  var varQ = sigmaQ * sigmaQ;
+  var df = l;
+  return {
+    muQ: muQ,
+    varQ: varQ,
+    df: df
+  };
+}
+
+function getPvalByMoment(q, m) {
+  var qNorm = (q - m.muQ) / Math.sqrt(m.varQ) * Math.sqrt(2.0 * m.df) + m.df;
+  return pchisq(qNorm, m.df, 0, false, false);
+}
+
+function getQvalByMoment(min_pval, m) {
+  var q_org = qchisq(min_pval, m.df, 0, false, false);
+  return (q_org - m.df) / Math.sqrt(2.0 * m.df) * Math.sqrt(m.varQ) + m.muQ;
+}
+
+var stats_SkatIntegrator =
+/*#__PURE__*/
+function () {
+  function SkatIntegrator(rhos, lambda, Qs_minP, taus, MuQ, VarQ, VarZeta, Df) {
+    classCallCheck_default()(this, SkatIntegrator);
+
+    this.rhos = rhos;
+    this.lambda = lambda;
+    this.Qs_minP = Qs_minP;
+    this.taus = taus;
+    this.MuQ = MuQ;
+    this.VarQ = VarQ;
+    this.VarZeta = VarZeta;
+    this.Df = Df;
+    this.gkPoints = 21;
+    this.gkDepth = 30;
+    this.gkError = Math.pow(Number.EPSILON, 0.25);
+  }
+
+  createClass_default()(SkatIntegrator, [{
+    key: "setIntegrationParams",
+    value: function setIntegrationParams(points, depth, error) {
+      this.gkPoints = points;
+      this.gkDepth = depth;
+      this.gkError = error;
+    }
+  }, {
+    key: "integrandDavies",
+    value: function integrandDavies(x) {
+      var kappa = Number.MAX_VALUE;
+      var nRho = this.rhos.length;
+
+      for (var i = 0; i < nRho; i++) {
+        var v = (this.Qs_minP[i] - this.taus[i] * x) / (1.0 - this.rhos[i]);
+
+        if (i === 0) {
+          kappa = v;
+        }
+
+        if (v < kappa) {
+          kappa = v;
+        }
+      }
+
+      var temp;
+
+      if (kappa > numeric_1_2_6_default.a.sum(this.lambda) * 10000) {
+        temp = 0.0;
+      } else {
+        var Q = (kappa - this.MuQ) * Math.sqrt(this.VarQ - this.VarZeta) / Math.sqrt(this.VarQ) + this.MuQ;
+        temp = SkatIntegrator.pvalueDavies(Q, this.lambda);
+
+        if (temp <= 0.0 || temp === 1.0) {
+          temp = SkatIntegrator.pvalueLiu(Q, this.lambda);
+        }
+      }
+
+      var _final = (1.0 - temp) * dchisq(x, 1); //console.log("integrandDavies: ", x, temp, final);
+
+
+      return _final;
+    }
+  }, {
+    key: "integrandLiu",
+    value: function integrandLiu(x) {
+      var kappa = Number.MAX_VALUE;
+      var nRho = this.rhos.length;
+
+      for (var i = 0; i < nRho; i++) {
+        var v = (this.Qs_minP[i] - this.taus[i] * x) / (1.0 - this.rhos[i]);
+
+        if (v < kappa) {
+          kappa = v;
+        }
+      }
+
+      var Q = (kappa - this.MuQ) / Math.sqrt(this.VarQ) * Math.sqrt(2.0 * this.Df) + this.Df;
+      var ret;
+
+      if (Q <= 0) {
+        ret = 0;
+      } else {
+        ret = pchisq(Q, this.Df) * dchisq(x, 1);
+      }
+
+      return ret;
+    }
+  }, {
+    key: "_debugWriteIntegrandDavies",
+    value: function _debugWriteIntegrandDavies(fpath) {
+      var xstart = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+      var xend = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 40;
+      var increment = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0.001;
+
+      var fs = __webpack_require__(9);
+
+      var stream = fs.createWriteStream(fpath);
+      var v;
+
+      for (var x = xstart; x < xend; x += increment) {
+        v = this.integrandDavies(x);
+        stream.write(x + "\t" + v + "\n");
+      }
+    }
+  }, {
+    key: "skatOptimalIntegral",
+    value: function skatOptimalIntegral() {
+      var integ = new quadrature_GaussKronrod(this.gkPoints, this.gkDepth, this.gkError); // Try integrating Davies first
+
+      var result;
+
+      try {
+        result = integ.integrate(this.integrandDavies.bind(this), 0, 40);
+      } catch (e1) {
+        try {
+          result = integ.integrate(this.integrandLiu.bind(this), 0, 40);
+        } catch (e2) {
+          console.error("Could not integrate Davies or Liu integrands (SKAT-O)");
+          throw e2;
+        }
+      }
+
+      return result[0];
+    }
+  }], [{
+    key: "pvalueDavies",
+    value: function pvalueDavies(q, lambdas) {
+      var n = lambdas.length;
+      var nc1 = Array(n).fill(0);
+      var n1 = Array(n).fill(1);
+      var sigma = 0.0;
+      var lim1 = 10000;
+      var acc = 0.0001;
+      var res = qf(lambdas, nc1, n1, n, sigma, q, lim1, acc);
+      var qfval = res[0];
+      var fault = res[1];
+      var pvalue = 1.0 - qfval;
+
+      if (pvalue > 1.0) {
+        pvalue = 1.0;
+      }
+
+      if (fault) {
+        pvalue = -1.0;
+      }
+
+      return pvalue;
+    }
+  }, {
+    key: "pvalueLiu",
+    value: function pvalueLiu(q, lambdas) {
+      var n = lambdas.length;
+
+      var _Array$fill3 = Array(4).fill(0.0),
+          _Array$fill4 = slicedToArray_default()(_Array$fill3, 4),
+          c1 = _Array$fill4[0],
+          c2 = _Array$fill4[1],
+          c3 = _Array$fill4[2],
+          c4 = _Array$fill4[3];
+
+      for (var i = 0; i < n; i++) {
+        var ilambda = lambdas[i];
+        c1 += ilambda;
+        c2 += ilambda * ilambda;
+        c3 += ilambda * ilambda * ilambda;
+        c4 += ilambda * ilambda * ilambda * ilambda;
+      }
+
+      var s1 = c3 / Math.sqrt(c2 * c2 * c2);
+      var s2 = c4 / (c2 * c2);
+      var muQ = c1;
+      var sigmaQ = Math.sqrt(2.0 * c2);
+      var tStar = (q - muQ) / sigmaQ;
+      var delta, l, a;
+
+      if (s1 * s1 > s2) {
+        a = 1.0 / (s1 - Math.sqrt(s1 * s1 - s2));
+        delta = s1 * a * a * a - a * a;
+        l = a * a - 2.0 * delta;
+      } else {
+        a = 1.0 / s1;
+        delta = 0.0;
+        l = c2 * c2 * c2 / (c3 * c3);
+      }
+
+      var muX = l + delta;
+      var sigmaX = Math.sqrt(2.0) * a;
+      var qNew = tStar * sigmaX + muX;
+
+      if (qNew < 0) {
+        return 1;
+      }
+
+      var p;
+
+      if (delta === 0) {
+        p = pchisq(qNew, l, 0, 0);
+      } else {
+        // Non-central chi-squared
+        p = pchisq(qNew, l, delta, 0, 0);
+      }
+
+      return p;
+    }
+  }]);
+
+  return SkatIntegrator;
+}();
+/**
+ * Optimal sequence kernel association test (SKAT). <p>
+ *
+ * The following papers detail the method:
+ *
+ * Original SKAT optimal test paper, utilizing genotypes instead of covariance matrices: https://doi.org/10.1016/j.ajhg.2012.06.007
+ * Meta-analysis of SKAT optimal test, and use of covariance matrices: https://doi.org/10.1016/j.ajhg.2013.05.010
+ *
+ * @extends AggregationTest
+ */
+
+
+var stats_SkatOptimalTest =
+/*#__PURE__*/
+function (_AggregationTest4) {
+  inherits_default()(SkatOptimalTest, _AggregationTest4);
+
+  function SkatOptimalTest() {
+    var _this4;
+
+    classCallCheck_default()(this, SkatOptimalTest);
+
+    _this4 = possibleConstructorReturn_default()(this, getPrototypeOf_default()(SkatOptimalTest).apply(this, arguments));
+    _this4.label = 'SKAT Optimal';
+    _this4.key = 'skat-o';
+    _this4.requiresMaf = true;
+    /**
+     * Skat test method. Only used for dev/testing.
+     * Should not be set by user.
+     * @private
+     * @type {string}
+     */
+
+    _this4._method = 'auto';
+    return _this4;
+  }
+  /**
+   * Calculate typical SKAT weights using beta density function.
+   *
+   * @function
+   * @param mafs {number[]} Array of minor allele frequencies.
+   * @param a {number} alpha defaults to 1.
+   * @param b {number} beta defaults to 25.
+   */
+
+
+  createClass_default()(SkatOptimalTest, [{
+    key: "run",
+
+    /**
+     * Calculate optimal SKAT test. <p>
+     *
+     * @function
+     * @param {Number[]} u Vector of score statistics (length m, number of variants).
+     * @param {Number[]} v Covariance matrix of score statistics (m x m).
+     * @param {Number[]} w Weight vector (length m, number of variants). If weights are not provided, they will
+     *  be calculated using the default weights() method of this object.
+     * @param {Number[]} mafs A vector of minor allele frequencies. These will be used to calculate weights if
+     *  they were not provided.
+     * @param {Number[]} rhos A vector of rho values, representing the weighting between burden and SKAT statistics.
+     * @return {Number[]} SKAT p-value.
+     */
+    value: function run(u, v, w, mafs, rhos) {
+      var dot = numeric_1_2_6_default.a.dot,
+          sum = numeric_1_2_6_default.a.sum,
+          mul = numeric_1_2_6_default.a.mul,
+          div = numeric_1_2_6_default.a.div,
+          sub = numeric_1_2_6_default.a.sub,
+          rep = numeric_1_2_6_default.a.rep,
+          pow = numeric_1_2_6_default.a.pow,
+          diag = numeric_1_2_6_default.a.diag;
+      var t = numeric_1_2_6_default.a.transpose;
+
+      if (u.length === 1) {
+        // rvtest
+        return new stats_SkatTest().run(u, v, w, mafs);
+      } // Calculate weights (if necessary)
+
+
+      if (w === undefined || w === null) {
+        w = SkatOptimalTest.weights(mafs);
+      }
+
+      var nVar = u.length; // number of variants
+
+      w = diag(w); // diagonal matrix
+
+      u = t([u]); // column vector
+      // Setup rho values
+
+      if (!rhos) {
+        rhos = [];
+
+        for (var i = 0; i <= 10; i++) {
+          var _v = i / 10;
+
+          if (_v > 0.999) {
+            // rvtests does this to avoid rank deficiency
+            _v = 0.999;
+          }
+
+          rhos.push(_v);
+        }
+      }
+
+      var nRhos = rhos.length; // MetaSKAT optimal.mod rho values
+      //const rhos = [0, 0.01, 0.04, 0.09, 0.25, 0.5, 0.999];
+      //const nRhos = rhos.length;
+      // Calculate rho matrices (1-rho)*I + rho*1*1'
+      // [ 1   rho rho ]
+      // [ rho 1   rho ]
+      // [ rho rho 1   ]
+
+      var Rp = new Array(nRhos).fill(null);
+
+      for (var _i11 = 0; _i11 < nRhos; _i11++) {
+        var r = rep([nVar, nVar], rhos[_i11]);
+
+        for (var j = 0; j < r.length; j++) {
+          r[j][j] = 1.0;
+        }
+
+        Rp[_i11] = r;
+      } // Calculate Q statistics, where Q = U' * W * R(rho) * W * U
+      // U is the score statistic vector, W is the diagonal weight matrix for each variant
+      // R(rho) is a matrix for each rho value that reflects weighting between burden & SKAT
+
+
+      var Qs = [];
+
+      for (var _i12 = 0; _i12 < nRhos; _i12++) {
+        Qs[_i12] = dot(t(u), dot(w, dot(Rp[_i12], dot(w, u))))[0][0];
+        Qs[_i12] = Qs[_i12] / 2.0; // SKAT R package divides by 2
+      } // Calculate lambdas (eigenvalues of W * IOTA * W.) In the paper, IOTA is the covariance matrix divided by
+      // the phenotypic variance sigma^2.
+
+
+      var lambdas = new Array(nRhos).fill(null);
+      var phi = div(dot(w, dot(v, w)), 2); // https://git.io/fjwqF
+
+      for (var _i13 = 0; _i13 < nRhos; _i13++) {
+        var L = cholesky(Rp[_i13]);
+        var phi_rho = dot(t(L), dot(phi, L));
+
+        try {
+          lambdas[_i13] = getEigen(phi_rho);
+        } catch (error) {
+          console.error(error.message);
+          return [NaN, NaN];
+        }
+      } // Calculate moments
+
+
+      var moments = new Array(nRhos).fill(null);
+
+      for (var _i14 = 0; _i14 < nRhos; _i14++) {
+        moments[_i14] = getMoment(lambdas[_i14]);
+      } // Calculate p-values for each rho
+
+
+      var pvals = new Array(nRhos).fill(null);
+
+      for (var _i15 = 0; _i15 < nRhos; _i15++) {
+        pvals[_i15] = getPvalByMoment(Qs[_i15], moments[_i15]);
+      } // Calculate minimum p-value across all rho values
+
+
+      var minP = pvals[0];
+      var minIndex = 0;
+
+      for (var _i16 = 1; _i16 < nRhos; _i16++) {
+        if (pvals[_i16] < minP) {
+          minP = pvals[_i16];
+          minIndex = _i16;
+        }
+      } //const rho = rhos[minIndex];
+
+
+      var Q = Qs[minIndex]; // Calculate minimum Q(p)
+
+      var Qs_minP = new Array(nRhos).fill(null);
+
+      for (var _i17 = 0; _i17 < nRhos; _i17++) {
+        Qs_minP[_i17] = getQvalByMoment(minP, moments[_i17]);
+      } // Calculate parameters needed for Z'(I-M)Z part
+
+
+      var Z11 = dot(phi, rep([nVar, 1], 1));
+      var ZZ = phi;
+      var ZMZ = div(dot(Z11, t(Z11)), sum(ZZ));
+      var ZIMZ = sub(ZZ, ZMZ);
+      var lambda;
+
+      try {
+        lambda = getEigen(ZIMZ);
+      } catch (error) {
+        console.error(error.message);
+        return [NaN, NaN];
+      }
+
+      var varZeta = 4 * sum(mul(ZMZ, ZIMZ));
+      var muQ = sum(lambda);
+      var varQ = 2.0 * sum(pow(lambda, 2)) + varZeta;
+      var kerQ = 12.0 * sum(pow(lambda, 4)) / Math.pow(sum(pow(lambda, 2)), 2);
+      var dF = 12.0 / kerQ; // Calculate taus
+
+      var z_mean = sum(ZZ) / Math.pow(nVar, 2);
+      var tau1 = sum(dot(ZZ, ZZ)) / Math.pow(nVar, 2) / z_mean;
+      var taus = new Array(nRhos).fill(null);
+
+      for (var _i18 = 0; _i18 < nRhos; _i18++) {
+        taus[_i18] = nVar * nVar * rhos[_i18] * z_mean + tau1 * (1 - rhos[_i18]);
+      } // Calculate final p-value
+
+
+      if (new Set([rhos.length, Qs_minP.length, taus.length]).size > 1) {
+        throw "Parameter arrays for SKAT integration must all be the same length";
+      }
+
+      var integrator = new stats_SkatIntegrator(rhos, lambda, Qs_minP, taus, muQ, varQ, varZeta, dF); // First pass is only capable of reaching p-values around 1e-6. To be conservative, we'll re-test if a
+      // p-value reaches < 1e-4.
+
+      integrator.setIntegrationParams(21, 30, Math.pow(Number.EPSILON, 0.25));
+      var pvalue = 1 - integrator.skatOptimalIntegral();
+
+      if (pvalue < 1e-4) {
+        // Increase integration accuracy to check for more significant p-value.
+        integrator.setIntegrationParams(21, 45, Math.pow(Number.EPSILON, 0.15));
+        pvalue = 1 - integrator.skatOptimalIntegral();
+      } // Check SKAT p-value
+
+
+      var multi = nRhos < 3 ? 2 : 3;
+
+      if (nRhos) {
+        if (pvalue <= 0) {
+          var p = minP * multi;
+
+          if (pvalue < p) {
+            pvalue = p;
+          }
+        }
+      }
+
+      if (pvalue === 0.0) {
+        pvalue = pvals[0];
+
+        for (var _i19 = 1; _i19 < nRhos; _i19++) {
+          if (pvals[_i19] > 0 && pvals[_i19] < pvalue) {
+            pvalue = pvals[_i19];
+          }
+        }
+      }
+
+      return [Q, pvalue];
+    }
+  }], [{
+    key: "weights",
+    value: function weights(mafs) {
+      var a = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
+      var b = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 25;
+      var weights = Array(mafs.length).fill(null);
+
+      for (var i = 0; i < mafs.length; i++) {
+        var w = _dbeta(mafs[i], a, b, false); //w *= w;
+
+        weights[i] = w;
+      }
+
+      return weights;
+    }
+  }]);
+
+  return SkatOptimalTest;
+}(stats_AggregationTest);
+
+
+
+// CONCATENATED MODULE: ./src/app/helpers.js
+
+
+
+
+
+/**
+ * Helper methods for running aggregation tests
+ *
+ * This wraps internal functionality and provides utilities for reading and writing expected API formats
+ */
+
+
+
+var _all_tests = [stats_ZegginiBurdenTest, stats_SkatTest, stats_VTTest, stats_SkatOptimalTest];
+/**
+ * Look up aggregation tests by unique name.
+ *
+ * This is a helper for external libraries; it provides an immutable registry of all available tests.
+ * TODO would be nice to get rid of this?
+ *
+ *
+ * {key: {label: String, constructor: Object }
+ * @type {{String: {label: String, constructor: function}}}
+ */
+
+var AGGREGATION_TESTS = Object.freeze(_all_tests.reduce(function (acc, constructor) {
+  var inst = new constructor(); // Hack- need instance to access attributes
+
+  acc[inst.key] = {
+    label: inst.label,
+    constructor: constructor
+  };
+  return acc;
+}, {}));
+/**
+ * Helper object for reading and interpreting variant data
+ */
+
+var helpers_PortalVariantsHelper =
+/*#__PURE__*/
+function () {
+  function PortalVariantsHelper(variants_array) {
+    classCallCheck_default()(this, PortalVariantsHelper);
+
+    this._variants = variants_array;
+    this._variant_lookup = this.parsePortalVariantData(variants_array);
+  }
+
+  createClass_default()(PortalVariantsHelper, [{
+    key: "parsePortalVariantData",
+    value: function parsePortalVariantData(variants) {
+      // Read an array of variants. Parse names into position/ref/alt, and assign altFreq to MAF.
+      // Return a hash keyed on variant ID for quick lookups.
+      var lookup = {};
+      variants.forEach(function (data) {
+        var variant = data.variant,
+            altFreq = data.altFreq,
+            pvalue = data.pvalue,
+            score = data.score;
+
+        var _variant$match = variant.match(REGEX_EPACTS),
+            _variant$match2 = slicedToArray_default()(_variant$match, 6),
+            _ = _variant$match2[0],
+            chrom = _variant$match2[1],
+            pos = _variant$match2[2],
+            ref = _variant$match2[3],
+            alt = _variant$match2[4],
+            __ = _variant$match2[5]; // eslint-disable-line no-unused-vars
+
+
+        var effectFreq = altFreq;
+        var effect = alt;
+        /**
+         * The variant's score statistic in the API is coded toward the alternate allele.
+         * However, we want the effect coded towards the minor allele, since most rare variant tests assume
+         * you are counting the rare/minor allele.
+         */
+
+        if (altFreq > 0.5) {
+          /**
+           * The effect allele is initially the alt allele. Since we're flipping it,
+           * the "other" allele is the reference allele.
+           */
+          score = -score;
+          effect = ref; // This is also now the minor allele frequency.
+
+          effectFreq = 1 - altFreq;
+        }
+
+        lookup[variant] = {
+          variant: variant,
+          chrom: chrom,
+          pos: pos,
+          pvalue: pvalue,
+          score: score,
+          altAllele: alt,
+          effectAllele: effect,
+          altFreq: altFreq,
+          effectFreq: effectFreq
+        };
+      });
+      return lookup;
+    }
+  }, {
+    key: "isAltEffect",
+    value: function isAltEffect(variant_names) {
+      var _this = this;
+
+      // Some calculations are sensitive to whether alt is the minor (effect) allele
+      return variant_names.map(function (name) {
+        var variant_data = _this._variant_lookup[name];
+        return variant_data.altAllele === variant_data.effectAllele;
+      });
+    }
+  }, {
+    key: "getEffectFreq",
+    value: function getEffectFreq(variant_names) {
+      var _this2 = this;
+
+      // Get the allele freq for the minor (effect) allele
+      return variant_names.map(function (name) {
+        return _this2._variant_lookup[name].effectFreq;
+      });
+    }
+  }, {
+    key: "getScores",
+    value: function getScores(variant_names) {
+      var _this3 = this;
+
+      // Get single-variant scores
+      return variant_names.map(function (name) {
+        return _this3._variant_lookup[name].score;
+      });
+    }
+  }, {
+    key: "getGroupVariants",
+    value: function getGroupVariants(variant_names) {
+      var _this4 = this;
+
+      // Return all that is known about a given set of variants
+      return variant_names.map(function (name) {
+        return _this4._variant_lookup[name];
+      });
+    }
+  }, {
+    key: "data",
+    get: function get() {
+      // Raw unparsed data
+      return this._variants;
+    }
+  }]);
+
+  return PortalVariantsHelper;
+}(); // Utility class. Provides helper methods to access information about groups and generate subsets
+
+
+var helpers_PortalGroupHelper =
+/*#__PURE__*/
+function () {
+  function PortalGroupHelper(groups) {
+    classCallCheck_default()(this, PortalGroupHelper);
+
+    this._groups = groups;
+    this._lookup = this._generateLookup(groups);
+  }
+
+  createClass_default()(PortalGroupHelper, [{
+    key: "byMask",
+    value: function byMask(selection) {
+      // str or array
+      // Get all groups that identify as a specific category of mask- "limit the analysis to loss of function variants
+      // in any gene"
+      if (!Array.isArray(selection)) {
+        selection = [selection];
+      }
+
+      selection = new Set(selection);
+
+      var subset = this._groups.filter(function (group) {
+        return selection.has(group.mask);
+      });
+
+      return new this.constructor(subset);
+    }
+  }, {
+    key: "byGroup",
+    value: function byGroup(selection) {
+      // str or array
+      // Get all groups based on a specific group name, regardless of mask. Eg, "all the ways to analyze data for a
+      // given gene".
+      if (!Array.isArray(selection)) {
+        selection = [selection];
+      }
+
+      selection = new Set(selection);
+
+      var subset = this._groups.filter(function (group) {
+        return selection.has(group.group);
+      });
+
+      return new this.constructor(subset);
+    }
+  }, {
+    key: "_generateLookup",
+    value: function _generateLookup(groups) {
+      var _this5 = this;
+
+      // We don't transform data, so this is a simple name -> position mapping
+      return groups.reduce(function (acc, item, idx) {
+        var key = _this5._getKey(item.mask, item.group);
+
+        acc[key] = idx;
+        return acc;
+      }, {});
+    }
+  }, {
+    key: "_getKey",
+    value: function _getKey(mask_name, group_name) {
+      return "".concat(mask_name, ",").concat(group_name);
+    }
+  }, {
+    key: "getOne",
+    value: function getOne(mask_name, group_name) {
+      // Get a single group that is fully and uniquely identified by group + mask
+      var key = this._getKey(mask_name, group_name);
+
+      var pos = this._lookup[key];
+      return this._groups[pos];
+    }
+  }, {
+    key: "makeCovarianceMatrix",
+    value: function makeCovarianceMatrix(group, is_alt_effect) {
+      // Helper method that expands the portal covariance format into a full matrix.
+      // Load the covariance matrix from the response JSON
+      var n_variants = group.variants.length;
+      var covmat = new Array(n_variants);
+
+      for (var i = 0; i < n_variants; i++) {
+        covmat[i] = new Array(n_variants).fill(null);
+      }
+
+      var c = 0;
+
+      for (var _i = 0; _i < n_variants; _i++) {
+        for (var j = _i; j < n_variants; j++) {
+          var v = group.covariance[c];
+          var iAlt = is_alt_effect[_i];
+          var jAlt = is_alt_effect[j];
+          /**
+           * The API spec codes variant genotypes towards the alt allele. If the alt allele frequency
+           * is > 0.5, that means we're not counting towards the minor (rare) allele, and we need to flip it around.
+           * We don't flip when i == j because that element represents the variance of the variant's score, which is
+           * invariant to which allele we code towards (but covariance is not.)
+           *
+           * We also don't flip when both the i variant and j variant need to be flipped (the ^ is XOR) because it would
+           * just cancel out.
+           */
+
+          if (_i !== j) {
+            if (!iAlt ^ !jAlt) {
+              v = -v;
+            }
+          }
+
+          covmat[_i][j] = v;
+          covmat[j][_i] = v;
+          c += 1;
+        }
+      }
+
+      covmat = numeric_1_2_6_default.a.mul(group.nSamples, covmat);
+      return covmat;
+    }
+  }, {
+    key: "data",
+    get: function get() {
+      // Raw unparsed data
+      return this._groups;
+    }
+  }]);
+
+  return PortalGroupHelper;
+}();
+/**
+ * Run one or more burden tests. This will operate in sequence: all specified tests on all specified masks
+ *
+ * The actual call signature of a burden test is pretty low-level. In addition to running the list of tests,
+ *  this helper also restructures human-friendly mask and variant representations into a shape that works directly
+ *  with the calculation.
+ */
+
+
+var helpers_PortalTestRunner =
+/*#__PURE__*/
+function () {
+  /**
+   * Create a test runner object, using group and variant data of the form provided by `parsePortalJSON`. Generally,
+   *  this helper is a convenience wrapper based on the raremetal.js API format spec, and hence it expects
+   *  variant and group definitions to follow that spec.
+   * @param groups PortalGroupHelper
+   * @param variants PortalVariantsHelper
+   * @param test_names {String[]|_AggregationTest[]}
+   */
+  function PortalTestRunner(groups, variants) {
+    var _this6 = this;
+
+    var test_names = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
+
+    classCallCheck_default()(this, PortalTestRunner);
+
+    this.groups = groups;
+    this.variants = variants;
+    this._tests = [];
+    test_names.forEach(function (name) {
+      return _this6.addTest(name);
+    });
+  }
+  /**
+   *
+   * @param test {String|_AggregationTest}
+   * @return {_AggregationTest}
+   */
+
+
+  createClass_default()(PortalTestRunner, [{
+    key: "addTest",
+    value: function addTest(test) {
+      // Add a new test by name, or directly from an instance
+      if (typeof test === 'string') {
+        var type = AGGREGATION_TESTS[test];
+
+        if (!type) {
+          throw new Error("Cannot make unknown test type: ".concat(test));
+        }
+
+        test = new type.constructor();
+      } else if (!(test instanceof stats_AggregationTest)) {
+        throw new Error('Must specify test as name or instance');
+      }
+
+      this._tests.push(test);
+
+      return test;
+    }
+    /**
+     * Run every test on every group in the container and return results
+     * @returns Promise A promise representing the fulfillment state of all tests being run
+     */
+
+  }, {
+    key: "run",
+    value: function run() {
+      var _this7 = this;
+
+      var partials = [];
+
+      this._tests.forEach(function (test) {
+        _this7.groups.data.forEach(function (group) {
+          partials.push(_this7._runOne.bind(_this7, test, group));
+        });
+      }); // Despite the async syntax, ensure that each tests is run in series, to mitigate memory allocation errors when
+      //  running many tests
+
+
+      return partials.reduce(function (results, one_test) {
+        return results.then(function (all_prior) {
+          return one_test().then(function (one_res) {
+            return [].concat(toConsumableArray_default()(all_prior), [one_res]);
+          });
+        });
+      }, Promise.resolve([]));
+    }
+    /**
+     *
+     * @param {AggregationTest} test Instance for a single unit test
+     * @param group {Object} Data corresponding to a specific group, following API format docs
+     * @returns {{groupType: *, stat: *, test: *, pvalue: *, variants: (*|Array|string[]|Map), group: *, mask: (*|string|SVGMaskElement|string)}}
+     * @private
+     */
+
+  }, {
+    key: "_runOne",
+    value: function _runOne(test, group) {
+      // Helper method that translates portal data into the format expected by a test.
+      var variants = group.variants;
+      var scores = this.variants.getScores(variants); // Most calculations will require adjusting API data to ensure that minor allele is the effect allele
+
+      var isAltEffect = this.variants.isAltEffect(variants);
+      var cov = this.groups.makeCovarianceMatrix(group, isAltEffect);
+      var mafs = this.variants.getEffectFreq(variants);
+      var weights; // TODO: The runner never actually uses the weights argument. Should it allow this?
+      // Some test classes may return a raw value and others will return a promise. Wrap the result for consistency.
+
+      var result = test.run(scores, cov, weights, mafs);
+      return Promise.resolve(result).then(function (_ref) {
+        var _ref2 = slicedToArray_default()(_ref, 2),
+            stat = _ref2[0],
+            pvalue = _ref2[1];
+
+        // The results describe the group + several new fields for calculation results.
+        return {
+          groupType: group.groupType,
+          group: group.group,
+          mask: group.mask,
+          variants: group.variants,
+          test: test.key,
+          stat: stat,
+          pvalue: pvalue
+        };
+      });
+    }
+    /**
+     * Generate a JSON representation of the results. Returns a Promise, because some methods may run asynchronously
+     *  (eg via web workers), or require loading external libraries (eg webassembly)
+     * @param results Array
+     * @returns {Promise<{data: {groups: Promise<any> | Array, variants: *}} | never>}
+     */
+
+  }, {
+    key: "toJSON",
+    value: function toJSON(results) {
+      var _this8 = this;
+
+      // Output calculation results in a format that matches the "precomputed results" endpoint
+      // By passing in an argument, user can format any set of results (even combining multiple runs)
+      if (!results) {
+        results = this.run();
+      } else {
+        results = Promise.resolve(results);
+      }
+
+      return results.then(function (group_results) {
+        return {
+          data: {
+            variants: _this8.variants.data,
+            groups: group_results
+          }
+        };
+      });
+    }
+  }]);
+
+  return PortalTestRunner;
+}();
+
+function parsePortalJSON(json) {
+  var data = json.data || json;
+  var groups = new helpers_PortalGroupHelper(data.groups.map(function (item) {
+    // Each group should have access to fields that, in portal json, are defined once globally
+    item.nSamples = data.nSamples;
+    item.sigmaSquared = data.sigmaSquared;
+    return item;
+  }));
+  var variants = new helpers_PortalVariantsHelper(data.variants);
+  return [groups, variants];
+}
+
+ // testing only
+
+
+// CONCATENATED MODULE: ./src/app/browser.js
+/* concated harmony reexport helpers */__webpack_require__.d(__webpack_exports__, "helpers", function() { return helpers_namespaceObject; });
+/* concated harmony reexport stats */__webpack_require__.d(__webpack_exports__, "stats", function() { return stats_namespaceObject; });
+/**
+ * Calculate aggregation tests and meta-analysis of these tests
+ * using score statistics and covariance matrices in the browser.
+ *
+ * This is the user-facing bundle, which exposes an API suitable for use in the web browser.
+ * If using es6 modules exclusively, consider including those files directly for greater control.
+ *
+ * @module browser
+ * @license MIT
+ */
+
+
+
 
 /***/ })
 /******/ ]);
