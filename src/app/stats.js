@@ -1026,6 +1026,9 @@ class SkatOptimalTest extends AggregationTest {
   /**
    * Calculate optimal SKAT test. <p>
    *
+   * This code is based partly on rvtests' implementation (https://git.io/fjQEs) which uses genotypes instead of
+   * scores/covariances, and also on the MetaSKAT R-package (https://git.io/fjQEZ).
+   *
    * @function
    * @param {Number[]} u Vector of score statistics (length m, number of variants).
    * @param {Number[]} v Covariance matrix of score statistics (m x m).
