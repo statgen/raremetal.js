@@ -817,16 +817,6 @@ class SkatIntegrator {
     this.VarQ = VarQ;
     this.VarZeta = VarZeta;
     this.Df = Df;
-
-    this.gkPoints = 21;
-    this.gkDepth = 30;
-    this.gkError = Number.EPSILON ** 0.25;
-  }
-
-  setIntegrationParams(points, depth, error) {
-    this.gkPoints = points;
-    this.gkDepth = depth;
-    this.gkError = error;
   }
 
   static pvalueDavies(q, lambdas) {
@@ -1185,15 +1175,7 @@ class SkatOptimalTest extends AggregationTest {
       dF
     );
 
-    // First pass is only capable of reaching p-values around 1e-6. To be conservative, we'll re-test if a
-    // p-value reaches < 1e-4.
-    integrator.setIntegrationParams(21, 30, Number.EPSILON ** 0.25);
     let pvalue = 1 - integrator.skatOptimalIntegral();
-    if (pvalue < 1e-4) {
-      // Increase integration accuracy to check for more significant p-value.
-      integrator.setIntegrationParams(21, 45, Number.EPSILON ** 0.15);
-      pvalue = 1 - integrator.skatOptimalIntegral();
-    }
 
     // Check SKAT p-value
     const multi = (nRhos < 3) ? 2 : 3;
