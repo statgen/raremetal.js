@@ -1,5 +1,5 @@
 import { assert } from 'chai';
-import { GaussKronrod } from '../../src/app/quadrature.js';
+import { GaussKronrod, ExpSinh } from '../../src/app/quadrature.js';
 
 describe('quadrature.js', function() {
   describe('GaussKronrod', function () {
@@ -15,6 +15,15 @@ describe('quadrature.js', function() {
       let f = x => Math.sin(x) * x;
       let [result, ] = integ.integrate(f, -20, 20);
       assert.closeTo(result, -14.497, 0.001);
+    });
+  });
+
+  describe('ExpSinh', function () {
+    it('exp(-x) / sqrt(x)', function () {
+      let integ = new ExpSinh();
+      let f = x => Math.exp(-x) / Math.sqrt(x);
+      let [result, ] = integ.integrate(f);
+      assert.closeTo(result, 1.77245, 0.0001);
     });
   });
 });

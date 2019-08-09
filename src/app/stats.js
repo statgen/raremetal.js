@@ -8,7 +8,7 @@ import { cholesky } from './linalg.js';
 import mvtdstpack from './mvtdstpack.js';
 import numeric from 'numeric';
 import * as qfc from './qfc.js';
-import { GaussKronrod } from './quadrature.js';
+import { ExpSinh } from './quadrature.js';
 import { pchisq, dbeta, pnorm, qchisq, dchisq } from './rstats.js';
 
 
@@ -958,16 +958,16 @@ class SkatIntegrator {
   }
 
   skatOptimalIntegral() {
-    const integ = new GaussKronrod(this.gkPoints, this.gkDepth, this.gkError);
+    const integ = new ExpSinh();
 
     // Try integrating Davies first
     let result;
     try {
-      result = integ.integrate(this.integrandDavies.bind(this), 0, 40);
+      result = integ.integrate(this.integrandDavies.bind(this));
     }
     catch (e1) {
       try {
-        result = integ.integrate(this.integrandLiu.bind(this), 0, 40);
+        result = integ.integrate(this.integrandLiu.bind(this));
       }
       catch (e2) {
         console.error("Could not integrate Davies or Liu integrands (SKAT-O)");
