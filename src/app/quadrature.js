@@ -401,8 +401,23 @@ class ExpSinh {
     return this.m_weights[n];
   }
 
-  integrate(f) {
-    let y_max = f(Number.MAX_VALUE);
+  integrate(f, a, b) {
+    let integrand = f;
+    if (isFinite(a) && (b >= Number.MAX_VALUE)) {
+      if (a !== 0) {
+        integrand = x => f(x + a);
+      }
+    }
+
+    if (isFinite(b) && (a <= -Number.MAX_VALUE)) {
+      integrand = x => f(b - x);
+    }
+
+    if (a <= -Number.MAX_VALUE && b >= Number.MAX_VALUE) {
+      throw new RangeError("Error: use sinh_sinh quadrature for integration over entire real line, exp_sinh is for half infinite [0, inf]");
+    }
+
+    let y_max = integrand(Number.MAX_VALUE);
     if (Math.abs(y_max) > Number.EPSILON || !isFinite(y_max)) {
       throw new RangeError("Error: integrated function does not go to zero at infinity");
     }
@@ -410,7 +425,7 @@ class ExpSinh {
     let I0 = 0;
     let L1_I0 = 0;
     for (let i = 0; i < this.m_abscissas[0].length; i++) {
-      let y = f(this.m_abscissas[0][i]);
+      let y = integrand(this.m_abscissas[0][i]);
       I0 += y * this.m_weights[0][i];
       L1_I0 += Math.abs(y) * this.m_weights[0][i];
     }
@@ -418,7 +433,7 @@ class ExpSinh {
     let I1 = I0;
     let L1_I1 = L1_I0;
     for (let i = 0; i < this.m_abscissas[1].length; i++) {
-      let y = f(this.m_abscissas[1][i]);
+      let y = integrand(this.m_abscissas[1][i]);
       I1 += y * this.m_weights[1][i];
       L1_I1 += Math.abs(y) * this.m_weights[1][i];
     }
@@ -444,7 +459,7 @@ class ExpSinh {
       let eps = Number.EPSILON * L1_I1;
       for (let j = 0; j < this.m_weights[i].length; j++) {
         let x = abscissas_row[j];
-        let y = f(x);
+        let y = integrand(x);
         sum += y * weight_row[j];
         let abterm0 = Math.abs(y) * weight_row[j];
         absum += abterm0;

@@ -25,5 +25,19 @@ describe('quadrature.js', function() {
       let [result, ] = integ.integrate(f);
       assert.closeTo(result, 1.77245, 0.0001);
     });
+
+    it('1/x^2 from 1 to inf', function () {
+      let integ = new ExpSinh();
+      let f = x => 1 / (x ** 2);
+      let [result, ] = integ.integrate(f, 1, Number.POSITIVE_INFINITY);
+      assert.closeTo(result, 1, 0.000001);
+    });
+
+    it('x * exp(-x^2) from 0 to inf', function () {
+      let integ = new ExpSinh();
+      let f = x => x * Math.exp(-Math.pow(x, 2));
+      let [result, ] = integ.integrate(f);
+      assert.closeTo(result, 0.5, 0.000001);
+    });
   });
 });
