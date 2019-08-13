@@ -740,7 +740,7 @@ function eigenvalues(A, maxiter) {
   var QH = numeric.toUpperHessenberg(A);
   var QB = numeric.QRFrancis(QH.H,maxiter);
   var T = numeric.T;
-  var n = A.length,i,k,flag = false,B = QB.B,H = numeric.dot(QB.Q,numeric.dot(QH.H,numeric.transpose(QB.Q)));
+  var i,k,B = QB.B,H = numeric.dot(QB.Q,numeric.dot(QH.H,numeric.transpose(QB.Q)));
   var Q = new T(numeric.dot(QB.Q,QH.Q)),Q0;
   var m = B.length,j;
   var a,b,c,d,p1,p2,disc,x,y,p,q,n1,n2;
