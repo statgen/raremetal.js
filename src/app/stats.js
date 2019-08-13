@@ -636,7 +636,7 @@ class SkatTest extends AggregationTest {
  * @return {Number[]} Array of [Q statistic, p-value].
  * @private
  */
-function _skatDavies(lambdas, qstat) {
+function _skatDavies(lambdas, qstat, acc=0.0001) {
   /**
    * lambdas - coefficient of jth chi-squared variable
    * nc1 - non-centrality parameters
@@ -668,7 +668,6 @@ function _skatDavies(lambdas, qstat) {
   let n1 = Array(n).fill(1);
   let sigma = 0.0;
   let lim1 = 10000;
-  let acc = 0.0001;
   let res = qfc.qf(lambdas, nc1, n1, n, sigma, qstat, lim1, acc);
   let qfval = res[0];
   let pval = 1.0 - qfval;
@@ -1112,6 +1111,10 @@ class SkatOptimalTest extends AggregationTest {
     const pvals = new Array(nRhos).fill(null);
     for (let i = 0; i < nRhos; i++) {
       pvals[i] = getPvalByMoment(Qs[i], moments[i]);
+      let [, daviesP] = _skatDavies(lambdas[i], Qs[i], 10**-6);
+      if (!isNaN(daviesP)) {
+        pvals[i] = daviesP;
+      }
     }
 
     // Calculate minimum p-value across all rho values
