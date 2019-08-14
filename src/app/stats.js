@@ -730,81 +730,159 @@ function _skatLiu(lambdas, qstat) {
   return [qstat, p];
 }
 
-/**
- * Modification of numeric's eigen() to only compute eigenvalues, rather than waste time storing the eigenvectors as well.
- * @param A
- * @param maxiter
- * @return {any[] | numeric.T}
- */
-function eigenvalues(A, maxiter) {
-  var QH = numeric.toUpperHessenberg(A);
-  var QB = numeric.QRFrancis(QH.H,maxiter);
-  var T = numeric.T;
-  var i,k,B = QB.B,H = numeric.dot(QB.Q,numeric.dot(QH.H,numeric.transpose(QB.Q)));
-  var Q = new T(numeric.dot(QB.Q,QH.Q)),Q0;
-  var m = B.length,j;
-  var a,b,c,d,p1,p2,disc,x,y,p,q,n1,n2;
-  var sqrt = Math.sqrt;
-  for(k=0;k<m;k++) {
-    i = B[k][0];
-    if(i === B[k][1]) {
-      // nothing
-    } else {
-      j = i+1;
-      a = H[i][i];
-      b = H[i][j];
-      c = H[j][i];
-      d = H[j][j];
-      if(b === 0 && c === 0) continue;
-      p1 = -a-d;
-      p2 = a*d-b*c;
-      disc = p1*p1-4*p2;
-      if(disc>=0) {
-        if(p1<0) x = -0.5*(p1-sqrt(disc));
-        else     x = -0.5*(p1+sqrt(disc));
-        n1 = (a-x)*(a-x)+b*b;
-        n2 = c*c+(d-x)*(d-x);
-        if(n1>n2) {
-          n1 = sqrt(n1);
-          p = (a-x)/n1;
-          q = b/n1;
-        } else {
-          n2 = sqrt(n2);
-          p = c/n2;
-          q = (d-x)/n2;
+// extension to real hermitian (symmetric) matrices
+// from this fork: https://git.io/fjdfx
+numeric.eigh = function(A, maxiter) {
+  return numeric.jacobi(A, maxiter)
+}
+
+numeric.jacobi = function(Ain, maxiter) {
+  // jacobi method with rutishauser improvements from
+  // Rutishauser, H. (1966). The Jacobi method for real symmetric matrices.
+  // Numerische Mathematik, 9(1), 1–10. doi:10.1007/BF02165223
+
+  // returns object containing
+  // E: {x : v} eigenvalues.
+  // lambda : {x: d} eigenstates.
+  // niter : number of iterations.
+  // iterations : list of convergence factors for each step of the iteration.
+  // nrot : number of rotations performed.
+
+  var size = [Ain.length, Ain[0].length];
+  if (size[0] !== size[1]) {
+    throw 'jacobi : matrix must be square';
+  }
+
+  // remember use only symmetric real matrices.
+  var n = size[0];
+
+  var v = numeric.identity(n);
+  var A = numeric.clone(Ain);
+
+  var iters = numeric.rep([maxiter], 0);
+  var d = numeric.getDiag(A);
+  var bw = numeric.clone(d);
+
+  // zeros
+  var zw = numeric.rep([n], 0);
+
+  // iteration parameters
+  var iter = -1;
+  var niter = 0;
+  var nrot = 0;
+  var tresh = 0;
+
+  //  prealloc
+  var h, g, gapq, term, termp, termq, theta, t, c, s, tau;
+  while (iter < maxiter)
+  {
+    iter++;
+    iters[iter] = numeric.jacobinorm(A);
+    niter = iter;
+    tresh = iters[iter]/(4 * n);
+
+    if (tresh==0) { return { E: { x: v }, lambda: { x: d }, iterations: iters, niter: niter, nrot: nrot }; }
+
+    for (var p = 0; p < n; p++)
+    {
+      for (var q = p + 1; q < n; q++)
+      {
+        gapq = 10*Math.abs(A[p][q]);
+        termp = gapq + Math.abs(d[p]);
+        termq = gapq + Math.abs(d[q]);
+        if (iter > 4 && termp == Math.abs(d[p]) && termq == Math.abs(d[q]))
+        {
+          // remove small elmts
+          A[p][q] = 0;
         }
-        Q0 = new T([[q,-p],[p,q]]);
-        Q.setRows(i,j,Q0.dot(Q.getRows(i,j)));
-      } else {
-        x = -0.5*p1;
-        y = 0.5*sqrt(-disc);
-        n1 = (a-x)*(a-x)+b*b;
-        n2 = c*c+(d-x)*(d-x);
-        if(n1>n2) {
-          n1 = sqrt(n1+y*y);
-          p = (a-x)/n1;
-          q = b/n1;
-          x = 0;
-          y /= n1;
-        } else {
-          n2 = sqrt(n2+y*y);
-          p = c/n2;
-          q = (d-x)/n2;
-          x = y/n2;
-          y = 0;
+        else
+        {
+          if (Math.abs(A[p][q]) >= tresh)
+          {
+            // apply rotation
+            h = d[q] - d[p];
+            term = Math.abs(h) + gapq;
+            if (term == Math.abs(h))
+            {
+              t = A[p][q]/h;
+            }
+            else
+            {
+              theta = 0.5 * h / A[p][q];
+              t = 1/(Math.abs(theta) + Math.sqrt(1 + theta*theta));
+              if (theta < 0)
+              {
+                t = -t;
+              }
+            }
+            c = 1/Math.sqrt(1 + t*t);
+            s = t * c;
+            tau = s/(1 + c);
+            h = t * A[p][q];
+            zw[p] = zw[p] - h;
+            zw[q] = zw[q] + h;
+            d[p] = d[p] - h;
+            d[q] = d[q] + h;
+            A[p][q] = 0;
+            // rotate and use upper tria only
+            for (let j = 0; j < p; j++)
+            {
+              g = A[j][p];
+              h = A[j][q];
+              A[j][p] = g - s * (h + g * tau);
+              A[j][q] = h + s * (g - h * tau);
+            }
+            for (let j = p + 1; j < q; j++)
+            {
+              g = A[p][j];
+              h = A[j][q];
+              A[p][j] = g - s * (h + g * tau);
+              A[j][q] = h + s * (g - h * tau);
+            }
+            for (let j = q + 1; j < n; j++)
+            {
+              g = A[p][j];
+              h = A[q][j];
+              A[p][j] = g - s * (h + g * tau);
+              A[q][j] = h + s * (g - h * tau);
+            }
+            // eigenstates
+            for (let j = 0; j < n; j++)
+            {
+              g = v[j][p];
+              h = v[j][q];
+              v[j][p] = g - s * (h + g * tau);
+              v[j][q] = h + s * (g - h * tau);
+            }
+            nrot++;
+          }
         }
-        Q0 = new T([[q,-p],[p,q]],[[x,y],[y,-x]]);
-        Q.setRows(i,j,Q0.dot(Q.getRows(i,j)));
       }
     }
+    bw = numeric.add(bw, zw);
+    d = numeric.clone(bw);
+    zw = numeric.rep([n], 0);
   }
-  var R = Q.dot(A).dot(Q.transjugate());
-  return R.getDiag().x;
+
+  return { E: { x: v }, lambda: { x: d }, iterations: iters, niter: niter, nrot: nrot };
+}
+
+numeric.jacobinorm = function(A) {
+  // used in numeric.jacobi
+  var n = A.length;
+  var s = 0;
+  for (var i = 0; i < n; i ++)
+  {
+    for (var j = i + 1; j < n; j ++)
+    {
+      s = s + Math.pow(A[i][j], 2)
+    }
+  }
+  return Math.sqrt(s);
 }
 
 function getEigen(m) {
-  const lambdas = eigenvalues(m, 1000000);
-  lambdas.sort((a, b) => a - b);
+  const lambdas = numeric.eigh(m, 1000000).lambda.x.sort((a, b) => a - b);
   const n = lambdas.length;
   let numNonZero = 0;
   let sumNonZero = 0.0;
