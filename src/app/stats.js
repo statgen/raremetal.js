@@ -1020,7 +1020,10 @@ class SkatIntegrator {
   }
 
   skatOptimalIntegral() {
-    const integ = new ExpSinh();
+    // Regarding the tolerance below:
+    // https://www.boost.org/doc/libs/1_70_0/libs/math/doc/html/math_toolkit/double_exponential/de_tol.html
+    // This particular tolerance appears to be enough to get a good match with MetaSKAT. Any larger and we lose power.
+    const integ = new ExpSinh(9, Number.EPSILON ** (2/3));
 
     // Try integrating Davies first
     let result;
