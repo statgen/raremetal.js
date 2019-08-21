@@ -939,31 +939,40 @@ function getMoment(lambdas) {
 
   const muQ = c[0];
   const sigmaQ = Math.sqrt(2 * c[1]);
-  const s1 = c[2] / c[1] / Math.sqrt(c[1]);
+  const s1 = c[2] / c[1] ** (3/2);
   const s2 = c[3] / (c[1] * c[1]);
 
   let a, d, l;
   if (s1 * s1 > s2) {
     a = 1 / (s1 - Math.sqrt(s1 * s1 - s2));
-    d = (s1 * a - a * a);
+    d = (s1 * (a ** 3) - a * a);
     l = a * a - 2 * d;
   }
   else {
     l = 1.0 / s2;
+    a = Math.sqrt(l);
+    d = 0;
   }
+
+  let muX = l + d;
+  let sigmaX = Math.sqrt(2) * a;
 
   const varQ = sigmaQ * sigmaQ;
   const df = l;
   return {
     muQ: muQ,
     varQ: varQ,
-    df: df
+    df: df,
+    ncp: d,
+    muX: muX,
+    sigmaQ: sigmaQ,
+    sigmaX: sigmaX
   }
 }
 
 function getPvalByMoment(q, m) {
-  const qNorm = (q - m.muQ) / Math.sqrt(m.varQ) * Math.sqrt(2.0 * m.df) + m.df;
-  return pchisq(qNorm, m.df, 0, false, false);
+  const qNorm = ((q - m.muQ) / m.sigmaQ) * m.sigmaX + m.muX;
+  return pchisq(qNorm, m.df, m.ncp, false, false);
 }
 
 function getQvalByMoment(min_pval, m) {
@@ -1276,12 +1285,18 @@ class SkatOptimalTest extends AggregationTest {
     }
 
     // Calculate p-values for each rho
-    const pvals = new Array(nRhos).fill(null);
+    const pvals = new Array(nRhos).fill(NaN);
+    const daviesPvals = new Array(nRhos).fill(NaN);
+    const liuPvals = new Array(nRhos).fill(NaN);
     for (let i = 0; i < nRhos; i++) {
-      pvals[i] = getPvalByMoment(Qs[i], moments[i]);
-      let [, daviesP] = _skatDavies(lambdas[i], Qs[i], 10**-6);
-      if (!isNaN(daviesP)) {
-        pvals[i] = daviesP;
+      liuPvals[i] = getPvalByMoment(Qs[i], moments[i]);
+      daviesPvals[i] = _skatDavies(lambdas[i], Qs[i], 10**-6)[1];
+
+      if (!isNaN(daviesPvals[i])) {
+        pvals[i] = daviesPvals[i];
+      }
+      else {
+        pvals[i] = liuPvals[i];
       }
     }
 
