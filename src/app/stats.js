@@ -1363,6 +1363,12 @@ class SkatOptimalTest extends AggregationTest {
 
     let pvalue = 1 - integrator.skatOptimalIntegral();
 
+    // Use minimum p-value adjusted for # of tests if less than what integrator provides. https://git.io/fjNOj
+    let minP_adj = minP * nRhos;
+    if (minP_adj < pvalue) {
+      pvalue = minP_adj;
+    }
+
     // Check SKAT p-value
     const multi = (nRhos < 3) ? 2 : 3;
     if (nRhos) {
