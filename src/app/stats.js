@@ -881,6 +881,7 @@ numeric.jacobinorm = function(A) {
   return Math.sqrt(s);
 }
 
+/*
 function toRMatrix(m) {
   let tmp = "c(" + m.map(x => "c(" + x.map(x => x.toFixed(3)).join(", ") + ")").join(", ") + ")";
   return `matrix(${tmp}, nrow=${m.length})`;
@@ -894,6 +895,7 @@ function writeMatrixToFile(m, fpath) {
   }
   fs.writeFileSync(fpath, s);
 }
+*/
 
 function getEigen(m) {
   const lambdas = numeric.eigh(m, 1000000).lambda.x.sort((a, b) => a - b);
