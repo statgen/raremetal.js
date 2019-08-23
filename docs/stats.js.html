@@ -36,7 +36,7 @@ import { cholesky } from './linalg.js';
 import mvtdstpack from './mvtdstpack.js';
 import numeric from 'numeric';
 import * as qfc from './qfc.js';
-import { GaussKronrod } from './quadrature.js';
+import { ExpSinh } from './quadrature.js';
 import { pchisq, dbeta, pnorm, qchisq, dchisq } from './rstats.js';
 
 
@@ -664,7 +664,7 @@ class SkatTest extends AggregationTest {
  * @return {Number[]} Array of [Q statistic, p-value].
  * @private
  */
-function _skatDavies(lambdas, qstat) {
+function _skatDavies(lambdas, qstat, acc=0.0001) {
   /**
    * lambdas - coefficient of jth chi-squared variable
    * nc1 - non-centrality parameters
@@ -696,7 +696,6 @@ function _skatDavies(lambdas, qstat) {
   let n1 = Array(n).fill(1);
   let sigma = 0.0;
   let lim1 = 10000;
-  let acc = 0.0001;
   let res = qfc.qf(lambdas, nc1, n1, n, sigma, qstat, lim1, acc);
   let qfval = res[0];
   let pval = 1.0 - qfval;
@@ -759,8 +758,175 @@ function _skatLiu(lambdas, qstat) {
   return [qstat, p];
 }
 
+// extension to real hermitian (symmetric) matrices
+// from this fork: https://git.io/fjdfx
+numeric.eigh = function(A, maxiter) {
+  return numeric.jacobi(A, maxiter)
+}
+
+numeric.jacobi = function(Ain, maxiter) {
+  // jacobi method with rutishauser improvements from
+  // Rutishauser, H. (1966). The Jacobi method for real symmetric matrices.
+  // Numerische Mathematik, 9(1), 1–10. doi:10.1007/BF02165223
+
+  // returns object containing
+  // E: {x : v} eigenvalues.
+  // lambda : {x: d} eigenstates.
+  // niter : number of iterations.
+  // iterations : list of convergence factors for each step of the iteration.
+  // nrot : number of rotations performed.
+
+  var size = [Ain.length, Ain[0].length];
+  if (size[0] !== size[1]) {
+    throw 'jacobi : matrix must be square';
+  }
+
+  // remember use only symmetric real matrices.
+  var n = size[0];
+
+  var v = numeric.identity(n);
+  var A = numeric.clone(Ain);
+
+  var iters = numeric.rep([maxiter], 0);
+  var d = numeric.getDiag(A);
+  var bw = numeric.clone(d);
+
+  // zeros
+  var zw = numeric.rep([n], 0);
+
+  // iteration parameters
+  var iter = -1;
+  var niter = 0;
+  var nrot = 0;
+  var tresh = 0;
+
+  //  prealloc
+  var h, g, gapq, term, termp, termq, theta, t, c, s, tau;
+  while (iter &lt; maxiter)
+  {
+    iter++;
+    iters[iter] = numeric.jacobinorm(A);
+    niter = iter;
+    tresh = iters[iter]/(4 * n);
+
+    if (tresh==0) { return { E: { x: v }, lambda: { x: d }, iterations: iters, niter: niter, nrot: nrot }; }
+
+    for (var p = 0; p &lt; n; p++)
+    {
+      for (var q = p + 1; q &lt; n; q++)
+      {
+        gapq = 10*Math.abs(A[p][q]);
+        termp = gapq + Math.abs(d[p]);
+        termq = gapq + Math.abs(d[q]);
+        if (iter > 4 &amp;&amp; termp == Math.abs(d[p]) &amp;&amp; termq == Math.abs(d[q]))
+        {
+          // remove small elmts
+          A[p][q] = 0;
+        }
+        else
+        {
+          if (Math.abs(A[p][q]) >= tresh)
+          {
+            // apply rotation
+            h = d[q] - d[p];
+            term = Math.abs(h) + gapq;
+            if (term == Math.abs(h))
+            {
+              t = A[p][q]/h;
+            }
+            else
+            {
+              theta = 0.5 * h / A[p][q];
+              t = 1/(Math.abs(theta) + Math.sqrt(1 + theta*theta));
+              if (theta &lt; 0)
+              {
+                t = -t;
+              }
+            }
+            c = 1/Math.sqrt(1 + t*t);
+            s = t * c;
+            tau = s/(1 + c);
+            h = t * A[p][q];
+            zw[p] = zw[p] - h;
+            zw[q] = zw[q] + h;
+            d[p] = d[p] - h;
+            d[q] = d[q] + h;
+            A[p][q] = 0;
+            // rotate and use upper tria only
+            for (let j = 0; j &lt; p; j++)
+            {
+              g = A[j][p];
+              h = A[j][q];
+              A[j][p] = g - s * (h + g * tau);
+              A[j][q] = h + s * (g - h * tau);
+            }
+            for (let j = p + 1; j &lt; q; j++)
+            {
+              g = A[p][j];
+              h = A[j][q];
+              A[p][j] = g - s * (h + g * tau);
+              A[j][q] = h + s * (g - h * tau);
+            }
+            for (let j = q + 1; j &lt; n; j++)
+            {
+              g = A[p][j];
+              h = A[q][j];
+              A[p][j] = g - s * (h + g * tau);
+              A[q][j] = h + s * (g - h * tau);
+            }
+            // eigenstates
+            for (let j = 0; j &lt; n; j++)
+            {
+              g = v[j][p];
+              h = v[j][q];
+              v[j][p] = g - s * (h + g * tau);
+              v[j][q] = h + s * (g - h * tau);
+            }
+            nrot++;
+          }
+        }
+      }
+    }
+    bw = numeric.add(bw, zw);
+    d = numeric.clone(bw);
+    zw = numeric.rep([n], 0);
+  }
+
+  return { E: { x: v }, lambda: { x: d }, iterations: iters, niter: niter, nrot: nrot };
+}
+
+numeric.jacobinorm = function(A) {
+  // used in numeric.jacobi
+  var n = A.length;
+  var s = 0;
+  for (var i = 0; i &lt; n; i ++)
+  {
+    for (var j = i + 1; j &lt; n; j ++)
+    {
+      s = s + Math.pow(A[i][j], 2)
+    }
+  }
+  return Math.sqrt(s);
+}
+
+/*
+function toRMatrix(m) {
+  let tmp = "c(" + m.map(x => "c(" + x.map(x => x.toFixed(3)).join(", ") + ")").join(", ") + ")";
+  return `matrix(${tmp}, nrow=${m.length})`;
+}
+
+function writeMatrixToFile(m, fpath) {
+  let fs = require("fs");
+  let s = "";
+  for (let row of m) {
+    s += row.join("\t") + "\n";
+  }
+  fs.writeFileSync(fpath, s);
+}
+*/
+
 function getEigen(m) {
-  const lambdas = numeric.eig(m, 1000000).lambda.x.sort((a, b) => a - b);
+  const lambdas = numeric.eigh(m, 1000000).lambda.x.sort((a, b) => a - b);
   const n = lambdas.length;
   let numNonZero = 0;
   let sumNonZero = 0.0;
@@ -803,31 +969,40 @@ function getMoment(lambdas) {
 
   const muQ = c[0];
   const sigmaQ = Math.sqrt(2 * c[1]);
-  const s1 = c[2] / c[1] / Math.sqrt(c[1]);
+  const s1 = c[2] / c[1] ** (3/2);
   const s2 = c[3] / (c[1] * c[1]);
 
   let a, d, l;
   if (s1 * s1 > s2) {
     a = 1 / (s1 - Math.sqrt(s1 * s1 - s2));
-    d = (s1 * a - a * a);
+    d = (s1 * (a ** 3) - a * a);
     l = a * a - 2 * d;
   }
   else {
     l = 1.0 / s2;
+    a = Math.sqrt(l);
+    d = 0;
   }
+
+  let muX = l + d;
+  let sigmaX = Math.sqrt(2) * a;
 
   const varQ = sigmaQ * sigmaQ;
   const df = l;
   return {
     muQ: muQ,
     varQ: varQ,
-    df: df
+    df: df,
+    ncp: d,
+    muX: muX,
+    sigmaQ: sigmaQ,
+    sigmaX: sigmaX
   }
 }
 
 function getPvalByMoment(q, m) {
-  const qNorm = (q - m.muQ) / Math.sqrt(m.varQ) * Math.sqrt(2.0 * m.df) + m.df;
-  return pchisq(qNorm, m.df, 0, false, false);
+  const qNorm = ((q - m.muQ) / m.sigmaQ) * m.sigmaX + m.muX;
+  return pchisq(qNorm, m.df, m.ncp, false, false);
 }
 
 function getQvalByMoment(min_pval, m) {
@@ -845,25 +1020,14 @@ class SkatIntegrator {
     this.VarQ = VarQ;
     this.VarZeta = VarZeta;
     this.Df = Df;
-
-    this.gkPoints = 21;
-    this.gkDepth = 30;
-    this.gkError = Number.EPSILON ** 0.25;
   }
 
-  setIntegrationParams(points, depth, error) {
-    this.gkPoints = points;
-    this.gkDepth = depth;
-    this.gkError = error;
-  }
-
-  static pvalueDavies(q, lambdas) {
+  static pvalueDavies(q, lambdas, acc=1e-4) {
     let n = lambdas.length;
     let nc1 = Array(n).fill(0);
     let n1 = Array(n).fill(1);
     let sigma = 0.0;
     let lim1 = 10000;
-    let acc = 0.0001;
     let res = qfc.qf(lambdas, nc1, n1, n, sigma, q, lim1, acc);
     let qfval = res[0];
     let fault = res[1];
@@ -874,7 +1038,7 @@ class SkatIntegrator {
     }
 
     if (fault) {
-      pvalue = -1.0;
+      throw new RangeError("Davies failed");
     }
 
     return pvalue;
@@ -943,10 +1107,7 @@ class SkatIntegrator {
     }
     else {
       let Q = (kappa - this.MuQ) * Math.sqrt(this.VarQ - this.VarZeta) / Math.sqrt(this.VarQ) + this.MuQ;
-      temp = SkatIntegrator.pvalueDavies(Q, this.lambda);
-      if (temp &lt;= 0.0 || temp === 1.0) {
-        temp = SkatIntegrator.pvalueLiu(Q, this.lambda);
-      }
+      temp = SkatIntegrator.pvalueDavies(Q, this.lambda, 1e-6);
     }
     let final = (1.0 - temp) * dchisq(x, 1);
     //console.log("integrandDavies: ", x, temp, final);
@@ -986,24 +1147,31 @@ class SkatIntegrator {
   }
 
   skatOptimalIntegral() {
-    const integ = new GaussKronrod(this.gkPoints, this.gkDepth, this.gkError);
+    // Regarding the tolerance below:
+    // https://www.boost.org/doc/libs/1_70_0/libs/math/doc/html/math_toolkit/double_exponential/de_tol.html
+    // This particular tolerance appears to be enough to get a good match with MetaSKAT. Any larger and we lose power.
+    const integ = new ExpSinh(9, Number.EPSILON ** (2/3));
 
-    // Try integrating Davies first
-    let result;
+    // In MetaSKAT, integrating "SKAT_Optimal_Integrate_Func_Davies" is only capable of reaching approximately the limit
+    // below. Because we changed quadratures to exp_sinh, we are sometimes able to integrate beyond this limit, up to
+    // around 1e-15 or so (or possibly even smaller.) However, this causes a deviation from MetaSKAT's results, so we cap
+    // our integrator at this value. Theoretically, removing this limitation would make our procedure slightly more powerful,
+    // however usually in the range beyond the Davies limit, we end up using minP * nRhos anyway.
+    let daviesLimit = 2.151768e-10;
+    let pvalue = NaN;
     try {
-      result = integ.integrate(this.integrandDavies.bind(this), 0, 40);
+      pvalue = 1 - integ.integrate(this.integrandDavies.bind(this))[0];
+      if (!isNaN(pvalue)) {
+        if (pvalue &lt; daviesLimit) {
+          pvalue = daviesLimit;
+        }
+      }
     }
-    catch (e1) {
-      try {
-        result = integ.integrate(this.integrandLiu.bind(this), 0, 40);
-      }
-      catch (e2) {
-        console.error("Could not integrate Davies or Liu integrands (SKAT-O)");
-        throw e2;
-      }
+    catch (error) {
+      pvalue = 1 - integ.integrate(this.integrandLiu.bind(this))[0];
     }
 
-    return result[0];
+    return pvalue;
   }
 }
 
@@ -1147,9 +1315,19 @@ class SkatOptimalTest extends AggregationTest {
     }
 
     // Calculate p-values for each rho
-    const pvals = new Array(nRhos).fill(null);
+    const pvals = new Array(nRhos).fill(NaN);
+    const daviesPvals = new Array(nRhos).fill(NaN);
+    const liuPvals = new Array(nRhos).fill(NaN);
     for (let i = 0; i &lt; nRhos; i++) {
-      pvals[i] = getPvalByMoment(Qs[i], moments[i]);
+      liuPvals[i] = getPvalByMoment(Qs[i], moments[i]);
+      daviesPvals[i] = _skatDavies(lambdas[i], Qs[i], 10**-6)[1];
+
+      if (!isNaN(daviesPvals[i])) {
+        pvals[i] = daviesPvals[i];
+      }
+      else {
+        pvals[i] = liuPvals[i];
+      }
     }
 
     // Calculate minimum p-value across all rho values
@@ -1213,14 +1391,12 @@ class SkatOptimalTest extends AggregationTest {
       dF
     );
 
-    // First pass is only capable of reaching p-values around 1e-6. To be conservative, we'll re-test if a
-    // p-value reaches &lt; 1e-4.
-    integrator.setIntegrationParams(21, 30, Number.EPSILON ** 0.25);
-    let pvalue = 1 - integrator.skatOptimalIntegral();
-    if (pvalue &lt; 1e-4) {
-      // Increase integration accuracy to check for more significant p-value.
-      integrator.setIntegrationParams(21, 45, Number.EPSILON ** 0.15);
-      pvalue = 1 - integrator.skatOptimalIntegral();
+    let pvalue = integrator.skatOptimalIntegral();
+
+    // Use minimum p-value adjusted for # of tests if less than what integrator provides. https://git.io/fjNOj
+    let minP_adj = minP * nRhos;
+    if (minP_adj &lt; pvalue) {
+      pvalue = minP_adj;
     }
 
     // Check SKAT p-value
@@ -1269,7 +1445,7 @@ export { SkatTest, SkatOptimalTest, ZegginiBurdenTest, VTTest,
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.1</a> on Tue Aug 06 2019 18:06:14 GMT-0400 (Eastern Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.1</a> on Fri Aug 23 2019 15:58:35 GMT-0400 (Eastern Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>
