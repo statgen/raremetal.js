@@ -994,13 +994,12 @@ class SkatIntegrator {
     this.Df = Df;
   }
 
-  static pvalueDavies(q, lambdas) {
+  static pvalueDavies(q, lambdas, acc=1e-4) {
     let n = lambdas.length;
     let nc1 = Array(n).fill(0);
     let n1 = Array(n).fill(1);
     let sigma = 0.0;
     let lim1 = 10000;
-    let acc = 0.0001;
     let res = qfc.qf(lambdas, nc1, n1, n, sigma, q, lim1, acc);
     let qfval = res[0];
     let fault = res[1];
@@ -1011,7 +1010,7 @@ class SkatIntegrator {
     }
 
     if (fault) {
-      pvalue = -1.0;
+      throw new RangeError("Davies failed");
     }
 
     return pvalue;
@@ -1080,10 +1079,7 @@ class SkatIntegrator {
     }
     else {
       let Q = (kappa - this.MuQ) * Math.sqrt(this.VarQ - this.VarZeta) / Math.sqrt(this.VarQ) + this.MuQ;
-      temp = SkatIntegrator.pvalueDavies(Q, this.lambda);
-      if (temp <= 0.0 || temp === 1.0) {
-        temp = SkatIntegrator.pvalueLiu(Q, this.lambda);
-      }
+      temp = SkatIntegrator.pvalueDavies(Q, this.lambda, 1e-6);
     }
     let final = (1.0 - temp) * dchisq(x, 1);
     //console.log("integrandDavies: ", x, temp, final);
@@ -1128,22 +1124,26 @@ class SkatIntegrator {
     // This particular tolerance appears to be enough to get a good match with MetaSKAT. Any larger and we lose power.
     const integ = new ExpSinh(9, Number.EPSILON ** (2/3));
 
-    // Try integrating Davies first
-    let result;
+    // In MetaSKAT, integrating "SKAT_Optimal_Integrate_Func_Davies" is only capable of reaching approximately the limit
+    // below. Because we changed quadratures to exp_sinh, we are sometimes able to integrate beyond this limit, up to
+    // around 1e-15 or so (or possibly even smaller.) However, this causes a deviation from MetaSKAT's results, so we cap
+    // our integrator at this value. Theoretically, removing this limitation would make our procedure slightly more powerful,
+    // however usually in the range beyond the Davies limit, we end up using minP * nRhos anyway.
+    let daviesLimit = 2.151768e-10;
+    let pvalue = NaN;
     try {
-      result = integ.integrate(this.integrandDavies.bind(this));
+      pvalue = 1 - integ.integrate(this.integrandDavies.bind(this))[0];
+      if (!isNaN(pvalue)) {
+        if (pvalue < daviesLimit) {
+          pvalue = daviesLimit;
+        }
+      }
     }
-    catch (e1) {
-      try {
-        result = integ.integrate(this.integrandLiu.bind(this));
-      }
-      catch (e2) {
-        console.error("Could not integrate Davies or Liu integrands (SKAT-O)");
-        throw e2;
-      }
+    catch (error) {
+      pvalue = 1 - integ.integrate(this.integrandLiu.bind(this))[0];
     }
 
-    return result[0];
+    return pvalue;
   }
 }
 
@@ -1363,7 +1363,7 @@ class SkatOptimalTest extends AggregationTest {
       dF
     );
 
-    let pvalue = 1 - integrator.skatOptimalIntegral();
+    let pvalue = integrator.skatOptimalIntegral();
 
     // Use minimum p-value adjusted for # of tests if less than what integrator provides. https://git.io/fjNOj
     let minP_adj = minP * nRhos;
