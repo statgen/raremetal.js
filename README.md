@@ -27,8 +27,6 @@ The methods implemented in this package are described across a number of papers 
 * ["General Framework for Meta-analysis of Rare Variants in Sequencing Association Studies." Lee et al, 2013.](https://doi.org/10.1016/j.ajhg.2013.05.010)
 * ["Optimal Tests for Rare Variant Effects in Sequencing Association Studies." Lee et al, 2012.](https://doi.org/10.1093/biostatistics/kxs014)
 
-:warning: The current implementation of SKAT-O can only reach p-values of roughly 1e-8. It can be used for detecting genome-wide significance for gene-based tests at a Bonferroni correction of 0.05 / 50000 = 1e-6 (assuming roughly 50,000 genes.)
-
 **Methods for aggregation tests on covariance matrices**:
 
 * ["Meta-analysis of gene-level tests for rare variant association." Liu et al, 2013.](https://www.nature.com/articles/ng.2852)
