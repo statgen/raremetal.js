@@ -36,6 +36,8 @@ This package is based partly on methods implemented in the following software:
 
 * [RAREMETAL](https://genome.sph.umich.edu/wiki/RAREMETAL)
 * [rvtests](https://github.com/zhanxw/rvtests)
+* [SKAT R package](https://cran.r-project.org/web/packages/SKAT/index.html)
+* [MetaSKAT R package](https://cran.r-project.org/web/packages/MetaSKAT/index.html)
 
 ## Usage
 
