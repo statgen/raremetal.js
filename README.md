@@ -117,3 +117,9 @@ The following commands are particularly useful during development
 - `npm run build`: build `dist/` files and documentation
 
 [raremetal.js]: https://github.com/statgen/raremetal.js
+
+### Internal testing
+
+Please see `/net/snowwhite/home/welchr/projects/covarmatrices/README.md` for details on how we compared raremetal.js with existing programs
+such as (rvtest, RAREMETAL, MetaSKAT) on larger test sets of data (whole genome sequencing, or simulated data.) Unit tests were subsequently
+derived from these larger tests to cover edge cases and extreme p-values.
