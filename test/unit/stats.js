@@ -140,7 +140,7 @@ describe('stats.js', function() {
         pval,
         expectedPval,
         0.001,
-        'testBurden on known u/cov did not produce close enough p-value to expected'
+        'testBurden on known u/cov did not produce close enough p-value to expected',
       );
     });
   });
@@ -179,7 +179,7 @@ describe('stats.js', function() {
         pval,
         expectedPval,
         0.001,
-        'SkatTest on known u/cov did not produce close enough p-value to expected'
+        'SkatTest on known u/cov did not produce close enough p-value to expected',
       );
     });
 
@@ -194,7 +194,7 @@ describe('stats.js', function() {
         pval,
         expectedPval,
         0.0000001,
-        'SkatTest on known u/cov did not produce close enough p-value to expected'
+        'SkatTest on known u/cov did not produce close enough p-value to expected',
       );
     });
   });
@@ -218,7 +218,7 @@ describe('stats.js', function() {
         pval,
         expectedPval,
         0.001,
-        'SkatOptimalTest on known u/cov did not produce close enough p-value to expected'
+        'SkatOptimalTest on known u/cov did not produce close enough p-value to expected',
       );
     });
 
@@ -241,7 +241,7 @@ describe('stats.js', function() {
         pval,
         expectedPval,
         1e-4,
-        'SkatOptimalTest on known u/cov did not produce close enough p-value to expected'
+        'SkatOptimalTest on known u/cov did not produce close enough p-value to expected',
       );
 
     });
@@ -260,7 +260,7 @@ describe('stats.js', function() {
         pval,
         expectedPval,
         1e-6,
-        'SkatOptimalTest on known u/cov did not produce close enough p-value to expected'
+        'SkatOptimalTest on known u/cov did not produce close enough p-value to expected',
       );
     });
 
@@ -278,7 +278,7 @@ describe('stats.js', function() {
         pval,
         expectedPval,
         1e-6,
-        'SkatOptimalTest on known u/cov did not produce close enough p-value to expected'
+        'SkatOptimalTest on known u/cov did not produce close enough p-value to expected',
       );
     });
 

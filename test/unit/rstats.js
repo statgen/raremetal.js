@@ -298,7 +298,7 @@ describe('rstats.js', function() {
         y.forEach((v) => {
           assert(nearlyEqual(
             pnorm(-v, 0, 1, true, b),
-            pnorm(+v, 0, 1, false, b)
+            pnorm(+v, 0, 1, false, b),
           ));
         });
       }

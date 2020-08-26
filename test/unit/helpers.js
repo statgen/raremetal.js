@@ -54,7 +54,7 @@ describe('helpers.js', function () {
       assert.deepEqual(
         helper.isAltEffect(variant_names),
         [true, false],
-        'Correctly identifies whether alt is effect allele'
+        'Correctly identifies whether alt is effect allele',
       );
     });
   });
@@ -95,7 +95,7 @@ describe('helpers.js', function () {
             [ 1, 2, 3 ],
             [ 2, 4, 5 ],
             [ 3, 5, 6 ],
-          ]
+          ],
         );
       });
 
@@ -110,7 +110,7 @@ describe('helpers.js', function () {
             [ -2, 4, 5 ],
             [ -3, 5, 6 ],
           ],
-          'Correctly handles a single variant sign flip'
+          'Correctly handles a single variant sign flip',
         );
 
         const two_flips = [false, false, true];
@@ -122,7 +122,7 @@ describe('helpers.js', function () {
             [ 2, 4, -5 ],
             [ -3, -5, 6 ],
           ],
-          'Correctly handles the case where two signs are flipped'
+          'Correctly handles the case where two signs are flipped',
         );
       });
     });
@@ -159,7 +159,7 @@ describe('helpers.js', function () {
           new PortalTestRunner(this.groups, this.variants, ['nonexistent']);
         },
         /Cannot make unknown test type/,
-        'Fails if given invalid test name'
+        'Fails if given invalid test name',
       );
 
       assert.throws(
@@ -167,7 +167,7 @@ describe('helpers.js', function () {
           new PortalTestRunner(this.groups, this.variants, [42]);
         },
         /Must specify test as name or instance/,
-        'Fails if test type can not be resolved'
+        'Fails if test type can not be resolved',
       );
     });
 

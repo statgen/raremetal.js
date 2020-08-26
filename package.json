@@ -4,20 +4,20 @@
   "version": "1.1.1",
   "description": "Calculate aggregation tests and meta-analysis of aggregation test results using score statistics and covariance matrices",
   "engines": {
-    "node": "~10.15.3"
+    "node": ">=10.13.0"
   },
   "main": "dist/raremetal.js",
+  "module": "src/app/browser.js",
   "bin": {
     "raremetal.js": "src/app/cli.js"
   },
   "scripts": {
-    "test": "gulp",
-    "lint": "gulp lint",
-    "test-browser": "gulp test-browser",
-    "watch": "gulp watch",
-    "build": "gulp build && npm run docs",
+    "test": "mocha --recursive test",
+    "lint": "eslint src/ test/",
+    "build": "npm run test && webpack --config webpack.prod.cjs && npm run docs",
+    "dev": "webpack --watch --config webpack.dev.cjs",
     "docs": "jsdoc src/app -R README.md -d docs/",
-    "coverage": "gulp coverage",
+    "coverage": "nyc npm test",
     "preversion": "[ `git rev-parse --abbrev-ref HEAD` == 'master' ] && npm run build",
     "version": "git add -A dist && git add -A docs"
   },
@@ -52,50 +52,29 @@
     "@babel/preset-env": "^7.11.0",
     "@babel/register": "^7.10.5",
     "@babel/runtime": "^7.11.2",
-    "acorn": "^6.4.1",
     "argparse": "^1.0.10",
     "babel-loader": "^8.1.0",
     "chai": "^4.2.0",
-    "clean-webpack-plugin": "^2.0.2",
+    "clean-webpack-plugin": "^3.0.0",
     "cli-table": "^0.3.1",
     "cli-table2": "^0.2.0",
-    "fancy-log": "^1.3.3",
+    "copy-webpack-plugin": "^6.0.3",
+    "eslint": "^7.7.0",
     "file-loader": "^4.3.0",
-    "glob": "^7.1.6",
-    "gulp": "^4.0.2",
-    "gulp-debug": "^4.0.0",
-    "gulp-eslint": "^5.0.0",
-    "gulp-exit": "0.0.2",
-    "gulp-filter": "^5.1.0",
-    "gulp-istanbul": "^1.1.3",
-    "gulp-livereload": "^4.0.2",
-    "gulp-load-plugins": "^1.6.0",
-    "gulp-mocha": "^6.0.0",
-    "gulp-plumber": "^1.2.1",
-    "gulp-rename": "^1.4.0",
-    "gulp-sourcemaps": "^2.6.5",
-    "gulp-uglify": "^3.0.2",
-    "gulp-uglify-es": "^1.0.4",
-    "gulp-util": "^3.0.8",
-    "isparta": "^4.1.1",
+    "friendly-errors-webpack-plugin": "^1.7.0",
     "js-yaml": "^3.14.0",
     "jsdoc": "^3.6.5",
-    "mocha": "^6.2.3",
-    "nyc": "^14.1.1",
+    "mocha": "^7.2.0",
+    "nyc": "^15.1.0",
     "sinon": "^7.5.0",
-    "sinon-chai": "^3.5.0",
-    "source-map-loader": "^0.2.4",
+    "source-map-loader": "^1.0.2",
     "sqlite3": "^4.2.0",
     "webpack": "^4.44.1",
-    "webpack-bundle-analyzer": "^3.8.0",
+    "webpack-cli": "^3.3.12",
     "webpack-common-shake": "^2.1.0",
-    "webpack-stream": "^5.2.1"
+    "webpack-merge": "^5.1.2"
   },
   "dependencies": {
     "numeric": "^1.2.6"
-  },
-  "babelBoilerplateOptions": {
-    "entryFileName": "browser.js",
-    "mainVarName": "raremetal"
   }
 }

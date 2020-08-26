@@ -1336,7 +1336,7 @@ class SkatOptimalTest extends AggregationTest {
       muQ,
       varQ,
       varZeta,
-      dF
+      dF,
     );
 
     let pvalue = integrator.skatOptimalIntegral();
