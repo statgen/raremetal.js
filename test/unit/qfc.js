@@ -7,7 +7,7 @@ import { assert } from 'chai';
 
 describe('qfc.js', function() {
   describe('qf()', function() {
-    describe('Davies\' test suite', function () { 
+    describe('Davies\' test suite', function () {
       let testJson = require('./qfc.json');
       let count = 0;
       for (var testCase of testJson) {
@@ -22,18 +22,18 @@ describe('qfc.js', function() {
           testCase['acc']
         );
 
-        it('should match expected values for parameter set ' + count, function() {
+        it(`should match expected values for parameter set ${  count}`, function() {
           let computedQf = result[0];
           let expectedQf = testCase['qfval'];
-          assert.closeTo(computedQf,expectedQf,0.001);
+          assert.closeTo(computedQf, expectedQf, 0.001);
 
           let ifault = result[1];
-          assert.equal(ifault,0);
+          assert.equal(ifault, 0);
 
           let computedTrace = result[2];
           let actualTrace = testCase['trace'];
           for (let i = 0; i < 6; i++) {
-            assert.closeTo(actualTrace[i],computedTrace[i],0.001);
+            assert.closeTo(actualTrace[i], computedTrace[i], 0.001);
           }
         });
 
@@ -51,13 +51,13 @@ describe('qfc.js', function() {
           0,
           0,
           0,
-          0
+          0,
         ];
         let n1 = [
           1,
           1,
           1,
-          1
+          1,
         ];
         let n = 4;
         let sigma = 0;
@@ -65,8 +65,8 @@ describe('qfc.js', function() {
         let lim = 10000;
         let qstat = 48692.70492647851;
         let res = qfc.qf(lambdas, nc1, n1, n, sigma, qstat, lim, acc);
-        assert.closeTo(res[0],0.1891,0.001)
-      })
+        assert.closeTo(res[0], 0.1891, 0.001);
+      });
     });
 
     describe('Problematic case arising from large number of lambdas', function() {

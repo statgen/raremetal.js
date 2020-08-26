@@ -16,8 +16,8 @@ import zlib from 'zlib';
  * @type {{RAREMETAL: number, RVTEST: number}}
  */
 const STATS_FORMAT = {
-  "RAREMETAL": 0,
-  "RVTEST": 1
+  'RAREMETAL': 0,
+  'RVTEST': 1,
 };
 
 /**
@@ -33,7 +33,7 @@ function _variantSort(a, b) {
   let pos_b = parseInt(b.match(REGEX_EPACTS)[2]);
 
   if (pos_a < pos_b) {
-    return -1
+    return -1;
   }
 
   if (pos_a > pos_b) {
@@ -75,13 +75,12 @@ class VariantMask {
    * @param variant Variant ID, usually "1:1_A/T"
    * @public
    */
-  addVariantForGroup(group,variant) {
+  addVariantForGroup(group, variant) {
     if (this.groups.has(group)) {
       this.groups.get(group).push(variant);
-    }
-    else {
+    } else {
       let ar = [variant];
-      this.groups.set(group,ar);
+      this.groups.set(group, ar);
     }
   }
 
@@ -93,8 +92,8 @@ class VariantMask {
    *  These should be in EPACTS format, e.g. chr:pos_ref/alt.
    * @public
    */
-  createGroup(group,variants) {
-    this.groups.set(group,variants);
+  createGroup(group, variants) {
+    this.groups.set(group, variants);
   }
 
   /**
@@ -167,8 +166,8 @@ class ScoreStatTable {
     this.variants.push(variant);
     this.positions.push(position);
 
-    this.variantMap.set(variant,this.variants.length-1);
-    this.positionMap.set(position,this.positions.length-1);
+    this.variantMap.set(variant, this.variants.length - 1);
+    this.positionMap.set(position, this.positions.length - 1);
 
     this.u.push(u);
     this.v.push(v);
@@ -186,7 +185,7 @@ class ScoreStatTable {
   getAltFreqForVariant(variant) {
     let freq = this.altFreq[this.variantMap.get(variant)];
     if (freq == null) {
-      throw new Error("Variant did not exist when looking up alt allele freq: " + variant);
+      throw new Error(`Variant did not exist when looking up alt allele freq: ${  variant}`);
     }
 
     return freq;
@@ -200,7 +199,7 @@ class ScoreStatTable {
   getAltFreqForPosition(position) {
     let freq = this.altFreq[this.positionMap.get(position)];
     if (freq == null) {
-      throw new Error("Position did not exist when looking up alt allele freq: " + position);
+      throw new Error(`Position did not exist when looking up alt allele freq: ${  position}`);
     }
 
     return freq;
@@ -213,7 +212,7 @@ class ScoreStatTable {
   getVariantAtPosition(position) {
     let variant = this.variants(this.positionMap.get(position));
     if (variant == null) {
-      throw new Error("Variant did not exist at position: " + position);
+      throw new Error(`Variant did not exist at position: ${  position}`);
     }
 
     return variant;
@@ -231,8 +230,8 @@ class ScoreStatTable {
     // First confirm both matrices are the same shape
     let dimThis = this.dim();
     let dimOther = other.dim();
-    if (!arraysEqual(dimThis,dimOther)) {
-      throw "Scores cannot be added, dimensions are unequal";
+    if (!arraysEqual(dimThis, dimOther)) {
+      throw 'Scores cannot be added, dimensions are unequal';
     }
 
     // To combine the score stats, we only need to add each element
@@ -261,23 +260,23 @@ class ScoreStatTable {
    * @return {ScoreStatTable} Score statistics after subsetting (not in-place, returns a new copy)
    */
   subsetToVariants(variantList) {
-    if (typeof variantList === "undefined") {
-      throw new Error("Must specify list of variants when subsetting");
+    if (typeof variantList === 'undefined') {
+      throw new Error('Must specify list of variants when subsetting');
     }
 
     // First figure out which variants supplied are actually in this set of score stats
-    variantList = variantList.filter(x => this.variantMap.has(x));
+    variantList = variantList.filter((x) => this.variantMap.has(x));
 
     // Subset each member to only those variants
-    let idx = variantList.map(x => this.variantMap.get(x));
-    let variants = idx.map(i => this.variants[i]);
-    let positions = idx.map(i => this.positions[i]);
-    let u = idx.map(i => this.u[i]);
-    let v = idx.map(i => this.v[i]);
-    let altFreq = idx.map(i => this.altFreq[i]);
+    let idx = variantList.map((x) => this.variantMap.get(x));
+    let variants = idx.map((i) => this.variants[i]);
+    let positions = idx.map((i) => this.positions[i]);
+    let u = idx.map((i) => this.u[i]);
+    let v = idx.map((i) => this.v[i]);
+    let altFreq = idx.map((i) => this.altFreq[i]);
 
-    let variantMap = new Map(variants.map((element,index) => [element,index]));
-    let positionMap = new Map(variants.map((element,index) => [element,index]));
+    let variantMap = new Map(variants.map((element, index) => [element, index]));
+    let positionMap = new Map(variants.map((element, index) => [element, index]));
 
     // Assemble new score table object
     let newTable = new ScoreStatTable();
@@ -369,8 +368,8 @@ class GenotypeCovarianceMatrix {
     // First confirm both matrices are the same shape
     let dimThis = this.dim();
     let dimOther = other.dim();
-    if (!arraysEqual(dimThis,dimOther)) {
-      throw "Covariance matrices cannot be added, dimensions are unequal";
+    if (!arraysEqual(dimThis, dimOther)) {
+      throw 'Covariance matrices cannot be added, dimensions are unequal';
     }
 
     // To combine the covariance matrices, we only need to add each element
@@ -424,20 +423,20 @@ class GenotypeCovarianceMatrix {
  * @public
  */
 function readMaskFileSync(fpath) {
-  const data = fs.readFileSync(fpath, { encoding: "utf8" });
+  const data = fs.readFileSync(fpath, { encoding: 'utf8' });
   const mask = new VariantMask();
-  for (let line of data.split("\n")) {
+  for (let line of data.split('\n')) {
     line = line.trim();
     if (line === '') {
       continue;
     }
 
-    let ar = line.split("\t");
+    let ar = line.split('\t');
     let group = ar[0];
     let variants = ar.slice(1);
 
     // Enforce all variants must be on same chromosome
-    let n_uniq = (new Set(variants.map(x => x.match(REGEX_EPACTS)[1]))).size;
+    let n_uniq = (new Set(variants.map((x) => x.match(REGEX_EPACTS)[1]))).size;
     if (n_uniq > 1) {
       throw `All variants for group ${group} must be on same chromosome`;
     }
@@ -446,7 +445,7 @@ function readMaskFileSync(fpath) {
     variants.sort(_variantSort);
 
     // Add group to the mask object
-    mask.createGroup(group,variants);
+    mask.createGroup(group, variants);
   }
 
   return mask;
@@ -484,8 +483,7 @@ async function extractScoreStats(fpath, region, variants) {
     colV = 14;
     colEffectAllele = 3;
     colPvalue = 16;
-  }
-  else if (fileFormat === STATS_FORMAT.RVTEST) {
+  } else if (fileFormat === STATS_FORMAT.RVTEST) {
     colChrom = 0;
     colPos = 1;
     colRef = 2;
@@ -495,34 +493,32 @@ async function extractScoreStats(fpath, region, variants) {
     colV = 13;
     colEffectAllele = 3;
     colPvalue = 15;
-  }
-  else {
-    throw new Error("Unrecognized covariance matrix file format");
+  } else {
+    throw new Error('Unrecognized covariance matrix file format');
   }
 
   // Read in data in region from tabix
-  const lines = execSync(`tabix -h ${fpath} ${region}`, { encoding: "utf8" });
+  const lines = execSync(`tabix -h ${fpath} ${region}`, { encoding: 'utf8' });
 
   const given_variants = variants != null;
   if (given_variants) {
     if (!Array.isArray(variants) || !variants.length) {
-      throw "Variants must be an array";
+      throw 'Variants must be an array';
     }
   }
 
   const scoreTable = new ScoreStatTable();
-  const line_array = lines.split("\n");
+  const line_array = lines.split('\n');
   for (let e of line_array) {
     e = e.trim();
-    if (e === "") {
+    if (e === '') {
       continue;
     }
 
-    if (e.startsWith("##AnalyzedSamples")) {
-      scoreTable.sampleSize = parseInt(e.trim().replace("##AnalyzedSamples=", ""));
-    }
-    else {
-      let ar = e.split("\t");
+    if (e.startsWith('##AnalyzedSamples')) {
+      scoreTable.sampleSize = parseInt(e.trim().replace('##AnalyzedSamples=', ''));
+    } else {
+      let ar = e.split('\t');
       let variant = `${ar[colChrom]}:${ar[colPos]}_${ar[colRef]}/${ar[colAlt]}`;
       let position = parseInt(ar[colPos]);
       let u = parseFloat(ar[colU]);
@@ -573,14 +569,18 @@ async function extractScoreStats(fpath, region, variants) {
  */
 function getNumberOfVariantsFromCovarianceFile(covarFile, region) {
   const cmd = `tabix ${covarFile} ${region}`;
-  const lines = execSync(cmd, { encoding: "utf8" });
+  const lines = execSync(cmd, { encoding: 'utf8' });
   const positions = new Set();
-  for (let e of lines.split("\n")) {
-    if (e.startsWith("#")) continue;
-    if (e.trim() === "") continue;
+  for (let e of lines.split('\n')) {
+    if (e.startsWith('#')) {
+      continue;
+    }
+    if (e.trim() === '') {
+      continue;
+    }
 
-    let pos_array = e.split("\t")[4].split(",");
-    pos_array.forEach(x => positions.add(x));
+    let pos_array = e.split('\t')[4].split(',');
+    pos_array.forEach((x) => positions.add(x));
   }
   return positions.size;
 }
@@ -595,20 +595,18 @@ async function detectFormat(fpath) {
   let gzstream = stream.pipe(zlib.createGunzip());
   let format = null;
 
-  return new Promise((resolve,reject) => {
-    gzstream.on("readable",() => {
+  return new Promise((resolve, reject) => {
+    gzstream.on('readable', () => {
       let head = gzstream.read(100);
-      let programName = head.toString().split("\n")[0].split("=")[1];
-      if (programName === "Rvtests") {
+      let programName = head.toString().split('\n')[0].split('=')[1];
+      if (programName === 'Rvtests') {
         format = STATS_FORMAT.RVTEST;
         resolve(format);
-      }
-      else if (programName === "RareMetalWorker") {
+      } else if (programName === 'RareMetalWorker') {
         format = STATS_FORMAT.RAREMETAL;
         resolve(format);
-      }
-      else {
-        reject("Could not determine format of covariance matrix file");
+      } else {
+        reject('Could not determine format of covariance matrix file');
       }
     });
   });
@@ -650,26 +648,24 @@ async function extractCovariance(fpath, region, variants, scoreStats) {
   if (fileFormat === STATS_FORMAT.RAREMETAL) {
     colCov = 3;
     colPos = 2;
-  }
-  else if (fileFormat === STATS_FORMAT.RVTEST) {
+  } else if (fileFormat === STATS_FORMAT.RVTEST) {
     colCov = 5;
     colPos = 4;
-  }
-  else {
-    throw new Error("Unrecognized covariance matrix file format");
+  } else {
+    throw new Error('Unrecognized covariance matrix file format');
   }
 
   const given_variants = variants != null;
 
   if (given_variants) {
     if (!Array.isArray(variants) || !variants.length) {
-      throw "Variants must be an array";
+      throw 'Variants must be an array';
     }
 
     // Remove duplicates
     let vset = new Set(variants);
     if (vset.size !== variants.length) {
-      throw 'Duplicate variants given when extracting covariance matrix: \n' + variants;
+      throw `Duplicate variants given when extracting covariance matrix: \n${  variants}`;
     }
   }
 
@@ -702,9 +698,9 @@ async function extractCovariance(fpath, region, variants, scoreStats) {
   // Async start reading lines into array, formatting as necessary
   let next = Math.max(...positions.values()) + 1 ? positions.size : 0;
   let stored_value = false;
-  rl.on("line", (e) => {
-    let ar = e.trim().split("\t");
-    let rowPositions = ar[colPos].split(",").map(x => parseInt(x));
+  rl.on('line', (e) => {
+    let ar = e.trim().split('\t');
+    let rowPositions = ar[colPos].split(',').map((x) => parseInt(x));
 
     if (!given_variants) {
       // Only parse all of the positions in the row if we weren't given variants
@@ -723,14 +719,13 @@ async function extractCovariance(fpath, region, variants, scoreStats) {
     // First: covariance between genotypes
     // Second: covariance between genotypes and covariates
     // Third: covariance between covariates
-    let [cov_geno,,] = ar[colCov].split(":");
+    let [cov_geno,, ] = ar[colCov].split(':');
 
     // At least cov_geno must be defined
     if (typeof cov_geno === 'undefined') {
       throw 'Could not extract genotype covariance';
-    }
-    else {
-      cov_geno = cov_geno.split(",").map(x => parseFloat(x));
+    } else {
+      cov_geno = cov_geno.split(',').map((x) => parseFloat(x));
     }
 
     if (!positions.has(rowPositions[0])) {
@@ -774,7 +769,7 @@ async function extractCovariance(fpath, region, variants, scoreStats) {
 
   // Return a promise that is fulfilled when readline is finished reading lines
   return new Promise(function(resolve, reject) {
-    rl.on("close", () => {
+    rl.on('close', () => {
       // We're finished reading, perform the final steps and then resolve the promise.
       // For some reason rvtest/RAREMETAL divide by the sample size.
       if (stored_value) {
@@ -783,9 +778,9 @@ async function extractCovariance(fpath, region, variants, scoreStats) {
         let covobj = new GenotypeCovarianceMatrix(covmat, variants, positions);
         resolve(covobj);
       } else {
-        reject("No values read from covariance matrix");
+        reject('No values read from covariance matrix');
       }
-    })
+    });
   });
 }
 

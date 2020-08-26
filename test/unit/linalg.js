@@ -5,9 +5,9 @@ import * as numeric from 'numeric';
 describe('linalg.js', function() {
   describe('cholesky', function() {
     it('simple case', function() {
-      const A = [[4,12,-16],[12,37,-43],[-16,-43,98]];
+      const A = [[4, 12, -16], [12, 37, -43], [-16, -43, 98]];
       const G = cholesky(A);
-      assert.deepStrictEqual(G, [[2,0,0],[6,1,0],[-8,5,3]]);
+      assert.deepStrictEqual(G, [[2, 0, 0], [6, 1, 0], [-8, 5, 3]]);
     });
 
     it('test when not perfect integers', function() {

@@ -16,7 +16,7 @@ describe('helpers.js', function () {
     it('should return helper objects for variants and groups', function () {
       const [ groups, variants ] = parsePortalJSON({
         variants: [],
-        groups: []
+        groups: [],
       });
       assert.instanceOf(variants, _PortalVariantsHelper, 'Received a variants helper');
       assert.instanceOf(groups, _PortalGroupHelper, 'Received a group helper');
@@ -33,12 +33,12 @@ describe('helpers.js', function () {
       const variants = [{
         variant: '22:21576208_G/A',
         altFreq: 0.1,
-        pvalue: 0.279888
+        pvalue: 0.279888,
       },
       {
         variant: '22:21581760_G/A',
         altFreq: 0.8,
-        pvalue: 0.477434
+        pvalue: 0.477434,
       }];
       const variant_names = ['22:21576208_G/A', '22:21581760_G/A'];
 
@@ -83,7 +83,7 @@ describe('helpers.js', function () {
         this.one_group =  {
           variants: ['1', '2', '3'],
           covariance: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
-          nSamples: 10
+          nSamples: 10,
         };
       });
 
@@ -94,7 +94,7 @@ describe('helpers.js', function () {
           [
             [ 1, 2, 3 ],
             [ 2, 4, 5 ],
-            [ 3, 5, 6 ]
+            [ 3, 5, 6 ],
           ]
         );
       });
@@ -108,7 +108,7 @@ describe('helpers.js', function () {
           [
             [ 1, -2, -3 ],
             [ -2, 4, 5 ],
-            [ -3, 5, 6 ]
+            [ -3, 5, 6 ],
           ],
           'Correctly handles a single variant sign flip'
         );
@@ -120,7 +120,7 @@ describe('helpers.js', function () {
           [
             [ 1, 2, -3 ],
             [ 2, 4, -5 ],
-            [ -3, -5, 6 ]
+            [ -3, -5, 6 ],
           ],
           'Correctly handles the case where two signs are flipped'
         );
@@ -155,27 +155,31 @@ describe('helpers.js', function () {
 
     it('cannot create tests of an unknown type', function () {
       assert.throws(
-        () => { new PortalTestRunner(this.groups, this.variants, ['nonexistent']); },
+        () => {
+          new PortalTestRunner(this.groups, this.variants, ['nonexistent']);
+        },
         /Cannot make unknown test type/,
         'Fails if given invalid test name'
       );
 
       assert.throws(
-        () => { new PortalTestRunner(this.groups, this.variants, [42]); },
+        () => {
+          new PortalTestRunner(this.groups, this.variants, [42]);
+        },
         /Must specify test as name or instance/,
         'Fails if test type can not be resolved'
       );
     });
 
     it('combines the results from multiple tests', function () {
-      return this.inst.run().then(results => {
+      return this.inst.run().then((results) => {
         const expected_count = this.groups.data.length * this.inst._tests.length;
         assert.equal(results.length, expected_count);
       });
     });
 
     it('can represent results payload as portal-format precomputed results JSON', function () {
-      return this.inst.toJSON().then(results => {
+      return this.inst.toJSON().then((results) => {
         assert.hasAllKeys(results.data, ['groups', 'variants']);
       });
     });

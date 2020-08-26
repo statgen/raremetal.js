@@ -48,30 +48,30 @@ const ME_UNDERFLOW = 16;
 
 function ML_ERROR(x, s) {
   if (x > ME_DOMAIN) {
-    let msg = "";
-    switch(x) {
-      case ME_DOMAIN:
-        msg = `argument out of domain in ${s}`;
-        break;
-      case ME_RANGE:
-        msg = `value out of range in ${s}`;
-        break;
-      case ME_NOCONV:
-        msg = `convergence failed in ${s}`;
-        break;
-      case ME_PRECISION:
-        msg = `full precision may not have been achieved in ${s}`;
-        break;
-      case ME_UNDERFLOW:
-        msg = `underflow occurred in ${s}`;
-        break;
+    let msg = '';
+    switch (x) {
+    case ME_DOMAIN:
+      msg = `argument out of domain in ${s}`;
+      break;
+    case ME_RANGE:
+      msg = `value out of range in ${s}`;
+      break;
+    case ME_NOCONV:
+      msg = `convergence failed in ${s}`;
+      break;
+    case ME_PRECISION:
+      msg = `full precision may not have been achieved in ${s}`;
+      break;
+    case ME_UNDERFLOW:
+      msg = `underflow occurred in ${s}`;
+      break;
     }
     console.error(msg);
   }
 }
 
 function ML_ERR_return_NAN() {
-  ML_ERROR(ME_DOMAIN, "");
+  ML_ERROR(ME_DOMAIN, '');
   return NaN;
 }
 
@@ -117,7 +117,7 @@ const SFERR_HALVES = [
   0.006171712263039457647532867, /* 13.5 */
   0.005951370112758847735624416, /* 14.0 */
   0.005746216513010115682023589, /* 14.5 */
-  0.005554733551962801371038690  /* 15.0 */
+  0.005554733551962801371038690,  /* 15.0 */
 ];
 
 const LGAMMA_COEFS = [0.3224670334241132182362075833230126e-0,
@@ -159,7 +159,7 @@ const LGAMMA_COEFS = [0.3224670334241132182362075833230126e-0,
   0.9573630387838555763782200936508615e-13,
   0.4664076026428374224576492565974577e-13,
   0.2273736960065972320633279596737272e-13,
-  0.1109139947083452201658320007192334e-13/* = (zeta(40+1)-1)/(40+1) */
+  0.1109139947083452201658320007192334e-13, /* = (zeta(40+1)-1)/(40+1) */
 ];
 
 const POIS_COEFS_A = [
@@ -170,7 +170,7 @@ const POIS_COEFS_A = [
   16 / 8505.,
   -8992 / 12629925.,
   -334144 / 492567075.,
-  698752 / 1477701225.
+  698752 / 1477701225.,
 ];
 
 const POIS_COEFS_B = [
@@ -181,7 +181,7 @@ const POIS_COEFS_B = [
   -571 / 2488320.,
   163879 / 209018880.,
   5246819 / 75246796800.,
-  -534703531 / 902961561600.
+  -534703531 / 902961561600.,
 ];
 
 const GAMCS = [
@@ -226,7 +226,7 @@ const GAMCS = [
   +.1146998663140024384347613866666e-28,
   -.1967938586345134677295103999999e-29,
   +.3376448816585338090334890666666e-30,
-  -.5793070335782135784625493333333e-31
+  -.5793070335782135784625493333333e-31,
 ];
 
 const ALGMCS = [
@@ -244,7 +244,7 @@ const ALGMCS = [
   -.3547598158101070547199999999999e-26,
   +.1025680058010470912000000000000e-27,
   -.3401102254316748799999999999999e-29,
-  +.1276642195630062933333333333333e-30
+  +.1276642195630062933333333333333e-30,
 ];
 
 const PNORM_A = [
@@ -252,14 +252,14 @@ const PNORM_A = [
   161.02823106855587881,
   1067.6894854603709582,
   18154.981253343561249,
-  0.065682337918207449113
+  0.065682337918207449113,
 ];
 
 const PNORM_B = [
   47.20258190468824187,
   976.09855173777669322,
   10260.932208618978205,
-  45507.789335026729956
+  45507.789335026729956,
 ];
 
 const PNORM_C = [
@@ -271,7 +271,7 @@ const PNORM_C = [
   6848.1904505362823326,
   11602.651437647350124,
   9842.7148383839780218,
-  1.0765576773720192317e-8
+  1.0765576773720192317e-8,
 ];
 
 const PNORM_D = [
@@ -282,7 +282,7 @@ const PNORM_D = [
   18615.571640885098091,
   34900.952721145977266,
   38912.003286093271411,
-  19685.429676859990727
+  19685.429676859990727,
 ];
 
 const PNORM_P = [
@@ -291,7 +291,7 @@ const PNORM_P = [
   0.022235277870649807,
   0.001421619193227893466,
   2.9112874951168792e-5,
-  0.02307344176494017303
+  0.02307344176494017303,
 ];
 
 const PNORM_Q = [
@@ -299,7 +299,7 @@ const PNORM_Q = [
   0.468238212480865118,
   0.0659881378689285515,
   0.00378239633202758244,
-  7.29751555083966205e-5
+  7.29751555083966205e-5,
 ];
 
 const R_D__0 = (log_p) => (log_p ? -Infinity : 0.0);
@@ -344,32 +344,45 @@ function R_Q_P01_check(p, log_p) {
  */
 function R_Q_P01_boundaries(p, lower_tail, log_p, left, right) {
   if (log_p) {
-    if (p > 0) { throw ML_ERR_return_NAN(); }
-    if (p === 0) { throw lower_tail ? right : left;  }
-    if (p === Number.NEGATIVE_INFINITY) { throw lower_tail ? left : right; }
-  }
-  else {
-    if (p < 0 || p > 1) { throw ML_ERR_return_NAN(); }
-    if (p === 0) { throw lower_tail ? left : right; }
-    if (p === 1) { throw lower_tail ? right : left; }
+    if (p > 0) {
+      throw ML_ERR_return_NAN();
+    }
+    if (p === 0) {
+      throw lower_tail ? right : left;
+    }
+    if (p === Number.NEGATIVE_INFINITY) {
+      throw lower_tail ? left : right;
+    }
+  } else {
+    if (p < 0 || p > 1) {
+      throw ML_ERR_return_NAN();
+    }
+    if (p === 0) {
+      throw lower_tail ? left : right;
+    }
+    if (p === 1) {
+      throw lower_tail ? right : left;
+    }
   }
 }
 
 function R_P_bounds_01(x, x_min, x_max, lower_tail, log_p) {
-  if (x <= x_min) { throw R_DT_0(lower_tail, log_p); }
-  if (x >= x_max) { throw R_DT_1(lower_tail, log_p); }
+  if (x <= x_min) {
+    throw R_DT_0(lower_tail, log_p);
+  }
+  if (x >= x_max) {
+    throw R_DT_1(lower_tail, log_p);
+  }
 }
 
 function R_DT_qIv(p, lower_tail, log_p) {
   if (log_p) {
     if (lower_tail) {
       return Math.exp(p);
-    }
-    else {
+    } else {
       return -Math.expm1(p);
     }
-  }
-  else {
+  } else {
     return R_D_Lval(p, lower_tail);
   }
 }
@@ -378,12 +391,10 @@ function R_DT_CIv(p, lower_tail, log_p) {
   if (log_p) {
     if (lower_tail) {
       return -Math.expm1(p);
-    }
-    else {
+    } else {
       return Math.exp(p);
     }
-  }
-  else {
+  } else {
     return R_D_Cval(p);
   }
 }
@@ -414,9 +425,8 @@ function expm1(x) {
   }
 
   if (a > 1e-8) {
-    y = Math.exp(x) - 1
-  }
-  else {
+    y = Math.exp(x) - 1;
+  } else {
     y = (x / 2 + 1) * x;
   }
 
@@ -449,13 +459,13 @@ function sinpi(x) {
   } else if (x > 1.0) {
     x -= 2.0;
   }
-  if (x == 0.0 || x == 1.0) {
+  if (x === 0.0 || x === 1.0) {
     return 0.0;
   }
-  if (x == 0.5) {
+  if (x === 0.5) {
     return 1.0;
   }
-  if (x == -0.5) {
+  if (x === -0.5) {
     return -1.0;
   }
   return Math.sin(M_PI * x);
@@ -490,7 +500,7 @@ function lgammacor(x) {
   if (x < 10) {
     return NaN;
   } else if (x > xmax) {
-    throw ("lgammacor underflow");
+    throw ('lgammacor underflow');
   } else if (x < xbig) {
     tmp = 10 / x;
     return chebyshev_eval(tmp * tmp * 2 - 1, ALGMCS, nalgm) / x;
@@ -510,7 +520,7 @@ function gammafn(x) {
     return (x);
   }
 
-  if (x == 0 || (x < 0 && x == Math.round(x))) {
+  if (x === 0 || (x < 0 && x === Math.round(x))) {
     return NaN;
   }
 
@@ -523,12 +533,12 @@ function gammafn(x) {
     y = x - n;
     n--;
     value = chebyshev_eval(y * 2 - 1, GAMCS, ngam) + .9375;
-    if (n == 0) {
+    if (n === 0) {
       return value;
     }
     if (n < 0) {
       if (x < -0.5 && Math.abs(x - parseInt(x - 0.5, 10) / x) < DXREL) {
-        throw("gammafn precision error");
+        throw ('gammafn precision error');
       }
       if (x < xsml) {
         return (x > 0) ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY;
@@ -553,23 +563,23 @@ function gammafn(x) {
     if (x < xmin) {
       return 0;
     }
-    if (y <= 50 && y == parseInt(y, 10)) {
+    if (y <= 50 && y === parseInt(y, 10)) {
       value = 1;
       for (i = 2; i < y; i++) {
         value *= i;
       }
     } else {
       value = Math.exp((y - 0.5) * Math.log(y) - y - M_LN_SQRT_2PI +
-        ((2 * y == parseInt(2 * y, 10)) ? stirlerr(y) : lgammacor(y)));
+        ((2 * y === parseInt(2 * y, 10)) ? stirlerr(y) : lgammacor(y)));
     }
     if (x > 0) {
       return value;
     }
     if (Math.abs(x - parseInt(x - 0.5, 10) / x) < DXREL) {
-      throw("gammafn precision error");
+      throw ('gammafn precision error');
     }
     sinpiy = sinpi(y);
-    if (sinpiy == 0) {
+    if (sinpiy === 0) {
       return Number.POSITIVE_INFINITY;
     }
     return -M_PI / (y * sinpiy * value);
@@ -585,16 +595,20 @@ function lgammafn_sign(x) {
     return x;
   }
 
-  if (x < 0 && Math.floor(-x) % 2 == 0) {
+  if (x < 0 && Math.floor(-x) % 2 === 0) {
     //sgn = -1;
   }
-  if (x <= 0 && x == Math.trunc(x)) {
+  if (x <= 0 && x === Math.trunc(x)) {
     return Number.POSITIVE_INFINITY;
   }
 
   y = Math.abs(x);
-  if (y < 1e-306) return -Math.log(y);
-  if (y <= 10) return Math.log(Math.abs(gammafn(x)));
+  if (y < 1e-306) {
+    return -Math.log(y);
+  }
+  if (y <= 10) {
+    return Math.log(Math.abs(gammafn(x)));
+  }
 
   if (y > xmax) {
     return Number.POSITIVE_INFINITY;
@@ -610,12 +624,12 @@ function lgammafn_sign(x) {
   }
   sinpiy = Math.abs(sinpi(y));
 
-  if (sinpiy == 0) {
+  if (sinpiy === 0) {
     return NaN;
   }
 
   if (Math.abs((x - Math.trunc(x - 0.5)) * ans / x) < DXREL) {
-    throw("lgamma precision error");
+    throw ('lgamma precision error');
   }
   return ans;
 }
@@ -628,7 +642,7 @@ function stirlerr(n) {
   var nn;
   if (n <= 15) {
     nn = n + n;
-    if (nn == Math.floor(nn)) {
+    if (nn === Math.floor(nn)) {
       return SFERR_HALVES[Math.floor(nn)];
     }
     return lgammafn(n + 1.0) - (n + 0.5) * Math.log(n) + n - M_LN_SQRT_2PI;
@@ -650,7 +664,7 @@ function stirlerr(n) {
 function bd0(x, np) {
   var ej, s, s1, v, j;
 
-  if (!Number.isFinite(x) || !Number.isFinite(np) || np == 0) {
+  if (!Number.isFinite(x) || !Number.isFinite(np) || np === 0) {
     return NaN;
   }
   if (Math.abs(x - np) < 0.1 * (x + np)) {
@@ -664,7 +678,7 @@ function bd0(x, np) {
     for (j = 1; j < 1000; j++) {
       ej *= v;
       s1 = s + ej / ((j * 2) + 1);
-      if (s1 == s) {
+      if (s1 === s) {
         return s1;
       }
       s = s1;
@@ -674,8 +688,8 @@ function bd0(x, np) {
 }
 
 function dpois_raw(x, lambda, give_log) {
-  if (lambda == 0) {
-    return (x == 1) ? R_D(1, give_log) : R_D(0, give_log);
+  if (lambda === 0) {
+    return (x === 1) ? R_D(1, give_log) : R_D(0, give_log);
   }
   if (!Number.isFinite(lambda)) {
     return R_D(0, give_log);
@@ -871,7 +885,7 @@ function pd_lower_cf(y, d) {
   var f = 0, of, f0;
   var i, c2, c3, c4, a1, b1, a2, b2;
 
-  if (y == 0) {
+  if (y === 0) {
     return 0;
   }
   f0 = y / d;
@@ -921,7 +935,7 @@ function pd_lower_cf(y, d) {
       b2 /= SCALE_FACTOR;
     }
 
-    if (b2 != 0) {
+    if (b2 !== 0) {
       f = a2 / b2;
       if (Math.abs(f - of) <= DBL_EPSILON * ((Math.abs(f) > f0) ? Math.abs(f) : f0)) {
         return f;
@@ -1022,8 +1036,9 @@ function pgamma_raw(x, alph, lower_tail, log_p) {
   var res, d, sum;
   try {
     R_P_bounds_01(x, 0.0, Number.POSITIVE_INFINITY, lower_tail, log_p);
+  } catch (e) {
+    return e;
   }
-  catch (e) { return e; }
   if (x < 1) {
     res = pgamma_smallx(x, alph, lower_tail, log_p);
   } else if (x <= alph - 1 && x < 0.8 * (alph + 50)) {
@@ -1085,7 +1100,7 @@ function pgamma(x, alph, scale, lower_tail, log_p) {
     return NaN;
   }
   x /= scale;
-  if (alph == 0) {
+  if (alph === 0) {
     return (x <= 0) ? R_DT(0, lower_tail, log_p) : R_DT(1, lower_tail, log_p);
   }
   return pgamma_raw(x, alph, lower_tail, log_p);
@@ -1111,7 +1126,9 @@ export function dgamma(x, shape, scale, give_log) {
     return x + shape + scale;
   }
 
-  if (shape < 0 || scale <= 0) { ML_ERR_return_NAN; }
+  if (shape < 0 || scale <= 0) {
+    ML_ERR_return_NAN;
+  }
   if (x < 0) {
     return R_D__0(give_log);
   }
@@ -1119,18 +1136,22 @@ export function dgamma(x, shape, scale, give_log) {
     return x === 0 ? Infinity : R_D__0(give_log);
   }
   if (x === 0) {
-    if (shape < 1) { return Infinity; }
-    if (shape > 1) { return R_D__0(give_log); }
+    if (shape < 1) {
+      return Infinity;
+    }
+    if (shape > 1) {
+      return R_D__0(give_log);
+    }
     return give_log ? -Math.log(scale) : 1 / scale;
   }
 
   if (shape < 1) {
-    pr = dpois_raw(shape, x/scale, give_log);
-    return give_log ? pr + Math.log(shape/x) : pr * shape / x;
+    pr = dpois_raw(shape, x / scale, give_log);
+    return give_log ? pr + Math.log(shape / x) : pr * shape / x;
   }
 
-  pr = dpois_raw(shape-1, x/scale, give_log);
-  return give_log ? pr - Math.log(scale) : pr/scale;
+  pr = dpois_raw(shape - 1, x / scale, give_log);
+  return give_log ? pr - Math.log(scale) : pr / scale;
 }
 
 /**
@@ -1162,12 +1183,17 @@ export function pchisq(x, df, ncp = 0, lower_tail = true, log_p = false) {
   lower_tail = parseBoolean(lower_tail);
   log_p = parseBoolean(log_p);
 
-  if (ncp === 0) { return pgamma(x, df / 2.0, 2.0, lower_tail, log_p); }
-  else { return pnchisq(x, df, ncp, lower_tail, log_p) }
+  if (ncp === 0) {
+    return pgamma(x, df / 2.0, 2.0, lower_tail, log_p);
+  } else {
+    return pnchisq(x, df, ncp, lower_tail, log_p);
+  }
 }
 
 function pnchisq(q, df, ncp = 0, lower_tail = true, log_p = false) {
-  if (df < 0 || ncp < 0) { return NaN; }
+  if (df < 0 || ncp < 0) {
+    return NaN;
+  }
 
   let ans = pnchisq_raw(q, df, ncp, 1e-12, 8 * DBL_EPSILON, 1000000, lower_tail, log_p);
   if (ncp >= 80) {
@@ -1175,7 +1201,7 @@ function pnchisq(q, df, ncp = 0, lower_tail = true, log_p = false) {
       ans = fmin2(ans, R_D__1(log_p));
     } else {
       if (ans < (log_p ? (-10.0 * M_LN10) : 1e-10)) {
-        ML_ERROR(ME_PRECISION, "pnchisq");
+        ML_ERROR(ME_PRECISION, 'pnchisq');
       }
       if (!log_p) {
         ans = fmax2(ans, 0.0);
@@ -1185,8 +1211,7 @@ function pnchisq(q, df, ncp = 0, lower_tail = true, log_p = false) {
 
   if (!log_p || ans < -1e-8) {
     return ans;
-  }
-  else {
+  } else {
     ans = pnchisq_raw(q, df, ncp, 1e-12, 8 * DBL_EPSILON, 1000000, !lower_tail, false);
     return Math.log1p(-ans);
   }
@@ -1208,7 +1233,9 @@ function pnchisq_raw(x, f, theta, errmax, reltol, itrmax, lower_tail, log_p) {
     return R_DT_0(lower_tail, log_p);
   }
 
-  if (!isFinite(x)) { return R_DT_1(lower_tail, log_p) }
+  if (!isFinite(x)) {
+    return R_DT_1(lower_tail, log_p);
+  }
 
   if (theta < 80) {
     let ans;
@@ -1219,19 +1246,22 @@ function pnchisq_raw(x, f, theta, errmax, reltol, itrmax, lower_tail, log_p) {
       for (let i = 0; i < 110; pr === Math.log(lambda) - Math.log(++i)) {
         sum2 = logspace_add(sum2, pr);
         sum = logspace_add(sum, pr + pchisq(x, f + 2 * i, 0, lower_tail, true));
-        if (sum2 >= -1e-15) break;
+        if (sum2 >= -1e-15) {
+          break;
+        }
       }
       ans = sum - sum2;
       return log_p ? ans : Math.exp(ans);
-    }
-    else {
+    } else {
       let lambda = 0.5 * theta;
       let sum = 0, sum2 = 0, pr = Math.exp(-lambda);
       /* we need to renormalize here: the result could be very close to 1 */
       for (let i = 0; i < 110; pr *= lambda / ++i) {
         sum2 += pr;
         sum += pr * pchisq(x, f + 2 * i, 0, lower_tail, false);
-        if (sum2 >= 1 - 1e-15) break;
+        if (sum2 >= 1 - 1e-15) {
+          break;
+        }
       }
       ans = sum / sum2;
       return log_p ? Math.log(ans) : ans;
@@ -1320,15 +1350,22 @@ function pnchisq_raw(x, f, theta, errmax, reltol, itrmax, lower_tail, log_p) {
 
 export function qnorm(p, mu, sigma, lower_tail, log_p) {
   let p_, q, r, val;
-  if (isNaN(p) || isNaN(mu) || isNaN(sigma)) { return p + mu + sigma; }
+  if (isNaN(p) || isNaN(mu) || isNaN(sigma)) {
+    return p + mu + sigma;
+  }
 
   try {
     R_Q_P01_boundaries(p, lower_tail, log_p, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
+  } catch (e) {
+    return e;
   }
-  catch(e) { return e; }
 
-  if (sigma < 0) { return ML_ERR_return_NAN(); }
-  if (sigma === 0) { return mu; }
+  if (sigma < 0) {
+    return ML_ERR_return_NAN();
+  }
+  if (sigma === 0) {
+    return mu;
+  }
 
   p_ = R_DT_qIv(p, lower_tail, log_p);
   q = p_ - 0.5;
@@ -1349,8 +1386,7 @@ export function qnorm(p, mu, sigma, lower_tail, log_p) {
     /* r = min(p, 1-p) < 0.075 */
     if (q > 0) {
       r = R_DT_CIv(p, lower_tail, log_p);/* 1-p */
-    }
-    else {
+    } else {
       r = p_;/* = R_DT_Iv(p) ^=  p */
     }
 
@@ -1410,34 +1446,35 @@ function qchisq_appr(p, nu, g, lower_tail, log_p, tol) {
 
   try {
     R_Q_P01_check(p, log_p);
+  } catch (e) {
+    return e;
   }
-  catch(e) { return e; }
-  if (nu <= 0) { return ML_ERR_return_NAN(); }
+  if (nu <= 0) {
+    return ML_ERR_return_NAN();
+  }
 
   alpha = 0.5 * nu;
   c = alpha - 1;
 
   if (nu < (-1.24) * (p1 = R_DT_log(p))) {
     let lgam1pa = (alpha < 0.5) ? lgamma1p(alpha) : (Math.log(alpha) + g);
-    ch = Math.exp((lgam1pa + p1)/alpha + M_LN2);
-  }
-  else if (nu > 0.32) {
+    ch = Math.exp((lgam1pa + p1) / alpha + M_LN2);
+  } else if (nu > 0.32) {
     x = qnorm(p, 0, 1, lower_tail, log_p);
     p1 = 2.0 / (9 * nu);
     ch = nu * Math.pow(x * Math.sqrt(p1) + 1 - p1, 3);
 
-    if (ch > 2.2*nu + 6) {
+    if (ch > 2.2 * nu + 6) {
       ch = -2 * (R_DT_Clog(p, lower_tail) - c * Math.log(0.5 * ch) + g);
     }
-  }
-  else {
+  } else {
     ch = 0.4;
     a = R_DT_Clog(p, lower_tail) + g + c * M_LN2;
     do {
       q = ch;
-      p1 = 1.0 / (1 + ch*(C7 + ch));
-      p2 = ch * (C9 + ch*(C8 + ch));
-      t = -0.5 + (C7 + 2*ch)*p1 - (C9 + ch*(C10 + 3 * ch)) / p2;
+      p1 = 1.0 / (1 + ch * (C7 + ch));
+      p2 = ch * (C9 + ch * (C8 + ch));
+      t = -0.5 + (C7 + 2 * ch) * p1 - (C9 + ch * (C10 + 3 * ch)) / p2;
       ch -= (1 - Math.exp(a + 0.5 * ch) * p2 * p1) / t;
     }
     while (Math.abs(q - ch) > tol * Math.abs(ch));
@@ -1462,7 +1499,7 @@ export function qgamma(p, alpha, scale, lower_tail, log_p) {
   //const LN_EPS = -36.043653389117156;
   const MAXIT = 1000;
   const pMIN = 1e-100;
-  const pMAX = 1-1e-14;
+  const pMAX = 1 - 1e-14;
   const i420 = 1.0 / 420.0;
   const i2520 = 1.0 / 2520.0;
   const i5040 = 1.0 / 5040.0;
@@ -1471,14 +1508,21 @@ export function qgamma(p, alpha, scale, lower_tail, log_p) {
   let p2, q, s1, s2, s3, s4, s5, s6, t, x;
   let max_it_Newton = 1;
 
-  if (isNaN(p) || isNaN(alpha) || isNaN(scale)) { return p + alpha + scale; }
+  if (isNaN(p) || isNaN(alpha) || isNaN(scale)) {
+    return p + alpha + scale;
+  }
   try {
     R_Q_P01_boundaries(p, lower_tail, log_p, 0.0, Number.POSITIVE_INFINITY);
+  } catch (e) {
+    return e;
   }
-  catch(e) { return e; }
 
-  if (alpha < 0 || scale <= 0) { return ML_ERR_return_NAN(); }
-  if (alpha === 0) { return 0.0; }
+  if (alpha < 0 || scale <= 0) {
+    return ML_ERR_return_NAN();
+  }
+  if (alpha === 0) {
+    return 0.0;
+  }
   if (alpha < 1e-10) {
     max_it_Newton = 7;
   }
@@ -1502,12 +1546,13 @@ export function qgamma(p, alpha, scale, lower_tail, log_p) {
         if ((lower_tail && p_ > p * _1_p) || (!lower_tail && p_ < p * _1_m)) {
           return 0.0;
         }
-      }
-      else {
+      } else {
         p_ = pgamma(x, alpha, scale, lower_tail, log_p);
       }
 
-      if (p_ === Number.NEGATIVE_INFINITY) { return 0; }
+      if (p_ === Number.NEGATIVE_INFINITY) {
+        return 0;
+      }
     }
     for (let i = 1; i <= max_it_Newton; i++) {
       p1 = p_ - p;
@@ -1553,7 +1598,7 @@ export function qgamma(p, alpha, scale, lower_tail, log_p) {
   }
 
   c = alpha - 1;
-  s6 = (120 + c * (346 + 127*c)) * i5040;
+  s6 = (120 + c * (346 + 127 * c)) * i5040;
   ch0 = ch;
   for (let i = 1; i <= MAXIT; i++) {
     q = ch;
@@ -1565,15 +1610,15 @@ export function qgamma(p, alpha, scale, lower_tail, log_p) {
       return end();
     }
 
-    t = p2 * Math.exp(alpha * M_LN2 + g + p1 - c*Math.log(ch));
-    b = t/ch;
-    a = 0.5*t - b*c;
-    s1 = (210+ a*(140+a*(105+a*(84+a*(70+60*a))))) * i420;
-    s2 = (420+ a*(735+a*(966+a*(1141+1278*a)))) * i2520;
-    s3 = (210+ a*(462+a*(707+932*a))) * i2520;
-    s4 = (252+ a*(672+1182*a) + c*(294+a*(889+1740*a))) * i5040;
-    s5 = (84+2264*a + c*(1175+606*a)) * i2520;
-    ch += t*(1+0.5*t*s1-b*c*(s1-b*(s2-b*(s3-b*(s4-b*(s5-b*s6))))));
+    t = p2 * Math.exp(alpha * M_LN2 + g + p1 - c * Math.log(ch));
+    b = t / ch;
+    a = 0.5 * t - b * c;
+    s1 = (210 + a * (140 + a * (105 + a * (84 + a * (70 + 60 * a))))) * i420;
+    s2 = (420 + a * (735 + a * (966 + a * (1141 + 1278 * a)))) * i2520;
+    s3 = (210 + a * (462 + a * (707 + 932 * a))) * i2520;
+    s4 = (252 + a * (672 + 1182 * a) + c * (294 + a * (889 + 1740 * a))) * i5040;
+    s5 = (84 + 2264 * a + c * (1175 + 606 * a)) * i2520;
+    ch += t * (1 + 0.5 * t * s1 - b * c * (s1 - b * (s2 - b * (s3 - b * (s4 - b * (s5 - b * s6))))));
 
     if (Math.abs(q - ch) < EPS2 * ch) {
       return end();
@@ -1581,8 +1626,7 @@ export function qgamma(p, alpha, scale, lower_tail, log_p) {
     if (Math.abs(q - ch) > 0.1 * ch) {
       if (ch < q) {
         ch = 0.9 * q;
-      }
-      else {
+      } else {
         ch = 1.1 * q;
       }
     }
@@ -1600,7 +1644,9 @@ export function qgamma(p, alpha, scale, lower_tail, log_p) {
  * @return {*|number}
  */
 export function qchisq(p, df, ncp = 0, lower_tail = true, log_p = false) {
-  if (ncp !== 0) { throw 'Non-central chi-squared not yet supported'; }
+  if (ncp !== 0) {
+    throw 'Non-central chi-squared not yet supported';
+  }
   return qgamma(p, 0.5 * df, 2.0, lower_tail, log_p);
 }
 
@@ -1616,8 +1662,8 @@ function pnorm_both(x, i_tail, log_p) {
   }
 
   eps = DBL_EPSILON * 0.5;
-  lower = i_tail != 1;
-  upper = i_tail != 0;
+  lower = i_tail !== 1;
+  upper = i_tail !== 0;
 
   y = Math.abs(x);
   if (y <= 0.67448975) {
@@ -1779,14 +1825,14 @@ function dnorm(x, mu, sigma, give_log) {
   if (!Number.isFinite(sigma)) {
     return R_D(0, give_log);
   }
-  if (!Number.isFinite(x) && mu == x) {
+  if (!Number.isFinite(x) && mu === x) {
     return NaN;
   }
   if (sigma <= 0) {
     if (sigma < 0) {
       return NaN;
     }
-    return (x == mu) ? Number.POSITIVE_INFINITY : R_D(0, give_log);
+    return (x === mu) ? Number.POSITIVE_INFINITY : R_D(0, give_log);
   }
   x = (x - mu) / sigma;
   if (!Number.isFinite(x)) {
@@ -1806,41 +1852,50 @@ function dnorm(x, mu, sigma, give_log) {
 function lbeta(a, b) {
   let corr, p, q;
   p = q = a;
-  if (b < p) p = b;
-  if (b > q) q = b;
+  if (b < p) {
+    p = b;
+  }
+  if (b > q) {
+    q = b;
+  }
 
   if (p < 0) {
     return ML_ERR_return_NAN();
-  }
-  else if (p === 0) {
+  } else if (p === 0) {
     return Number.POSITIVE_INFINITY;
-  }
-  else if (!isFinite(q)) {
+  } else if (!isFinite(q)) {
     return Number.NEGATIVE_INFINITY;
   }
 
   if (p >= 10) {
     corr = lgammacor(p) + lgammacor(q) - lgammacor(p + q);
     return Math.log(q) * -0.5 + M_LN_SQRT_2PI + corr + (p - 0.5) * Math.log(p / (p + q)) + q * Math.log1p(-p / (p + q));
-  }
-  else if (q >= 10) {
+  } else if (q >= 10) {
     corr = lgammacor(q) - lgammacor(p + q);
     return lgammafn(p) + corr + p - p * Math.log(p + q) + (q - 0.5) * Math.log1p(-p / (p + q));
-  }
-  else {
-    if (p < 1e-306) return lgammafn(p) + (lgammafn(q) - lgammafn(p + q));
-    else return Math.log(gammafn(p) * (gammafn(q) / gammafn(p + q)));
+  } else {
+    if (p < 1e-306) {
+      return lgammafn(p) + (lgammafn(q) - lgammafn(p + q));
+    } else {
+      return Math.log(gammafn(p) * (gammafn(q) / gammafn(p + q)));
+    }
   }
 }
 
 function dbinom_raw(x, n, p, q, give_log) {
   let lf, lc;
 
-  if (p === 0) return (x === 0 ? R_D__1(give_log) : R_D__0(give_log));
-  if (q === 0) return (x === n ? R_D__1(give_log) : R_D__0(give_log));
+  if (p === 0) {
+    return (x === 0 ? R_D__1(give_log) : R_D__0(give_log));
+  }
+  if (q === 0) {
+    return (x === n ? R_D__1(give_log) : R_D__0(give_log));
+  }
 
   if (x === 0) {
-    if (n === 0) return R_D__1(give_log);
+    if (n === 0) {
+      return R_D__1(give_log);
+    }
     lc = p < 0.1 ? -bd0(n, n * q) - n * p : n * Math.log(q);
     return R_D_exp(lc, give_log);
   }
@@ -1848,7 +1903,9 @@ function dbinom_raw(x, n, p, q, give_log) {
     lc = q < 0.1 ? -bd0(n, n * p) - n * q : n * Math.log(p);
     return R_D_exp(lc, give_log);
   }
-  if (x < 0 || x > n) return R_D__0(give_log);
+  if (x < 0 || x > n) {
+    return R_D__0(give_log);
+  }
 
   lc = stirlerr(n) - stirlerr(x) - stirlerr(n - x) - bd0(x, n * p) - bd0(n - x, n * q);
   lf = M_LN_2PI + Math.log(x) + Math.log1p(-x / n);
@@ -1856,38 +1913,65 @@ function dbinom_raw(x, n, p, q, give_log) {
 }
 
 function dbeta(x, a, b, give_log) {
-  if (a < 0 || b < 0) ML_ERR_return_NAN();
-  if (x < 0 || x > 1) return R_D__0(give_log);
+  if (a < 0 || b < 0) {
+    ML_ERR_return_NAN();
+  }
+  if (x < 0 || x > 1) {
+    return R_D__0(give_log);
+  }
 
-  if (a === 0 || b ===0 || !isFinite(a) || !isFinite(b)) {
+  if (a === 0 || b === 0 || !isFinite(a) || !isFinite(b)) {
     if (a === 0 && b === 0) {
-      if (x === 0 || x === 1) return Number.POSITIVE_INFINITY; else return R_D__0(give_log);
+      if (x === 0 || x === 1) {
+        return Number.POSITIVE_INFINITY;
+      } else {
+        return R_D__0(give_log);
+      }
     }
     if (a === 0 || a / b === 0) {
-      if (x === 0) return Number.POSITIVE_INFINITY; else return R_D__0(give_log);
+      if (x === 0) {
+        return Number.POSITIVE_INFINITY;
+      } else {
+        return R_D__0(give_log);
+      }
     }
     if (b === 0 || b / a === 0) {
-      if (x === 1) return Number.POSITIVE_INFINITY; else return R_D__0(give_log);
+      if (x === 1) {
+        return Number.POSITIVE_INFINITY;
+      } else {
+        return R_D__0(give_log);
+      }
     }
-    if (x === 0.5) return Number.POSITIVE_INFINITY; else return R_D__0(give_log);
+    if (x === 0.5) {
+      return Number.POSITIVE_INFINITY;
+    } else {
+      return R_D__0(give_log);
+    }
   }
 
   if (x === 0) {
-    if (a > 1) return R_D__0(give_log);
-    if (a < 1) return Number.POSITIVE_INFINITY;
+    if (a > 1) {
+      return R_D__0(give_log);
+    }
+    if (a < 1) {
+      return Number.POSITIVE_INFINITY;
+    }
     return R_D_val(b, give_log);
   }
   if (x === 1) {
-    if (b > 1) return R_D__0(give_log);
-    if (b < 1) return Number.POSITIVE_INFINITY;
+    if (b > 1) {
+      return R_D__0(give_log);
+    }
+    if (b < 1) {
+      return Number.POSITIVE_INFINITY;
+    }
     return R_D_val(a, give_log);
   }
 
   let lval;
   if (a <= 2 || b <= 2) {
     lval = (a - 1) * Math.log(x) + (b - 1) * Math.log1p(-x) - lbeta(a, b);
-  }
-  else {
+  } else {
     lval = Math.log(a + b - 1) + dbinom_raw(a - 1, a + b - 2, x, 1 - x, true);
   }
 
@@ -1918,17 +2002,17 @@ function _dbeta(x, shape1, shape2, log) {
 export { _dbeta as dbeta };
 
 function parseNumeric(x, default_value) {
-  if (typeof(x) === "undefined") {
+  if (typeof(x) === 'undefined') {
     return default_value;
   }
   return +x;
 }
 
 function parseBoolean(x, default_value) {
-  if (typeof(x) === "undefined") {
+  if (typeof(x) === 'undefined') {
     return default_value;
   }
-  return !!((x || "false") != "false");
+  return !!((x || 'false') !== 'false');
 }
 
 // Will slowly roll this into export statements as-needed

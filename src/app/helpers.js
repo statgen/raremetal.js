@@ -3,9 +3,9 @@
  *
  * This wraps internal functionality and provides utilities for reading and writing expected API formats
  */
-import numeric from "numeric";
-import { REGEX_EPACTS } from "./constants";
-import { _AggregationTest, SkatTest, ZegginiBurdenTest, VTTest, SkatOptimalTest } from "./stats";
+import numeric from 'numeric';
+import { REGEX_EPACTS } from './constants';
+import { _AggregationTest, SkatTest, ZegginiBurdenTest, VTTest, SkatOptimalTest } from './stats';
 
 const _all_tests = [ZegginiBurdenTest, SkatTest, VTTest, SkatOptimalTest];
 
@@ -43,7 +43,7 @@ class PortalVariantsHelper {
     // Read an array of variants. Parse names into position/ref/alt, and assign altFreq to MAF.
     // Return a hash keyed on variant ID for quick lookups.
     let lookup = {};
-    variants.forEach(data => {
+    variants.forEach((data) => {
       let { variant, altFreq, pvalue, score } = data;
       let [_, chrom, pos, ref, alt, __] = variant.match(REGEX_EPACTS);  // eslint-disable-line no-unused-vars
 
@@ -76,14 +76,14 @@ class PortalVariantsHelper {
         altAllele: alt,
         effectAllele: effect,
         altFreq: altFreq,
-        effectFreq: effectFreq
+        effectFreq: effectFreq,
       };
     });
     return lookup;
   }
 
   isAltEffect(variant_names) {  // Some calculations are sensitive to whether alt is the minor (effect) allele
-    return variant_names.map(name => {
+    return variant_names.map((name) => {
       const variant_data = this._variant_lookup[name];
       return variant_data.altAllele === variant_data.effectAllele;
     });
@@ -91,17 +91,17 @@ class PortalVariantsHelper {
 
   getEffectFreq(variant_names) {
     // Get the allele freq for the minor (effect) allele
-    return variant_names.map(name => this._variant_lookup[name].effectFreq);
+    return variant_names.map((name) => this._variant_lookup[name].effectFreq);
   }
 
   getScores(variant_names) {
     // Get single-variant scores
-    return variant_names.map(name => this._variant_lookup[name].score);
+    return variant_names.map((name) => this._variant_lookup[name].score);
   }
 
   getGroupVariants(variant_names) {
     // Return all that is known about a given set of variants
-    return variant_names.map(name => this._variant_lookup[name]);
+    return variant_names.map((name) => this._variant_lookup[name]);
   }
 }
 
@@ -120,11 +120,11 @@ class PortalGroupHelper {
     // Get all groups that identify as a specific category of mask- "limit the analysis to loss of function variants
     // in any gene"
     if (!Array.isArray(selection)) {
-      selection = [selection]
+      selection = [selection];
     }
     selection = new Set(selection);
 
-    const subset = this._groups.filter(group => selection.has(group.mask));
+    const subset = this._groups.filter((group) => selection.has(group.mask));
     return new this.constructor(subset);
   }
 
@@ -132,11 +132,11 @@ class PortalGroupHelper {
     // Get all groups based on a specific group name, regardless of mask. Eg, "all the ways to analyze data for a
     // given gene".
     if (!Array.isArray(selection)) {
-      selection = [selection]
+      selection = [selection];
     }
     selection = new Set(selection);
 
-    const subset = this._groups.filter(group => selection.has(group.group));
+    const subset = this._groups.filter((group) => selection.has(group.group));
     return new this.constructor(subset);
   }
 
@@ -224,7 +224,7 @@ class PortalTestRunner {
     this.variants = variants;
     this._tests = [];
 
-    test_names.forEach(name => this.addTest(name));
+    test_names.forEach((name) => this.addTest(name));
   }
 
   /**
@@ -254,8 +254,8 @@ class PortalTestRunner {
   run() {
     let partials = [];
 
-    this._tests.forEach(test => {
-      this.groups.data.forEach(group => {
+    this._tests.forEach((test) => {
+      this.groups.data.forEach((group) => {
         partials.push(this._runOne.bind(this, test, group));
       });
     });
@@ -263,7 +263,7 @@ class PortalTestRunner {
     //  running many tests
     return partials.reduce((results, one_test) => {
       return results.then((all_prior) => {
-        return one_test().then(one_res => {
+        return one_test().then((one_res) => {
           return [...all_prior, one_res];
         });
       });
@@ -302,7 +302,7 @@ class PortalTestRunner {
 
           test: test.key,
           stat,
-          pvalue
+          pvalue,
         };
       });
   }
@@ -322,13 +322,13 @@ class PortalTestRunner {
       results = Promise.resolve(results);
     }
 
-    return results.then(group_results => {
+    return results.then((group_results) => {
       return {
         data: {
           variants: this.variants.data,
           groups: group_results,
-        }
-      }
+        },
+      };
     });
   }
 }
@@ -336,7 +336,7 @@ class PortalTestRunner {
 
 function parsePortalJSON(json) {
   const data = json.data || json;
-  const groups = new PortalGroupHelper(data.groups.map(item => {
+  const groups = new PortalGroupHelper(data.groups.map((item) => {
     // Each group should have access to fields that, in portal json, are defined once globally
     item.nSamples = data.nSamples;
     item.sigmaSquared = data.sigmaSquared;

@@ -1,50 +1,70 @@
 {
-  "parserOptions": {
-    "ecmaVersion": 8,
-    "sourceType": "module"
-  },
+  "extends": "eslint:recommended",
   "rules": {
+    "arrow-parens": "error",
+    "brace-style": "error",
+    "comma-dangle": [
+      "warn",
+      "always-multiline"
+    ],
+    "comma-spacing": "warn",
+    "curly": "error",
+    "eol-last": "error",
+    "eqeqeq": [
+      "error",
+      "smart"
+    ],
     "indent": [
       "error",
       2,
       {
+        "FunctionDeclaration": {
+          "parameters": "first"
+        },
         "FunctionExpression": {
           "parameters": "first"
         },
         "CallExpression": {
           "arguments": "first"
-        },
-        "FunctionDeclaration": {
-          "parameters": "first"
-        },
-        "SwitchCase": 1
+        }
       }
     ],
-    "object-curly-spacing": [
+    "keyword-spacing": "warn",
+    "linebreak-style": [
+      "error",
+      "unix"
+    ],
+    "no-console": "off",
+    "no-trailing-spaces": "error",
+    "no-unused-vars": [
+      "error",
+      {
+        "args": "none"
+      }
+    ],
+    "prefer-template": "error",
+    "quotes": [
+      "error",
+      "single",
+      {
+        "avoidEscape": true,
+        "allowTemplateLiterals": true
+      }
+    ],
+    "semi": [
       "error",
       "always"
     ],
-    "no-console": [
-      "error",
-      {
-        "allow": [
-          "log",
-          "warn",
-          "error",
-          "time",
-          "timeEnd"
-        ]
-      }
-    ],
-    "no-unused-vars": [
-      "error",
-      { "args": "none" }
-    ]
+    "space-before-blocks": "error",
+    "space-infix-ops": "error"
   },
   "env": {
     "browser": true,
     "node": true,
     "es6": true
   },
-  "extends": "eslint:recommended"
+  "parserOptions": {
+    "ecmaVersion": 2017,
+    "sourceType": "module"
+  }
 }

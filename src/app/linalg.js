@@ -11,13 +11,12 @@ export function cholesky(A) {
   for (let i = 0; i < n; i++) {
     for (let j = 0; j <= i; j++) {
       let s = A[j][i];
-      for (let k = 0; k <= j-1; k++) {
+      for (let k = 0; k <= j - 1; k++) {
         s = s - G[j][k] * G[i][k];
       }
       if (j < i) {
         G[i][j] = s / G[j][j];
-      }
-      else {
+      } else {
         G[i][i] = Math.sqrt(s);
       }
     }

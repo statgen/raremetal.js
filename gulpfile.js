@@ -5,7 +5,7 @@ const filter = require('gulp-filter');
 const eslint = require('gulp-eslint');
 const path = require('path');
 const isparta = require('isparta');
-const uglify = require("gulp-uglify-es").default;
+const uglify = require('gulp-uglify-es').default;
 const istanbul = require('gulp-istanbul');
 const sourcemaps = require('gulp-sourcemaps');
 const rename = require('gulp-rename');
@@ -51,7 +51,7 @@ function build() {
       output: {
         filename: `${exportFileName}.js`,
         libraryTarget: 'umd',
-        library: config.mainVarName
+        library: config.mainVarName,
       },
       optimization: {
         minimize: false,
@@ -63,29 +63,29 @@ function build() {
           {
             test: /\.js$/,
             loader: 'source-map-loader',
-            enforce: "pre"
+            enforce: 'pre',
           },
           {
             test: /\.js$/,
             exclude: /node_modules/,
-            loader: 'babel-loader'
+            loader: 'babel-loader',
           },
           {
             test: /\.wasm$/,
             type: 'javascript/auto',
             loader: 'file-loader',
             options: {
-              publicPath: 'dist/'
-            }
-          }
-        ]
+              publicPath: 'dist/',
+            },
+          },
+        ],
       },
       plugins: [
         new CleanWebpackPlugin({
           verbose: true,
           cleanOnceBeforeBuildPatterns: [
             'dist/*',
-          ]
+          ],
         }),
         // new BundleAnalyzerPlugin(),
       ],
@@ -93,8 +93,8 @@ function build() {
       node: { // Reduce build size bloat by skipping certain emscripten library shims. TODO: Verify this doesn't break integral.js!
         fs: 'empty',
         path: 'empty',
-        crypto: 'empty'
-      }
+        crypto: 'empty',
+      },
     }))
     .pipe(gulp.dest(destinationFolder))
     .pipe(filter(['**', '!**/*.js.map']))
@@ -118,7 +118,7 @@ function _mocha() {
   return gulp.src(['test/setup/node.js', 'test/unit/**/*.js', 'test/integration/**/*.js'], { read: false })
     .pipe(mocha({
       globals: Object.keys(mochaGlobals.globals),
-      checkLeaks: true
+      checkLeaks: true,
     }));
 }
 
@@ -137,7 +137,7 @@ function coverage(done) {
     .pipe(filter(['!**/*cli*js']))
     .pipe(istanbul({
       instrumenter: Instrumenter,
-      includeUntested: true
+      includeUntested: true,
     }))
     .pipe(istanbul.hookRequire())
     .on('finish', () => {
@@ -157,7 +157,7 @@ function watch() {
 function watchDocs() {
   const files = ['README.md', 'src/app/**/*js', 'test/**/*js', 'src/**/*.md'];
   const exec = require('child_process').exec;
-  gulp.watch(files, async function() {
+  gulp.watch(files, function() {
     exec('npm run docs', function(err, stdout, stderr) {
       console.log(stdout);
       console.error(stderr);

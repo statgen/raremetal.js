@@ -17,7 +17,7 @@ import Table from 'cli-table2';
  */
 function printScoreTable(scores) {
   let table = new Table({
-    head: ["variant", "u", "sqrt_v", "alt_freq"]
+    head: ['variant', 'u', 'sqrt_v', 'alt_freq'],
   });
 
   for (let i = 0; i < scores.variants.length; i++) {
@@ -25,12 +25,12 @@ function printScoreTable(scores) {
       scores.variants[i],
       scores.u[i],
       scores.v[i],
-      scores.altFreq[i]
-    ])
+      scores.altFreq[i],
+    ]);
   }
 
   console.log(table.toString());
-  console.log("\n");
+  console.log('\n');
 }
 
 /**
@@ -40,11 +40,11 @@ function printScoreTable(scores) {
 function printCovarianceMatrix(matrix) {
   let pos = new Array(...matrix.positions.keys());
   let table = new Table({
-    head: pos
+    head: pos,
   });
   table.push(...matrix.matrix);
   console.log(table.toString());
-  console.log("\n");
+  console.log('\n');
 }
 
 export { printScoreTable, printCovarianceMatrix };
