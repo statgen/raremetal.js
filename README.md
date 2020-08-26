@@ -215,8 +215,8 @@ system; you must install these separately. Already built documentation is provid
 ### Useful commands
 
 The following commands are particularly useful during development
-- `npm test`: run unit tests and exit
-- `npm run watch`: auto-run tests whenever code changes
+- `npm run test`: run unit tests and exit
+- `npm run dev`: auto-run tests whenever code changes
 - `npm run build`: build `dist/` files and documentation
 
 [raremetal.js]: https://github.com/statgen/raremetal.js

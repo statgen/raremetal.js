@@ -19,7 +19,7 @@ describe('qfc.js', function() {
           testCase['sigma'],
           testCase['c'],
           testCase['lim'],
-          testCase['acc']
+          testCase['acc'],
         );
 
         it(`should match expected values for parameter set ${  count}`, function() {

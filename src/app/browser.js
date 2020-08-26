@@ -9,7 +9,9 @@
  * @license MIT
  */
 
+import { version } from '../../package.json';
+
 import * as helpers from './helpers.js';
 import * as stats from './stats.js';
 
-export { helpers, stats };
+export { helpers, stats, version };
