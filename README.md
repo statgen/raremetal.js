@@ -74,13 +74,16 @@ The package can be installed with NPM:
 
 This package may be incorporated into both web/browser and node.js based projects.
 
-On the web, include the `dist/raremetal.min.js` file in your site:
+On the web, include the `dist/raremetal.js` file in your site:
 
-`<script src="/path/to/your/assets/raremetal.min.js" type="application/javascript"></script>`
+`<script src="/path/to/your/assets/raremetal.js" type="application/javascript"></script>`
 
-Or alternatively via CDN:
+(if you are copying files over, make sure that `mvtdstpack.wasm` is in the same folder)
 
-`<script src="https://cdn.example/raremetal.min.js" type="application/javascript"></script>`
+Or alternatively, you can automatically fetch all needed files via CDN:
+
+`<script type="application/javascript" src="https://cdn.jsdelivr.net/npm/raremetal.js/dist/raremetal.js"
+          crossorigin="anonymous"></script>`
 
 Alternatively, the module can be loaded via node.js:
 
