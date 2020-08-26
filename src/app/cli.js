@@ -3,47 +3,47 @@
 /**
  * Command-line interface for running aggregation tests locally in node.js
  *
- * This file should be the only file using node.js require() - the remainder of the package uses ES6 module imports. 
+ * This file should be the only file using node.js require() - the remainder of the package uses ES6 module imports.
  *
  * @module cli
  * @license MIT
  */
 
 require('@babel/register')({
-  extends: __dirname + '/../.././.babelrc',
+  extends: `${__dirname  }/../.././.babelrc`,
   ignore: [/node_modules/],
 });
-const { ArgumentParser } = require("argparse");
-const { readMaskFileSync, extractScoreStats, extractCovariance } = require("./fio.js");
-const { REGEX_EPACTS } = require("./constants.js");
-const { ZegginiBurdenTest, SkatTest, SkatOptimalTest, VTTest } = require("./stats.js");
-const fs = require("fs");
-const yaml = require("js-yaml");
+const { ArgumentParser } = require('argparse');
+const { readMaskFileSync, extractScoreStats, extractCovariance } = require('./fio.js');
+const { REGEX_EPACTS } = require('./constants.js');
+const { ZegginiBurdenTest, SkatTest, SkatOptimalTest, VTTest } = require('./stats.js');
+const fs = require('fs');
+const yaml = require('js-yaml');
 
 function getSettings() {
   let parser = new ArgumentParser({
-    description: "Script for running gene-based tests with raremetal.js",
-    addHelp: true
+    description: 'Script for running gene-based tests with raremetal.js',
+    addHelp: true,
   });
 
   let subParsers = parser.addSubparsers({
-    title: "Sub-commands",
-    dest: "subcommand"
+    title: 'Sub-commands',
+    dest: 'subcommand',
   });
 
-  let single = subParsers.addParser("single", { addHelp: true });
+  let single = subParsers.addParser('single', { addHelp: true });
 
-  single.addArgument(["-m", "--mask"], { help: "Mask file defining variants assigned to each group" });
-  single.addArgument(["-s", "--score"], { help: "File containing score statistics per variant" });
-  single.addArgument(["-t", "--test"], { help: "Specify group-based test to run. Can be 'burden', 'skat'." });
-  single.addArgument(["-c", "--cov"], { help: "File containing covariance statistics across windows of variants" });
-  single.addArgument(["-g", "--group"], { help: "Only analyze 1 group/gene." });
-  single.addArgument(["--skato-rhos"], { help: "Specify rho values for SKAT-O as comma separated string." });
-  single.addArgument(["-o", "--out"], { help: "File to write results to." });
-  single.addArgument(["--silent"], { help: "Silence console output.", default: false });
+  single.addArgument(['-m', '--mask'], { help: 'Mask file defining variants assigned to each group' });
+  single.addArgument(['-s', '--score'], { help: 'File containing score statistics per variant' });
+  single.addArgument(['-t', '--test'], { help: "Specify group-based test to run. Can be 'burden', 'skat'." });
+  single.addArgument(['-c', '--cov'], { help: 'File containing covariance statistics across windows of variants' });
+  single.addArgument(['-g', '--group'], { help: 'Only analyze 1 group/gene.' });
+  single.addArgument(['--skato-rhos'], { help: 'Specify rho values for SKAT-O as comma separated string.' });
+  single.addArgument(['-o', '--out'], { help: 'File to write results to.' });
+  single.addArgument(['--silent'], { help: 'Silence console output.', default: false });
 
-  let meta = subParsers.addParser("meta", { addHelp: true });
-  meta.addArgument(["--spec"], { help: "YAML file specifying studies & their files." });
+  let meta = subParsers.addParser('meta', { addHelp: true });
+  meta.addArgument(['--spec'], { help: 'YAML file specifying studies & their files.' });
 
   return parser.parseArgs();
 }
@@ -79,8 +79,8 @@ class Results {
     this.results.push({
       group: group,
       pvalue: pvalue,
-      time: time
-    })
+      time: time,
+    });
   }
 
   getLastResult() {
@@ -88,12 +88,12 @@ class Results {
   }
 
   toString() {
-    let s = "group\tpvalue\ttime_ms\n";
+    let s = 'group\tpvalue\ttime_ms\n';
     //let s = Object.keys(this.results[0]).join("\t") + "\n";
     for (let obj of this.results) {
-      s += obj["group"] + "\t";
-      s += obj["pvalue"].toExponential(2) + "\t";
-      s += obj["time"].toString() + "\n";
+      s += `${obj['group']  }\t`;
+      s += `${obj['pvalue'].toExponential(2)  }\t`;
+      s += `${obj['time'].toString()  }\n`;
     }
     return s;
   }
@@ -107,7 +107,9 @@ class Results {
 async function single(args) {
   // Load mask file.
   const mask = readMaskFileSync(args.mask);
-  if (!args.silent) console.log(`Read ${mask.size()} groups from mask file`);
+  if (!args.silent) {
+    console.log(`Read ${mask.size()} groups from mask file`);
+  }
 
   // Run test on one group, or all groups
   const results = new Results();
@@ -119,8 +121,12 @@ async function single(args) {
       continue;
     }
 
-    if (!args.silent) console.log(`Testing [${i}/${total}]: ${group} | nvariants: ${groupVars.length}`);
-    if (!args.silent) console.time("  Total time");
+    if (!args.silent) {
+      console.log(`Testing [${i}/${total}]: ${group} | nvariants: ${groupVars.length}`);
+    }
+    if (!args.silent) {
+      console.time('  Total time');
+    }
     let chrom = groupVars[0].match(REGEX_EPACTS)[1];
     let start = groupVars[0].match(REGEX_EPACTS)[2];
     let end = groupVars[groupVars.length - 1].match(REGEX_EPACTS)[2];
@@ -129,7 +135,7 @@ async function single(args) {
     let scores = await extractScoreStats(args.score, region, groupVars);
 
     if (!scores.variants.length) {
-      console.log("  No polymorphic variants loaded from group, skipping");
+      console.log('  No polymorphic variants loaded from group, skipping');
       results.addResult(group, NaN);
       continue;
     }
@@ -146,25 +152,23 @@ async function single(args) {
       let [, p] = new ZegginiBurdenTest().run(scores.u, cov.matrix, null);
       timer.stop();
       results.addResult(group, p, timer);
-    }
-    else if (args.test.startsWith('skat')) {
+    } else if (args.test.startsWith('skat')) {
       // Use default weights for now
-      let mafs = scores.altFreq.map(x => Math.min(x,1-x));
+      let mafs = scores.altFreq.map((x) => Math.min(x, 1 - x));
 
       // Method
       if (args.test === 'skato') {
         let rhos;
         if (args.skato_rhos) {
-          rhos = args.skato_rhos.split(",").map(x => parseFloat(x.trim()));
+          rhos = args.skato_rhos.split(',').map((x) => parseFloat(x.trim()));
         }
         let skat = new SkatOptimalTest();
         const timer = new Timer();
         let [, p] = skat.run(scores.u, cov.matrix, null, mafs, rhos);
         timer.stop();
         results.addResult(group, p, timer);
-      }
-      else {
-        let method = args.test.replace('skat-','');
+      } else {
+        let method = args.test.replace('skat-', '');
         let skat = new SkatTest();
         skat._method = method;
         const timer = new Timer();
@@ -172,9 +176,8 @@ async function single(args) {
         timer.stop();
         results.addResult(group, p, timer);
       }
-    }
-    else if (args.test === 'vt') {
-      let mafs = scores.altFreq.map(x => Math.min(x,1-x));
+    } else if (args.test === 'vt') {
+      let mafs = scores.altFreq.map((x) => Math.min(x, 1 - x));
       let vt = new VTTest();
       const timer = new Timer();
       let [, p] = await vt.run(scores.u, cov.matrix, null, mafs);
@@ -182,16 +185,22 @@ async function single(args) {
       results.addResult(group, p, timer);
     }
 
-    if (!args.silent) console.timeEnd("  Total time");
-    if (!args.silent) console.log("  Pvalue: ", results.getLastResult().pvalue);
+    if (!args.silent) {
+      console.timeEnd('  Total time');
+    }
+    if (!args.silent) {
+      console.log('  Pvalue: ', results.getLastResult().pvalue);
+    }
     i += 1;
   }
 
   if (args.out != null) {
     // @todo should compress this
-    fs.writeFileSync(args.out, results.toString(), { encoding: "utf8" });
+    fs.writeFileSync(args.out, results.toString(), { encoding: 'utf8' });
   } else {
-    if (!args.silent) console.log(results.toString());
+    if (!args.silent) {
+      console.log(results.toString());
+    }
   }
 
   return results;
@@ -246,7 +255,7 @@ async function meta(args) {
 
       store[study] = {
         scores: scores,
-        cov: cov
+        cov: cov,
       };
 
       if (finalScores == null) {
@@ -280,11 +289,11 @@ async function meta(args) {
 
   // Write results for each test to separate file.
   for (let test of spec.settings.tests) {
-    let out = spec.settings.output + "." + test + ".tab";
+    let out = `${spec.settings.output  }.${  test  }.tab`;
     let test_results = results[test];
 
     // @todo should compress this
-    fs.writeFileSync(out, test_results.toString(), { encoding: "utf8" });
+    fs.writeFileSync(out, test_results.toString(), { encoding: 'utf8' });
   }
 
   return results;
@@ -296,18 +305,18 @@ if (typeof require !== 'undefined' && require.main === module) {
   console.log(args);
 
   let main;
-  if (args.subcommand === "single") {
+  if (args.subcommand === 'single') {
     main = single;
-  } else if (args.subcommand === "meta") {
+  } else if (args.subcommand === 'meta') {
     main = meta;
   } else {
     console.log("Error: must specify command, either 'single' or 'meta'");
     process.exit(1);
   }
 
-  main(args).catch(error => {
+  main(args).catch((error) => {
     console.log(error);
-  })
+  });
 }
 
 module.exports = { single, meta } ;

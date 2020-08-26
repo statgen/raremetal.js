@@ -1,11 +1,11 @@
-require("babel-register");
-const { parsePortalJson } = require("../../app/helpers.js");
-const { testBurden, testSkat, calcSkatWeights } = require("../../app/stats.js");
-const fs = require("fs");
-const Table = require("cli-table2");
+require('babel-register');
+const { parsePortalJson } = require('../../app/helpers.js');
+const { testBurden, testSkat, calcSkatWeights } = require('../../app/stats.js');
+const fs = require('fs');
+const Table = require('cli-table2');
 
 function numberWithCommas(x) {
-  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
 class Timer {
@@ -43,19 +43,20 @@ function scoreCovDescriptiveStats(scoreCov, maskId) {
   let avgGroupLength = 0;
   let avgGroupNvar = 0;
 
+  // eslint-disable-next-line no-unused-vars
   for (const [groupLabel, variants] of mask) {
     const nVar = variants.length;
-    const start = parseInt(variants[0].split("_")[0].split(":")[1]);
-    const end = parseInt(variants[nVar-1].split("_")[0].split(":")[1]);
+    const start = parseInt(variants[0].split('_')[0].split(':')[1]);
+    const end = parseInt(variants[nVar - 1].split('_')[0].split(':')[1]);
     const length = end - start;
     avgGroupLength += length / nGroups;
     avgGroupNvar += nVar / nGroups;
   }
 
   return {
-    "Avg length/group": avgGroupLength,
-    "Avg variants/group": avgGroupNvar,
-    "Number of groups": nGroups,
+    'Avg length/group': avgGroupLength,
+    'Avg variants/group': avgGroupNvar,
+    'Number of groups': nGroups,
   };
 }
 
@@ -63,8 +64,8 @@ function timeAggregationTests(tests, scoreCov) {
   let results = {
     data: {
       masks: [],
-      groupResults: []
-    }
+      groupResults: [],
+    },
   };
 
   results.data.masks = Object.values(scoreCov.masks);
@@ -78,8 +79,7 @@ function timeAggregationTests(tests, scoreCov) {
       let weightFunc;
       if (typeof testObject === 'function') {
         testFunc = testObject;
-      }
-      else if (typeof testObject === 'object') {
+      } else if (typeof testObject === 'object') {
         weightFunc = testObject.weights;
         testFunc = testObject.test;
       }
@@ -89,7 +89,7 @@ function timeAggregationTests(tests, scoreCov) {
         mask: scoreBlock.mask,
         test: testLabel,
         pvalue: NaN,
-        stat: NaN
+        stat: NaN,
       };
 
       if (scoreBlock.scores.u.length === 0 || scoreBlock.covariance.matrix.length === 0) {
@@ -100,7 +100,7 @@ function timeAggregationTests(tests, scoreCov) {
       let w;
       if (weightFunc) {
         // Use default weights for now, will offer option to specify later
-        w = weightFunc(scoreBlock.scores.altFreq.map(x => Math.min(x, 1 - x)));
+        w = weightFunc(scoreBlock.scores.altFreq.map((x) => Math.min(x, 1 - x)));
       }
 
       let [stat, p] = testFunc(scoreBlock.scores.u, scoreBlock.covariance.matrix, w);
@@ -122,15 +122,15 @@ function runTiming(scoreCov) {
   timerLoad.stop();
 
   const tests = {
-    "zegginiBurden": testBurden,
-    "skatLiu": {
-      test: (u, v, w) => testSkat(u, v, w, "liu"),
-      weights: calcSkatWeights
+    'zegginiBurden': testBurden,
+    'skatLiu': {
+      test: (u, v, w) => testSkat(u, v, w, 'liu'),
+      weights: calcSkatWeights,
     },
-    "skatDavies": {
-      test: (u, v, w) => testSkat(u, v, w, "davies"),
-      weights: calcSkatWeights
-    }
+    'skatDavies': {
+      test: (u, v, w) => testSkat(u, v, w, 'davies'),
+      weights: calcSkatWeights,
+    },
   };
 
   // Run all tests/masks
@@ -142,12 +142,12 @@ function runTiming(scoreCov) {
   return {
     load: timerLoad.toString(),
     allTests: timerTests.toString(),
-    perTest: perTestTimes
+    perTest: perTestTimes,
   };
 }
 
 function main() {
-  const regions = readJson("regions.json");
+  const regions = readJson('regions.json');
 
   /*
   { load: '0.069759 ms',
@@ -167,36 +167,37 @@ function main() {
 
   const table = new Table({
     head: [
-      "Region",
-      "Total Length",
-      "# Groups",
-      "Avg length/group",
-      "Avg variants/group",
-      "Load JSON",
-      "All Tests",
-      "Burden",
-      "SKAT Liu",
-      "SKAT Davies"
-    ]
+      'Region',
+      'Total Length',
+      '# Groups',
+      'Avg length/group',
+      'Avg variants/group',
+      'Load JSON',
+      'All Tests',
+      'Burden',
+      'SKAT Liu',
+      'SKAT Davies',
+    ],
   });
 
   for (const region of regions) {
+    // FIXME: test file is not captured in repo
     const filename = `example_portal_${region.chr}-${region.start}-${region.end}.json`;
     const portalJson = loadPortalJson(filename);
     const stats = scoreCovDescriptiveStats(portalJson, 'GENCODE-AF01');
     const timings = runTiming(portalJson);
 
     table.push([
-      region["region"],
-      numberWithCommas(region["end"] - region["start"]) + " bp",
-      stats["Number of groups"],
-      stats["Avg length/group"].toFixed(1),
-      stats["Avg variants/group"].toFixed(1),
-      timings["load"],
-      timings["allTests"],
-      timings["perTest"]["zegginiBurden"],
-      timings["perTest"]["skatLiu"],
-      timings["perTest"]["skatDavies"]
+      region['region'],
+      `${numberWithCommas(region['end'] - region['start'])  } bp`,
+      stats['Number of groups'],
+      stats['Avg length/group'].toFixed(1),
+      stats['Avg variants/group'].toFixed(1),
+      timings['load'],
+      timings['allTests'],
+      timings['perTest']['zegginiBurden'],
+      timings['perTest']['skatLiu'],
+      timings['perTest']['skatDavies'],
     ]);
   }
 

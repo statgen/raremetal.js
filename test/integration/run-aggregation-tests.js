@@ -15,7 +15,7 @@ describe('In-browser calculation workflow', function () {
     // TODO: DRY with PortalTestRunner unit tests
     const runner = new PortalTestRunner(this.groups, this.variants, ['skat']);
 
-    return runner.run().then(results => {
+    return runner.run().then((results) => {
       const expected_count = this.groups.data.length * runner._tests.length;
       assert.equal(results.length, expected_count);
       assert.hasAllKeys(results[0], ['groupType', 'group', 'mask', 'variants', 'test', 'pvalue', 'stat'] );
@@ -25,7 +25,7 @@ describe('In-browser calculation workflow', function () {
   it('should match expected burden p-value for HIC2', function() {
     const runner = new PortalTestRunner(this.groups, this.variants);
     const testGroup = this.groups.getOne(1, 'ENSG00000169635');
-    return runner._runOne(new ZegginiBurdenTest(), testGroup).then(results => {
+    return runner._runOne(new ZegginiBurdenTest(), testGroup).then((results) => {
       assert.closeTo(results.pvalue, 0.42913956, 0.001);
     });
   });
@@ -33,9 +33,9 @@ describe('In-browser calculation workflow', function () {
   it('should match expected skat p-value for HIC2', function() {
     const runner = new PortalTestRunner(this.groups, this.variants);
     const testGroup = this.groups.getOne(1, 'ENSG00000169635');
-    return runner._runOne(new SkatTest(), testGroup).then(results => {
+    return runner._runOne(new SkatTest(), testGroup).then((results) => {
       assert.closeTo(results.pvalue, 0.765, 0.001);
-    })
+    });
   });
 });
 

@@ -7,7 +7,7 @@ const mvtdstpack = mvtmodule();
 describe('mvtdstpack.js', function() {
   describe('Test mvtdst', function() {
     it('should return correct values', function() {
-      return mvtdstpack.then(module => {
+      return mvtdstpack.then((module) => {
         // Parameters
         let n = 4;
         let df = 0;
