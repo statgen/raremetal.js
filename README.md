@@ -1,4 +1,4 @@
-## raremetal.js
+# raremetal.js
 
 [![Build Status](https://travis-ci.com/statgen/raremetal.js.svg?branch=master)](https://travis-ci.com/statgen/raremetal.js)
 [![Dependency Status](https://david-dm.org/statgen/raremetal.js.svg)](https://david-dm.org/statgen/raremetal.js)
@@ -9,6 +9,29 @@ A package for performing rare variant aggregation tests and meta-analysis using 
 For a general overview of these types of tests and study design issues, refer to ["Rare-Variant Association Analysis: Study Designs and Statistical Tests". Lee et al, 2014.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4085641/)
 
 The methods implemented in this package are described across a number of papers and websites.
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=2 depthTo=6 orderedList=false} -->
+<!-- code_chunk_output -->
+
+- [Methods](#methods)
+- [Usage](#usage)
+  - [Installation](#installation)
+  - [Importing](#importing)
+  - [Usage in the browser](#usage-in-the-browser)
+  - [Usage on the server (CLI)](#usage-on-the-server-cli)
+    - [Single study](#single-study)
+    - [Meta-analysis of multiple studies (not well tested)](#meta-analysis-of-multiple-studies-not-well-tested)
+    - [Examples](#examples)
+      - [Test single gene/group](#test-single-genegroup)
+      - [Test all genes/groups](#test-all-genesgroups)
+- [Development](#development)
+  - [Requirements](#requirements)
+  - [Useful commands](#useful-commands)
+  - [Internal testing](#internal-testing)
+
+<!-- /code_chunk_output -->
+
+## Methods
 
 **Collapsing burden test (specifically the Morris-Zeggini test)**:
 
@@ -72,7 +95,7 @@ const helpers = raremetal.helpers;
 const stats = raremetal.stats;
 ```
 
-### Examples
+### Usage in the browser
 
 The best working example of how to use the library can be found in LocusZoom. The [aggregation test example](http://statgen.github.io/locuszoom/examples/aggregation_tests.html) shows how LocusZoom uses the functions in [src/app/helpers.js](helpers.js.html) to:
 
@@ -81,9 +104,89 @@ The best working example of how to use the library can be found in LocusZoom. Th
 
 Functions in [src/app/helpers.js](helpers.js.html) are designed to load data in JSON format from an API (or a static JSON file.) The [API format](https://github.com/statgen/LDServer/blob/master/docs/raremetal-api.md) is the same as implemented in the [raremetal app](https://github.com/statgen/LDServer#raremetal-app) of the [LDServer](https://github.com/statgen/LDServer).
 
-For examples of loading data and running tests using the command-line (CLI) version of this package, see
-[src/app/cli.js](cli.js.html). Scores and covariances are loaded from rvtest or RAREMETAL formatted files. When installing
-this package, an executable script `raremetal.js` should be installed, which corresponds to [src/app/cli.js](cli.js.html).
+### Usage on the server (CLI)
+
+A command line interface is included for running raremetal.js on a server or your local machine. You will need a recent version of node.js (12.0+ recommended.)
+
+The CLI is fairly basic and mainly used for testing when [comparing to other software](#internal-testing).
+
+#### Single study
+
+```
+usage: raremetal.js single [-h] [-m MASK] [-s SCORE] [-t TEST] [-c COV]
+                           [-g GROUP] [--skato-rhos SKATO_RHOS] [-o OUT]
+                           [--silent SILENT]
+
+
+Optional arguments:
+  -h, --help            Show this help message and exit.
+  -m MASK, --mask MASK  Mask file defining variants assigned to each group
+  -s SCORE, --score SCORE
+                        File containing score statistics per variant
+  -t TEST, --test TEST  Specify group-based test to run. Can be 'burden',
+                        'skat'.
+  -c COV, --cov COV     File containing covariance statistics across windows
+                        of variants
+  -g GROUP, --group GROUP
+                        Only analyze 1 group/gene.
+  --skato-rhos SKATO_RHOS
+                        Specify rho values for SKAT-O as comma separated
+                        string.
+  -o OUT, --out OUT     File to write results to.
+  --silent SILENT       Silence console output.
+```
+
+Possible tests for `-t` are `burden`, `skat-davies`, `skat-liu`, `vt`, and `skato`.
+
+
+#### Meta-analysis of multiple studies (not well tested)
+
+```
+usage: raremetal.js meta [-h] [--spec SPEC]
+
+Optional arguments:
+  -h, --help   Show this help message and exit.
+  --spec SPEC  YAML file specifying studies & their files.
+```
+
+The `--spec` YAML file should look like:
+
+```yaml
+studies:
+  study1:
+    scores: study1/rvtest.LDL.chrom22.MetaScore.assoc.gz
+    cov: study1/rvtest.LDL.chrom22.MetaCov.assoc.gz
+  study2:
+    scores: study2/rvtest.LDL.chrom22.MetaScore.assoc.gz
+    cov: study2/rvtest.LDL.chrom22.MetaCov.assoc.gz
+
+settings:
+  mask: masks/epacts.mask.chr22.tab
+  tests:
+    - burden
+    - skato
+
+  output: results/test_meta
+```
+
+#### Examples
+
+##### Test single gene/group
+
+```bash
+#!/bin/bash
+raremetal.js single \
+  -s 'test.MetaScore.assoc.gz' \
+  -c 'test.MetaCov.assoc.gz' \
+  -m 'mask.tab' \
+  -g 'MYGENE1' \
+  -t 'skato' \
+  -o 'results'
+```
+
+##### Test all genes/groups
+
+Omit the `-g XXX` option and it will run over all groups present in the mask file.
 
 ## Development
 
@@ -109,7 +212,7 @@ This will make it difficult to contribute your changes back upstream to us, howe
 Building some portions of the documentation (such as methods and API docs) require `pandoc` and a working `LaTeX` installation on your
 system; you must install these separately. Already built documentation is provided in both the npm package and the git repository.
 
-### Useful Commands
+### Useful commands
 
 The following commands are particularly useful during development
 - `npm test`: run unit tests and exit
