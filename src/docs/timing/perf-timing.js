@@ -189,7 +189,7 @@ function main() {
 
     table.push([
       region['region'],
-      `${numberWithCommas(region['end'] - region['start'])  } bp`,
+      `${numberWithCommas(region['end'] - region['start'])} bp`,
       stats['Number of groups'],
       stats['Avg length/group'].toFixed(1),
       stats['Avg variants/group'].toFixed(1),

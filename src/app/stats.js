@@ -1094,7 +1094,7 @@ class SkatIntegrator {
     let v;
     for (let x = xstart; x < xend; x += increment) {
       v = this.integrandDavies(x);
-      stream.write(`${x  }\t${  v  }\n`);
+      stream.write(`${x}\t${v}\n`);
     }
   }
 
