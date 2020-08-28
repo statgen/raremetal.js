@@ -185,7 +185,7 @@ class ScoreStatTable {
   getAltFreqForVariant(variant) {
     let freq = this.altFreq[this.variantMap.get(variant)];
     if (freq == null) {
-      throw new Error(`Variant did not exist when looking up alt allele freq: ${  variant}`);
+      throw new Error(`Variant did not exist when looking up alt allele freq: ${variant}`);
     }
 
     return freq;
@@ -199,7 +199,7 @@ class ScoreStatTable {
   getAltFreqForPosition(position) {
     let freq = this.altFreq[this.positionMap.get(position)];
     if (freq == null) {
-      throw new Error(`Position did not exist when looking up alt allele freq: ${  position}`);
+      throw new Error(`Position did not exist when looking up alt allele freq: ${position}`);
     }
 
     return freq;
@@ -212,7 +212,7 @@ class ScoreStatTable {
   getVariantAtPosition(position) {
     let variant = this.variants(this.positionMap.get(position));
     if (variant == null) {
-      throw new Error(`Variant did not exist at position: ${  position}`);
+      throw new Error(`Variant did not exist at position: ${position}`);
     }
 
     return variant;
@@ -590,7 +590,7 @@ function getNumberOfVariantsFromCovarianceFile(covarFile, region) {
  * @param fpath {string} Path to file (can be covariance or score stats).
  * @return {number} STATS_FORMAT.RAREMETAL or STATS_FORMAT.RVTEST.
  */
-async function detectFormat(fpath) {
+function detectFormat(fpath) {
   let stream = fs.createReadStream(fpath);
   let gzstream = stream.pipe(zlib.createGunzip());
   let format = null;
@@ -606,7 +606,7 @@ async function detectFormat(fpath) {
         format = STATS_FORMAT.RAREMETAL;
         resolve(format);
       } else {
-        reject('Could not determine format of covariance matrix file');
+        reject(Error('Could not determine format of covariance matrix file'));
       }
     });
   });
@@ -665,7 +665,7 @@ async function extractCovariance(fpath, region, variants, scoreStats) {
     // Remove duplicates
     let vset = new Set(variants);
     if (vset.size !== variants.length) {
-      throw `Duplicate variants given when extracting covariance matrix: \n${  variants}`;
+      throw `Duplicate variants given when extracting covariance matrix: \n${variants}`;
     }
   }
 
@@ -778,7 +778,7 @@ async function extractCovariance(fpath, region, variants, scoreStats) {
         let covobj = new GenotypeCovarianceMatrix(covmat, variants, positions);
         resolve(covobj);
       } else {
-        reject('No values read from covariance matrix');
+        reject(Error('No values read from covariance matrix'));
       }
     });
   });

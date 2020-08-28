@@ -22,7 +22,7 @@ describe('qfc.js', function() {
           testCase['acc'],
         );
 
-        it(`should match expected values for parameter set ${  count}`, function() {
+        it(`should match expected values for parameter set ${count}`, function() {
           let computedQf = result[0];
           let expectedQf = testCase['qfval'];
           assert.closeTo(computedQf, expectedQf, 0.001);

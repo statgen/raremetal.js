@@ -10,7 +10,7 @@
  */
 
 require('@babel/register')({
-  extends: `${__dirname  }/../.././.babelrc`,
+  extends: `${__dirname}/../.././.babelrc`,
   ignore: [/node_modules/],
 });
 const { ArgumentParser } = require('argparse');
@@ -91,9 +91,9 @@ class Results {
     let s = 'group\tpvalue\ttime_ms\n';
     //let s = Object.keys(this.results[0]).join("\t") + "\n";
     for (let obj of this.results) {
-      s += `${obj['group']  }\t`;
-      s += `${obj['pvalue'].toExponential(2)  }\t`;
-      s += `${obj['time'].toString()  }\n`;
+      s += `${obj['group']}\t`;
+      s += `${obj['pvalue'].toExponential(2)}\t`;
+      s += `${obj['time'].toString()}\n`;
     }
     return s;
   }
@@ -289,7 +289,7 @@ async function meta(args) {
 
   // Write results for each test to separate file.
   for (let test of spec.settings.tests) {
-    let out = `${spec.settings.output  }.${  test  }.tab`;
+    let out = `${spec.settings.output}.${test}.tab`;
     let test_results = results[test];
 
     // @todo should compress this
