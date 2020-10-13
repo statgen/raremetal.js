@@ -35,10 +35,12 @@ function getSettings() {
 
   single.addArgument(['-m', '--mask'], { help: 'Mask file defining variants assigned to each group' });
   single.addArgument(['-s', '--score'], { help: 'File containing score statistics per variant' });
-  single.addArgument(['-t', '--test'], { help: "Specify group-based test to run. Can be 'burden', 'skat'." });
+  single.addArgument(['-t', '--test'], { help: "Specify group-based test to run. Can be 'burden', 'skat', 'skato', 'vt', 'cond'." });
   single.addArgument(['-c', '--cov'], { help: 'File containing covariance statistics across windows of variants' });
   single.addArgument(['-g', '--group'], { help: 'Only analyze 1 group/gene.' });
   single.addArgument(['--skato-rhos'], { help: 'Specify rho values for SKAT-O as comma separated string.' });
+  // TODO: Allow multiple variants for conditional analysis
+  single.addArgument(['-d', '--cond'], { help: 'Specify variant to use for conditional analysis.' });
   single.addArgument(['-o', '--out'], { help: 'File to write results to.' });
   single.addArgument(['--silent'], { help: 'Silence console output.', default: false });
 
@@ -183,6 +185,28 @@ async function single(args) {
       let [, p] = await vt.run(scores.u, cov.matrix, null, mafs);
       timer.stop();
       results.addResult(group, p, timer);
+    } else if (args.test == 'cond' ) {
+      // New conditional test requires a Score vector U = [X Z] y 
+      // with dimensions (m + c) x 1 (where m = unconditional markers and c = conditional markers)
+      // with X representing non-conditional genotypes, 
+      // Z the conditional genotype(s), and y a vector of phenotypes;
+      // and covariance matrix V with dimensions (m+c)x(m+c), where
+      // V = X'X X'Z 
+      //     Z'X Z'Z 
+      // where X'X is an (m x m) matrix, and Z'Z is a (c x c) matrix
+      // such that the conditional score statistic and variance will be
+      // U_cond = X'y - X'Z (Z'Z)^-1 Z'y
+      // V_cond = (X'Z) (Z'Z)^-1 (Z'X)
+      // When we are conditioning on a single variant, c = 1
+      // and Z is a (1 x n) genotype vector
+      let cond = new CondTest();
+      const timer = new Timer();
+      // process genotype vector Z contained in args.cond and phenotype vector y contained in y.pheno
+      // to generate u and v as necessary, then send them to the Conditional Test
+      // along with an indication of how many variants are unconditional vs conditional
+      let [, p] = await cond.run(scores.u, cov.matrix, null, z, args.pheno);
+      timer.stop();
+      results.addResult(group, p timer);
     }
 
     if (!args.silent) {

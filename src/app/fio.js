@@ -383,12 +383,40 @@ class GenotypeCovarianceMatrix {
   /**
    * Subset the covariance matrix down to a subset of variants, in this exact ordering
    * @todo Implement
-   * @param variants List of variants
+   * @param variantList List of variants
    * @return New GenotypeCovarianceMatrix after subsetting (not in-place)
    */
-  // subsetToVariants(variants) {
-  //
-  // }
+  subsetToVariants(variantList) {
+   if (typeof variantList === 'undefined') {
+      throw new Error('Must specify list of variants when subsetting');
+    }
+  // First, figure out which variants supplied are actually in our covariance matrix
+  variantList = variantList.filter((x) => this.variantMap.has(x));
+  if (typeof variantList === 'undefined') {
+    throw new Error('Must specify list of variants when subsetting');
+  }
+  // Next, get the indices for values we need to extract from the big matrix
+  let idx = variantList.map((x) => this.variantMap.get(x));
+  let variants = idx.map((i) => this.variants[i]);
+  // Preallocate a smaller blank matrix to hold the subsetted covariances
+  let n_variants = length(variants);
+  let outMatrix = new Array(n_variants);
+  for (let i = 0; i < n_variants; i++) {
+    outMatrix[i] = new Array(n_variants).fill(null);
+  }
+  /** 
+   * Finally, read through the full covariance matrix line by line,
+   * choosing only the rows which match the listed variants,
+   * and copy only the corresponding columns
+  */ 
+  for (let i = 0; i < n_variants; i++) {
+   let currentVector = this.matrix[idx[i]];
+   for (let j = 0; j < n_variants; j++) {
+     outMatrix[i][j] = currentVector[idx[i]];
+   }
+  }
+  return outMatrix;
+ }
 }
 
 // async function readMaskFile(fpath) {

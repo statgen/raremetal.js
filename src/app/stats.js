@@ -1369,6 +1369,36 @@ class SkatOptimalTest extends AggregationTest {
   }
 }
 
+/**
+ * Conditional analysis
+ *
+ * Based on derivations from the Conditional Analysis section
+ * of the supplementary material from Dajiang Liu's paper: 
+ * Meta-Analysis of Gene Level Tests for Rare Variant Association
+ * https://doi.org/10.1038/ng.2852
+ * 
+ */
+
+// Not actually an aggregation test, but we'll use the class for convenient
+class CondTest extends AggregationTest {
+  constructor() {
+   super(...arguments);
+   this.key = 'cond';
+   this.label = 'Conditional';
+   this.requiresMaf = false;
+  }
+
+/**
+ * Calculate conditional score and variance from vectors of genotypes,
+ * conditional genotypes, and phenotypes
+ *
+ * @param {Number[]} u Vector of score statistics (length m, number of unconditional variants)
+ * @param {Number[]} v Covariance matrix of unconditional score statistics (m x m)
+ * @param {Number[]} 
+ * @return {Number[]} Conditional p-values.
+ */
+}
+
 export { // for unit testing only
   AggregationTest as _AggregationTest,
   get_conditional_dist as _get_conditional_dist,
