@@ -1379,13 +1379,29 @@ class SkatOptimalTest extends AggregationTest {
  * 
  */
 
-// Not actually an aggregation test, but we'll use the class for convenient
-class CondTest extends AggregationTest {
+/**
+ * Base class for all conditional tests.
+ */
+class ConditionalTest {
+  constructor() {
+    this.label = '';
+    this.key = '';
+
+    this.requiresMaf = false;
+  }
+
+  run(u, vclass) { // todo update docstrings and call sigs
+    throw new Error('Method must be implemented in a subclass');
+  }
+}
+
+// Condition on one or more genetic variants to adjust score statistic
+class CondTest extends ConditionalTest {
   constructor() {
    super(...arguments);
    this.key = 'cond';
    this.label = 'Conditional';
-   this.requiresMaf = false;
+
   }
 
 /**
@@ -1394,9 +1410,10 @@ class CondTest extends AggregationTest {
  *
  * @param {Number[]} u Vector of score statistics (length m, number of unconditional variants)
  * @param {Number[]} v Covariance matrix of unconditional score statistics (m x m)
- * @param {Number[]} 
+ * @param {number[][]} matrix
  * @return {Number[]} Conditional p-values.
  */
+
 }
 
 export { // for unit testing only
