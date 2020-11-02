@@ -26,7 +26,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - name: Set up dependencies
-      run: apt-get install tabix
+      run: sudo apt-get install tabix
     - name: Cache Node.js modules
       uses: actions/cache@v2
       with:
