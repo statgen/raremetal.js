@@ -423,33 +423,19 @@ class GenotypeCovarianceMatrix {
 //   return outMatrix;
 //  }
 
-
 /**
- * Add variant(s) for conditioning to the list, and regenerate XX, XZ, and ZZ
+ * Regenerate XX, XZ, and ZZ based on the current conditional variant list
  * Replaces the XX, XZ, and ZZ matrices
  * ZZ is a square matrix with dimensions equal to the number of conditional variants
  * XX is a square matrix with dimensions equal to the number of variants not being conditioned on
- * @function
- * @param variantList List of variants
-*/
-  changeConditionalVariants(variantList) {
-  // First, figure out which variants supplied are actually in our covariance matrix
-  variantList = variantList.filter((x) => this.variantMap.has(x));
-  if (typeof variantList === 'undefined') {
-    throw new Error('Must specify list of variants when subsetting');
-  }
-  // Old: Next, concatenate the current list with the input variant list, and restrict to unique variants
-  // Code from https://stackoverflow.com/questions/1584370/how-to-merge-two-arrays-in-javascript-and-de-duplicate-items
-  // this.conditionList = this.conditionList.concat(variantList.filter((item) => this.conditionList.indexOf(item) < 0));
-  // New: Change the current conditional list to the input list every time this is called
-  // Use a different function to handle adding and removing variants from the conditional list
-  this.conditionalList = variantList;
+ */
+ updateMatrices() {
   // Get the sorted indices for values we need to extract from the big matrix
   var idx = this.conditionList.map((x) => this.variantMap.get(x)).sort();
   // let variantIdx = idx.map((i) => this.variants[i]);
-  fullLength = this.dim()[0]
-  zLength = length(this.conditionList);
-  xLength = fullLength - zLength;
+  var fullLength = this.dim()[0]
+  var zLength = length(this.conditionList);
+  var xLength = fullLength - zLength;
   // let xxMatrix = new Array(xLength);
   // for (let i = 0; i < xLength; i++) {
   //   xxMatrix[i] = new Array(xLength).fill(null);
@@ -501,9 +487,64 @@ class GenotypeCovarianceMatrix {
   }
   this.xxMatrix = xxMatrix;
   this.zxMatrix = zxMatrix;
-  this.zzMatrix = zzMatrix;
+  this.zzMatrix = zzMatrix;   
+  }
+
+/**
+ * Change variant list for conditioning
+ * @function
+ * @param variantList List of variants
+*/
+  changeConditionalVariants(variantList) {
+  // First, figure out which variants supplied are actually in our covariance matrix
+  variantList = variantList.filter((x) => this.variantMap.has(x));
+  if (typeof variantList === 'undefined') {
+    throw new Error('Must specify list of variants when subsetting');
+  }
+  // Old: Next, concatenate the current list with the input variant list, and restrict to unique variants
+  // Code from https://stackoverflow.com/questions/1584370/how-to-merge-two-arrays-in-javascript-and-de-duplicate-items
+  // this.conditionList = this.conditionList.concat(variantList.filter((item) => this.conditionList.indexOf(item) < 0));
+  // New: Change the current conditional list to the input list every time this is called
+  // Use a different function to handle adding and removing variants from the conditional list
+  this.conditionalList = variantList;
+  this.updateMatrices();
  }
+
+/**
+ * Remove a single conditional variant from the current conditional variant list,
+ * then update all relevant matrices
+ * If the variant is not in the current conditional list, then do nothing
+ * @param {string} variant Variant to remove from conditional analysis
+ */
+  removeConditionalVariant(variant) {
+    if (this.variants.has(variant)) {
+      if (this.conditionList.has(variant)) {
+        this.conditionList = this.conditionList.filter(function(value) {return value != variant});
+        this.updateMatrices();
+      }
+    } else {
+      throw new Error('Specified conditional variant not found in current variant set, unable to remove')
+    }
+  }
+
+/**
+* Add a single conditional variant to the current conditional variant list,
+* then update all relevant matrices
+* If the variant is already part of the conditional variant list, then do nothing
+* @param {string} variant Variant to add to conditional analysis
+*/
+  addConditionalVariant(variant) {
+    if (this.variants.has(variant)) {
+      if (!this.conditionList.has(variant)) {
+        this.conditionList.push(variant);
+        this.updateMatrices();
+      }
+    } else {
+      throw new Error('Specified conditional variant not found in current variant set, unable to add')
+    }
+  } 
 }
+
 // async function readMaskFile(fpath) {
 //   const rl = readline.createInterface(fs.createReadStream(fpath))
 //
