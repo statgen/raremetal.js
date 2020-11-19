@@ -71,15 +71,12 @@ class Results {
     this.results = [];
   }
 
-  addResult(group, pvalue, time) {
-    if (!time) {
-      time = NaN;
-    }
-
+  addResult(group, pvalue, time=NaN, effect=NaN) {
     this.results.push({
       group: group,
       pvalue: pvalue,
       time: time,
+      effect: effect
     });
   }
 
@@ -88,12 +85,13 @@ class Results {
   }
 
   toString() {
-    let s = 'group\tpvalue\ttime_ms\n';
+    let s = 'group\tpvalue\ttime_ms\teffect\n';
     //let s = Object.keys(this.results[0]).join("\t") + "\n";
     for (let obj of this.results) {
       s += `${obj['group']}\t`;
       s += `${obj['pvalue'].toExponential(2)}\t`;
-      s += `${obj['time'].toString()}\n`;
+      s += `${obj['time'].toString()}\t`;
+      s += `${obj['effect'].toPrecision(3)}\n`;
     }
     return s;
   }
@@ -149,9 +147,9 @@ async function single(args) {
 
     if (args.test === 'burden') {
       const timer = new Timer();
-      let [, p] = new ZegginiBurdenTest().run(scores.u, cov.matrix, null);
+      let [, p, effect] = new ZegginiBurdenTest().run(scores.u, cov.matrix, null);
       timer.stop();
-      results.addResult(group, p, timer);
+      results.addResult(group, p, timer, effect);
     } else if (args.test.startsWith('skat')) {
       // Use default weights for now
       let mafs = scores.altFreq.map((x) => Math.min(x, 1 - x));
@@ -185,9 +183,9 @@ async function single(args) {
       let mafs = scores.altFreq.map((x) => Math.min(x, 1 - x));
       let vt = new VTTest();
       const timer = new Timer();
-      let [, p] = await vt.run(scores.u, cov.matrix, null, mafs);
+      let [, p, effect] = await vt.run(scores.u, cov.matrix, null, mafs);
       timer.stop();
-      results.addResult(group, p, timer);
+      results.addResult(group, p, timer, effect);
     }
 
     if (!args.silent) {
