@@ -393,13 +393,15 @@ class ZegginiBurdenTest extends AggregationTest {
     // This is taken from:
     // https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#BURDEN_META_ANALYSIS
     let over = numeric.dot(w, u);
-    let under = Math.sqrt(numeric.dot(numeric.dot(w, v), w));
+    let wvw = numeric.dot(numeric.dot(w, v), w)
+    let under = Math.sqrt(wvw);
     let z = over / under;
+    let effect = over / wvw;
 
     // The -Math.abs(z) is because pnorm returns the lower tail probability from the normal dist
     // The * 2 is for a two-sided p-value.
     let p = pnorm(-Math.abs(z), 0, 1) * 2;
-    return [z, p];
+    return [z, p, effect];
   }
 }
 
@@ -407,6 +409,7 @@ function _vt(maf_cutoffs, u, v, mafs) {
   // Calculate score statistic and cov weight matrix for each MAF cutoff.
   const cov_weight = emptyRowMatrix(maf_cutoffs.length, u.length);
   let t_max = -Infinity;
+  let effect = NaN;
   const scores = Array(maf_cutoffs.length).fill(0.0);
   maf_cutoffs.map((m, i) => {
     // Weight is 1 if MAF < cutoff, otherwise 0.
@@ -420,6 +423,7 @@ function _vt(maf_cutoffs, u, v, mafs) {
     scores[i] = t_stat;
     if (t_stat > t_max) {
       t_max = t_stat;
+      effect = numer / denom;
     }
   });
 
@@ -432,7 +436,7 @@ function _vt(maf_cutoffs, u, v, mafs) {
   const cov_u = numeric.dot(numeric.dot(cov_weight, v), numeric.transpose(cov_weight));
   const cov_t = cov2cor(cov_u);
 
-  return [scores, cov_t, t_max];
+  return [scores, cov_t, t_max, effect];
 }
 
 /**
@@ -471,7 +475,7 @@ class VTTest extends AggregationTest {
     }
 
     // Try calculating scores/t-stat covariance the first time (may need refinement later).
-    let [scores, cov_t, t_max] = _vt(maf_cutoffs, u, v, mafs);
+    let [scores, cov_t, t_max, effect] = _vt(maf_cutoffs, u, v, mafs);
     const lower = new Array(maf_cutoffs.length).fill(-t_max);
     const upper = new Array(maf_cutoffs.length).fill(t_max);
     const mean = new Array(maf_cutoffs.length).fill(0);
@@ -486,7 +490,8 @@ class VTTest extends AggregationTest {
         // Use Shuang's algorithm
         if (maf_cutoffs.length > 20) {
           maf_cutoffs = maf_cutoffs.slice(-20);
-          let [scores, cov_t, t_max] = _vt(maf_cutoffs, u, v, mafs);
+          let [scores, cov_t, t_max, eff_cut] = _vt(maf_cutoffs, u, v, mafs);
+          effect = eff_cut;
           pvalue = calculate_mvt_pvalue(scores, cov_t, t_max);
         } else {
           pvalue = calculate_mvt_pvalue(scores, cov_t, t_max);
@@ -499,7 +504,7 @@ class VTTest extends AggregationTest {
         pvalue = 1.0;
       }
 
-      return [t_max, pvalue];
+      return [t_max, pvalue, effect];
     });
   }
 }
