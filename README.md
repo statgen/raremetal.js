@@ -137,7 +137,7 @@ Optional arguments:
   --silent SILENT       Silence console output.
 ```
 
-Possible tests for `-t` are `burden`, `skat-davies`, `skat-liu`, `vt`, and `skato`.
+Possible tests for `-t` are `burden`, `skat`, `skat-o`, and `vt`.
 
 
 #### Meta-analysis of multiple studies (not well tested)

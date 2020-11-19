@@ -157,7 +157,7 @@ async function single(args) {
       let mafs = scores.altFreq.map((x) => Math.min(x, 1 - x));
 
       // Method
-      if (args.test === 'skato') {
+      if (args.test === 'skat-o') {
         let rhos;
         if (args.skato_rhos) {
           rhos = args.skato_rhos.split(',').map((x) => parseFloat(x.trim()));
@@ -170,6 +170,11 @@ async function single(args) {
       } else {
         let method = args.test.replace('skat-', '');
         let skat = new SkatTest();
+
+        if (method === 'skat') {
+          skat._method = 'auto';
+        }
+
         skat._method = method;
         const timer = new Timer();
         let [, p] = skat.run(scores.u, cov.matrix, null, mafs);
