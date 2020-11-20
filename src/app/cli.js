@@ -35,7 +35,7 @@ function getSettings() {
 
   single.addArgument(['-m', '--mask'], { help: 'Mask file defining variants assigned to each group' });
   single.addArgument(['-s', '--score'], { help: 'File containing score statistics per variant' });
-  single.addArgument(['-t', '--test'], { help: "Specify group-based test to run. Can be 'burden', 'skat'." });
+  single.addArgument(['-t', '--test'], { help: "Specify group-based test to run. Can be 'burden', 'skat', 'skat-o', 'vt'." });
   single.addArgument(['-c', '--cov'], { help: 'File containing covariance statistics across windows of variants' });
   single.addArgument(['-g', '--group'], { help: 'Only analyze 1 group/gene.' });
   single.addArgument(['--skato-rhos'], { help: 'Specify rho values for SKAT-O as comma separated string.' });
