@@ -143,6 +143,47 @@ describe('stats.js', function() {
         'testBurden on known u/cov did not produce close enough p-value to expected',
       );
     });
+
+    it('should return correct effect size for known u/cov', function() {
+      let u = [1.26175, 3.45806, -4.90216, -7.05748];
+
+      let cov = [
+        [
+          23.902543,
+          -0.01359241884,
+          -0.01361261692,
+          -0.1976943976
+        ],
+        [
+          -0.01359241884,
+          23.90577896,
+          -0.01371627432,
+          -0.1992892636
+        ],
+        [
+          -0.01361261692,
+          -0.01371627432,
+          23.9075214,
+          -0.1996334844
+        ],
+        [
+          -0.1976943976,
+          -0.1992892636,
+          -0.1996334844,
+          320.2882088
+        ]
+      ];
+
+      let agg = new ZegginiBurdenTest();
+      let [, pval, effect] = agg.run(u, cov, null);
+      let expectedEffect = -0.018529;
+      assert.closeTo(
+        effect,
+        expectedEffect,
+        0.001,
+        'burden test on known u/cov did not produce close enough effect size to expected',
+      );
+    });
   });
 
   describe('SkatTest', function() {
