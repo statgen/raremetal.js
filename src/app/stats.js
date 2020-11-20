@@ -360,7 +360,7 @@ class ZegginiBurdenTest extends AggregationTest {
    * @return {number[]} An array of weights, one per variant.
    */
   static weights(n) {
-    return new Array(n).fill(1 / n);
+    return new Array(n).fill(1);
   }
 
   /**
