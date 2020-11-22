@@ -18,7 +18,7 @@ describe('In-browser calculation workflow', function () {
     return runner.run().then((results) => {
       const expected_count = this.groups.data.length * runner._tests.length;
       assert.equal(results.length, expected_count);
-      assert.hasAllKeys(results[0], ['groupType', 'group', 'mask', 'variants', 'test', 'pvalue', 'stat'] );
+      assert.hasAllKeys(results[0], ['groupType', 'group', 'mask', 'variants', 'test', 'pvalue', 'stat', 'effect'] );
     });
   });
 
@@ -27,6 +27,7 @@ describe('In-browser calculation workflow', function () {
     const testGroup = this.groups.getOne(1, 'ENSG00000169635');
     return runner._runOne(new ZegginiBurdenTest(), testGroup).then((results) => {
       assert.closeTo(results.pvalue, 0.42913956, 0.001);
+      assert.closeTo(results.effect, -0.006566478415213644, 0.00001);
     });
   });
 
