@@ -43,13 +43,44 @@
 
 
     <section>
-        <article><h2>raremetal.js</h2>
-<p><a href="https://travis-ci.com/statgen/raremetal.js"><img src="https://travis-ci.com/statgen/raremetal.js.svg?branch=master" alt="Build Status"></a>
-<a href="https://david-dm.org/statgen/raremetal.js"><img src="https://david-dm.org/statgen/raremetal.js.svg" alt="Dependency Status"></a>
-<a href="https://david-dm.org/statgen/raremetal.js#info=devDependencies"><img src="https://david-dm.org/statgen/raremetal.js/dev-status.svg" alt="devDependency Status"></a></p>
+        <article><h1>raremetal.js</h1>
+<p><img src="https://github.com/statgen/raremetal.js/workflows/Unit%20tests/badge.svg?branch=master" alt="Build Status"></p>
 <p>A package for performing rare variant aggregation tests and meta-analysis using score covariance matrices.</p>
 <p>For a general overview of these types of tests and study design issues, refer to <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4085641/">&quot;Rare-Variant Association Analysis: Study Designs and Statistical Tests&quot;. Lee et al, 2014.</a></p>
 <p>The methods implemented in this package are described across a number of papers and websites.</p>
+<!-- @import "[TOC]" {cmd="toc" depthFrom=2 depthTo=6 orderedList=false} -->
+<!-- code_chunk_output -->
+<ul>
+<li><a href="#methods">Methods</a></li>
+<li><a href="#usage">Usage</a>
+<ul>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#importing">Importing</a></li>
+<li><a href="#usage-in-the-browser">Usage in the browser</a></li>
+<li><a href="#usage-on-the-server-cli">Usage on the server (CLI)</a>
+<ul>
+<li><a href="#single-study">Single study</a></li>
+<li><a href="#meta-analysis-of-multiple-studies-not-well-tested">Meta-analysis of multiple studies (not well tested)</a></li>
+<li><a href="#examples">Examples</a>
+<ul>
+<li><a href="#test-single-genegroup">Test single gene/group</a></li>
+<li><a href="#test-all-genesgroups">Test all genes/groups</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#development">Development</a>
+<ul>
+<li><a href="#requirements">Requirements</a></li>
+<li><a href="#useful-commands">Useful commands</a></li>
+<li><a href="#internal-testing">Internal testing</a></li>
+</ul>
+</li>
+</ul>
+<!-- /code_chunk_output -->
+<h2>Methods</h2>
 <p><strong>Collapsing burden test (specifically the Morris-Zeggini test)</strong>:</p>
 <ul>
 <li><a href="https://www.ncbi.nlm.nih.gov/pubmed/19810025">&quot;An evaluation of statistical approaches to rare variant analysis in genetic association studies.&quot; Morris et al, 2010.</a></li>
@@ -85,10 +116,11 @@
 <p><code>npm install --save raremetal.js</code></p>
 <h3>Importing</h3>
 <p>This package may be incorporated into both web/browser and node.js based projects.</p>
-<p>On the web, include the <code>dist/raremetal.min.js</code> file in your site:</p>
-<p><code>&lt;script src=&quot;/path/to/your/assets/raremetal.min.js&quot; type=&quot;application/javascript&quot;&gt;&lt;/script&gt;</code></p>
-<p>Or alternatively via CDN:</p>
-<p><code>&lt;script src=&quot;https://cdn.example/raremetal.min.js&quot; type=&quot;application/javascript&quot;&gt;&lt;/script&gt;</code></p>
+<p>On the web, include the <code>dist/raremetal.js</code> file in your site:</p>
+<p><code>&lt;script src=&quot;/path/to/your/assets/raremetal.js&quot; type=&quot;application/javascript&quot;&gt;&lt;/script&gt;</code></p>
+<p>(if you are copying files over, make sure that <code>mvtdstpack.wasm</code> is in the same folder)</p>
+<p>Or alternatively, you can automatically fetch all needed files via CDN:</p>
+<p><code>&lt;script type=&quot;application/javascript&quot; src=&quot;https://cdn.jsdelivr.net/npm/raremetal.js/dist/raremetal.js&quot;           crossorigin=&quot;anonymous&quot;&gt;&lt;/script&gt;</code></p>
 <p>Alternatively, the module can be loaded via node.js:</p>
 <pre class="prettyprint source lang-javascript"><code>// In node.js
 const raremetal = require(&quot;raremetal.js&quot;);
@@ -99,16 +131,77 @@ const helpers = raremetal.helpers;
 // Statistical functions for calculating aggregation tests.
 const stats = raremetal.stats;
 </code></pre>
-<h3>Examples</h3>
+<h3>Usage in the browser</h3>
 <p>The best working example of how to use the library can be found in LocusZoom. The <a href="http://statgen.github.io/locuszoom/examples/aggregation_tests.html">aggregation test example</a> shows how LocusZoom uses the functions in <a href="helpers.js.html">src/app/helpers.js</a> to:</p>
 <ul>
 <li>Load score statistics and covariance matrices for genes within a genomic region.</li>
 <li>Calculate aggregation tests (burden, SKAT) for each gene in the region.</li>
 </ul>
 <p>Functions in <a href="helpers.js.html">src/app/helpers.js</a> are designed to load data in JSON format from an API (or a static JSON file.) The <a href="https://github.com/statgen/LDServer/blob/master/docs/raremetal-api.md">API format</a> is the same as implemented in the <a href="https://github.com/statgen/LDServer#raremetal-app">raremetal app</a> of the <a href="https://github.com/statgen/LDServer">LDServer</a>.</p>
-<p>For examples of loading data and running tests using the command-line (CLI) version of this package, see
-<a href="cli.js.html">src/app/cli.js</a>. Scores and covariances are loaded from rvtest or RAREMETAL formatted files. When installing
-this package, an executable script <code>raremetal.js</code> should be installed, which corresponds to <a href="cli.js.html">src/app/cli.js</a>.</p>
+<h3>Usage on the server (CLI)</h3>
+<p>A command line interface is included for running raremetal.js on a server or your local machine. You will need a recent version of node.js (12.0+ recommended.)</p>
+<p>The CLI is fairly basic and mainly used for testing when <a href="#internal-testing">comparing to other software</a>.</p>
+<h4>Single study</h4>
+<pre class="prettyprint source"><code>usage: raremetal.js single [-h] [-m MASK] [-s SCORE] [-t TEST] [-c COV]
+                           [-g GROUP] [--skato-rhos SKATO_RHOS] [-o OUT]
+                           [--silent SILENT]
+
+
+Optional arguments:
+  -h, --help            Show this help message and exit.
+  -m MASK, --mask MASK  Mask file defining variants assigned to each group
+  -s SCORE, --score SCORE
+                        File containing score statistics per variant
+  -t TEST, --test TEST  Specify group-based test to run. Can be 'burden',
+                        'skat'.
+  -c COV, --cov COV     File containing covariance statistics across windows
+                        of variants
+  -g GROUP, --group GROUP
+                        Only analyze 1 group/gene.
+  --skato-rhos SKATO_RHOS
+                        Specify rho values for SKAT-O as comma separated
+                        string.
+  -o OUT, --out OUT     File to write results to.
+  --silent SILENT       Silence console output.
+</code></pre>
+<p>Possible tests for <code>-t</code> are <code>burden</code>, <code>skat</code>, <code>skat-o</code>, and <code>vt</code>.</p>
+<h4>Meta-analysis of multiple studies (not well tested)</h4>
+<pre class="prettyprint source"><code>usage: raremetal.js meta [-h] [--spec SPEC]
+
+Optional arguments:
+  -h, --help   Show this help message and exit.
+  --spec SPEC  YAML file specifying studies & their files.
+</code></pre>
+<p>The <code>--spec</code> YAML file should look like:</p>
+<pre class="prettyprint source lang-yaml"><code>studies:
+  study1:
+    scores: study1/rvtest.LDL.chrom22.MetaScore.assoc.gz
+    cov: study1/rvtest.LDL.chrom22.MetaCov.assoc.gz
+  study2:
+    scores: study2/rvtest.LDL.chrom22.MetaScore.assoc.gz
+    cov: study2/rvtest.LDL.chrom22.MetaCov.assoc.gz
+
+settings:
+  mask: masks/epacts.mask.chr22.tab
+  tests:
+    - burden
+    - skato
+
+  output: results/test_meta
+</code></pre>
+<h4>Examples</h4>
+<h5>Test single gene/group</h5>
+<pre class="prettyprint source lang-bash"><code>#!/bin/bash
+raremetal.js single \
+  -s 'test.MetaScore.assoc.gz' \
+  -c 'test.MetaCov.assoc.gz' \
+  -m 'mask.tab' \
+  -g 'MYGENE1' \
+  -t 'skato' \
+  -o 'results'
+</code></pre>
+<h5>Test all genes/groups</h5>
+<p>Omit the <code>-g XXX</code> option and it will run over all groups present in the mask file.</p>
 <h2>Development</h2>
 <h3>Requirements</h3>
 <p>This package has been developed and tested using Node.js 10 LTS (Dubnium). It currently does not work with the latest version of Node.js, though we aim to patch that eventually. You can manage multiple Node.js versions using <a href="https://github.com/creationix/nvm">nvm</a>, and this package includes a <code>.nvmrc</code> file that specifies which version we are currently testing against.</p>
@@ -125,11 +218,11 @@ npm install
 This will make it difficult to contribute your changes back upstream to us, however.</p>
 <p>Building some portions of the documentation (such as methods and API docs) require <code>pandoc</code> and a working <code>LaTeX</code> installation on your
 system; you must install these separately. Already built documentation is provided in both the npm package and the git repository.</p>
-<h3>Useful Commands</h3>
+<h3>Useful commands</h3>
 <p>The following commands are particularly useful during development</p>
 <ul>
-<li><code>npm test</code>: run unit tests and exit</li>
-<li><code>npm run watch</code>: auto-run tests whenever code changes</li>
+<li><code>npm run test</code>: run unit tests and exit</li>
+<li><code>npm run dev</code>: auto-run tests whenever code changes</li>
 <li><code>npm run build</code>: build <code>dist/</code> files and documentation</li>
 </ul>
 <h3>Internal testing</h3>
@@ -146,13 +239,13 @@ derived from these larger tests to cover edge cases and extreme p-values.</p></a
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-browser.html">browser</a></li><li><a href="module-cli.html">cli</a></li><li><a href="module-fio.html">fio</a></li><li><a href="module-print.html">print</a></li><li><a href="module-qfc.html">qfc</a></li><li><a href="module-quadrature.html">quadrature</a></li><li><a href="module-rstats.html">rstats</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="module-fio-GenotypeCovarianceMatrix.html">GenotypeCovarianceMatrix</a></li><li><a href="module-fio-ScoreStatTable.html">ScoreStatTable</a></li><li><a href="module-fio-VariantMask.html">VariantMask</a></li><li><a href="PortalTestRunner.html">PortalTestRunner</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AGGREGATION_TESTS">AGGREGATION_TESTS</a></li><li><a href="global.html#cholesky">cholesky</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-browser.html">browser</a></li><li><a href="module-cli.html">cli</a></li><li><a href="module-fio.html">fio</a></li><li><a href="module-print.html">print</a></li><li><a href="module-qfc.html">qfc</a></li><li><a href="module-quadrature.html">quadrature</a></li><li><a href="module-rstats.html">rstats</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="module-fio-GenotypeCovarianceMatrix.html">GenotypeCovarianceMatrix</a></li><li><a href="module-fio-ScoreStatTable.html">ScoreStatTable</a></li><li><a href="module-fio-VariantMask.html">VariantMask</a></li><li><a href="module-quadrature-ExpSinh.html">ExpSinh</a></li><li><a href="module-stats-AggregationTest.html">AggregationTest</a></li><li><a href="module-stats-SkatOptimalTest.html">SkatOptimalTest</a></li><li><a href="module-stats-SkatTest.html">SkatTest</a></li><li><a href="module-stats-VTTest.html">VTTest</a></li><li><a href="module-stats-ZegginiBurdenTest.html">ZegginiBurdenTest</a></li><li><a href="PortalTestRunner.html">PortalTestRunner</a></li><li><a href="PortalVariantsHelper.html">PortalVariantsHelper</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AGGREGATION_TESTS">AGGREGATION_TESTS</a></li><li><a href="global.html#cholesky">cholesky</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.1</a> on Thu Jul 02 2020 16:10:32 GMT-0400 (Eastern Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Mon Nov 23 2020 16:17:36 GMT-0500 (Eastern Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>

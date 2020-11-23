@@ -31,9 +31,9 @@
  *
  * This wraps internal functionality and provides utilities for reading and writing expected API formats
  */
-import numeric from "numeric";
-import { REGEX_EPACTS } from "./constants";
-import { _AggregationTest, SkatTest, ZegginiBurdenTest, VTTest, SkatOptimalTest } from "./stats";
+import numeric from 'numeric';
+import { REGEX_EPACTS } from './constants';
+import { _AggregationTest, SkatTest, ZegginiBurdenTest, VTTest, SkatOptimalTest } from './stats';
 
 const _all_tests = [ZegginiBurdenTest, SkatTest, VTTest, SkatOptimalTest];
 
@@ -71,7 +71,7 @@ class PortalVariantsHelper {
     // Read an array of variants. Parse names into position/ref/alt, and assign altFreq to MAF.
     // Return a hash keyed on variant ID for quick lookups.
     let lookup = {};
-    variants.forEach(data => {
+    variants.forEach((data) => {
       let { variant, altFreq, pvalue, score } = data;
       let [_, chrom, pos, ref, alt, __] = variant.match(REGEX_EPACTS);  // eslint-disable-line no-unused-vars
 
@@ -104,14 +104,14 @@ class PortalVariantsHelper {
         altAllele: alt,
         effectAllele: effect,
         altFreq: altFreq,
-        effectFreq: effectFreq
+        effectFreq: effectFreq,
       };
     });
     return lookup;
   }
 
   isAltEffect(variant_names) {  // Some calculations are sensitive to whether alt is the minor (effect) allele
-    return variant_names.map(name => {
+    return variant_names.map((name) => {
       const variant_data = this._variant_lookup[name];
       return variant_data.altAllele === variant_data.effectAllele;
     });
@@ -119,17 +119,17 @@ class PortalVariantsHelper {
 
   getEffectFreq(variant_names) {
     // Get the allele freq for the minor (effect) allele
-    return variant_names.map(name => this._variant_lookup[name].effectFreq);
+    return variant_names.map((name) => this._variant_lookup[name].effectFreq);
   }
 
   getScores(variant_names) {
     // Get single-variant scores
-    return variant_names.map(name => this._variant_lookup[name].score);
+    return variant_names.map((name) => this._variant_lookup[name].score);
   }
 
   getGroupVariants(variant_names) {
     // Return all that is known about a given set of variants
-    return variant_names.map(name => this._variant_lookup[name]);
+    return variant_names.map((name) => this._variant_lookup[name]);
   }
 }
 
@@ -148,11 +148,11 @@ class PortalGroupHelper {
     // Get all groups that identify as a specific category of mask- "limit the analysis to loss of function variants
     // in any gene"
     if (!Array.isArray(selection)) {
-      selection = [selection]
+      selection = [selection];
     }
     selection = new Set(selection);
 
-    const subset = this._groups.filter(group => selection.has(group.mask));
+    const subset = this._groups.filter((group) => selection.has(group.mask));
     return new this.constructor(subset);
   }
 
@@ -160,11 +160,11 @@ class PortalGroupHelper {
     // Get all groups based on a specific group name, regardless of mask. Eg, "all the ways to analyze data for a
     // given gene".
     if (!Array.isArray(selection)) {
-      selection = [selection]
+      selection = [selection];
     }
     selection = new Set(selection);
 
-    const subset = this._groups.filter(group => selection.has(group.group));
+    const subset = this._groups.filter((group) => selection.has(group.group));
     return new this.constructor(subset);
   }
 
@@ -252,7 +252,7 @@ class PortalTestRunner {
     this.variants = variants;
     this._tests = [];
 
-    test_names.forEach(name => this.addTest(name));
+    test_names.forEach((name) => this.addTest(name));
   }
 
   /**
@@ -282,8 +282,8 @@ class PortalTestRunner {
   run() {
     let partials = [];
 
-    this._tests.forEach(test => {
-      this.groups.data.forEach(group => {
+    this._tests.forEach((test) => {
+      this.groups.data.forEach((group) => {
         partials.push(this._runOne.bind(this, test, group));
       });
     });
@@ -291,7 +291,7 @@ class PortalTestRunner {
     //  running many tests
     return partials.reduce((results, one_test) => {
       return results.then((all_prior) => {
-        return one_test().then(one_res => {
+        return one_test().then((one_res) => {
           return [...all_prior, one_res];
         });
       });
@@ -320,7 +320,7 @@ class PortalTestRunner {
     // Some test classes may return a raw value and others will return a promise. Wrap the result for consistency.
     let result = test.run(scores, cov, weights, mafs);
     return Promise.resolve(result)
-      .then(([stat, pvalue]) => {
+      .then(([stat, pvalue, effect]) => {
         // The results describe the group + several new fields for calculation results.
         return {
           groupType: group.groupType,
@@ -330,7 +330,8 @@ class PortalTestRunner {
 
           test: test.key,
           stat,
-          pvalue
+          pvalue,
+          effect,
         };
       });
   }
@@ -350,13 +351,13 @@ class PortalTestRunner {
       results = Promise.resolve(results);
     }
 
-    return results.then(group_results => {
+    return results.then((group_results) => {
       return {
         data: {
           variants: this.variants.data,
           groups: group_results,
-        }
-      }
+        },
+      };
     });
   }
 }
@@ -364,7 +365,7 @@ class PortalTestRunner {
 
 function parsePortalJSON(json) {
   const data = json.data || json;
-  const groups = new PortalGroupHelper(data.groups.map(item => {
+  const groups = new PortalGroupHelper(data.groups.map((item) => {
     // Each group should have access to fields that, in portal json, are defined once globally
     item.nSamples = data.nSamples;
     item.sigmaSquared = data.sigmaSquared;
@@ -387,13 +388,13 @@ export { parsePortalJSON, PortalTestRunner, AGGREGATION_TESTS };
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-browser.html">browser</a></li><li><a href="module-cli.html">cli</a></li><li><a href="module-fio.html">fio</a></li><li><a href="module-print.html">print</a></li><li><a href="module-qfc.html">qfc</a></li><li><a href="module-quadrature.html">quadrature</a></li><li><a href="module-rstats.html">rstats</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="module-fio-GenotypeCovarianceMatrix.html">GenotypeCovarianceMatrix</a></li><li><a href="module-fio-ScoreStatTable.html">ScoreStatTable</a></li><li><a href="module-fio-VariantMask.html">VariantMask</a></li><li><a href="PortalTestRunner.html">PortalTestRunner</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AGGREGATION_TESTS">AGGREGATION_TESTS</a></li><li><a href="global.html#cholesky">cholesky</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-browser.html">browser</a></li><li><a href="module-cli.html">cli</a></li><li><a href="module-fio.html">fio</a></li><li><a href="module-print.html">print</a></li><li><a href="module-qfc.html">qfc</a></li><li><a href="module-quadrature.html">quadrature</a></li><li><a href="module-rstats.html">rstats</a></li><li><a href="module-stats.html">stats</a></li></ul><h3>Classes</h3><ul><li><a href="module-fio-GenotypeCovarianceMatrix.html">GenotypeCovarianceMatrix</a></li><li><a href="module-fio-ScoreStatTable.html">ScoreStatTable</a></li><li><a href="module-fio-VariantMask.html">VariantMask</a></li><li><a href="module-quadrature-ExpSinh.html">ExpSinh</a></li><li><a href="module-stats-AggregationTest.html">AggregationTest</a></li><li><a href="module-stats-SkatOptimalTest.html">SkatOptimalTest</a></li><li><a href="module-stats-SkatTest.html">SkatTest</a></li><li><a href="module-stats-VTTest.html">VTTest</a></li><li><a href="module-stats-ZegginiBurdenTest.html">ZegginiBurdenTest</a></li><li><a href="PortalTestRunner.html">PortalTestRunner</a></li><li><a href="PortalVariantsHelper.html">PortalVariantsHelper</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AGGREGATION_TESTS">AGGREGATION_TESTS</a></li><li><a href="global.html#cholesky">cholesky</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.1</a> on Thu Jul 02 2020 16:10:32 GMT-0400 (Eastern Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Mon Nov 23 2020 16:17:36 GMT-0500 (Eastern Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>
