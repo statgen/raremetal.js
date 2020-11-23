@@ -393,7 +393,7 @@ class ZegginiBurdenTest extends AggregationTest {
     // This is taken from:
     // https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#BURDEN_META_ANALYSIS
     let over = numeric.dot(w, u);
-    let wvw = numeric.dot(numeric.dot(w, v), w)
+    let wvw = numeric.dot(numeric.dot(w, v), w);
     let under = Math.sqrt(wvw);
     let z = over / under;
     let effect = over / wvw;

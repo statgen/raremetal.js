@@ -71,12 +71,12 @@ class Results {
     this.results = [];
   }
 
-  addResult(group, pvalue, time=NaN, effect=NaN) {
+  addResult(group, pvalue, time = NaN, effect = NaN) {
     this.results.push({
       group: group,
       pvalue: pvalue,
       time: time,
-      effect: effect
+      effect: effect,
     });
   }
 

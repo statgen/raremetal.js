@@ -303,7 +303,7 @@ class PortalTestRunner {
           test: test.key,
           stat,
           pvalue,
-          effect
+          effect,
         };
       });
   }
