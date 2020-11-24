@@ -123,6 +123,41 @@ describe('stats.js', function() {
         assert.closeTo(pval, 4.307841306988618e-19, 0.0001);
       });
     });
+
+    it('test effect size', function() {
+      const u = [1.26175, 3.45806, -4.90216, -7.05748];
+      const v = [
+        [
+          23.902543,
+          -0.01359241884,
+          -0.01361261692,
+          -0.1976943976,
+        ],
+        [
+          -0.01359241884,
+          23.90577896,
+          -0.01371627432,
+          -0.1992892636,
+        ],
+        [
+          -0.01361261692,
+          -0.01371627432,
+          23.9075214,
+          -0.1996334844,
+        ],
+        [
+          -0.1976943976,
+          -0.1992892636,
+          -0.1996334844,
+          320.2882088,
+        ],
+      ];
+      const mafs = [0.000281496, 0.000283886, 0.000284308, 0.00412922];
+      const agg = new VTTest();
+      return agg.run(u, v, null, mafs).then(function ([tmax, pval, effect]) {
+        assert.closeTo(effect, 0.0988, 0.0001);
+      });
+    });
   });
 
   describe('ZegginiBurdenTest', function() {
@@ -141,6 +176,47 @@ describe('stats.js', function() {
         expectedPval,
         0.001,
         'testBurden on known u/cov did not produce close enough p-value to expected',
+      );
+    });
+
+    it('should return correct effect size for known u/cov', function() {
+      let u = [1.26175, 3.45806, -4.90216, -7.05748];
+
+      let cov = [
+        [
+          23.902543,
+          -0.01359241884,
+          -0.01361261692,
+          -0.1976943976,
+        ],
+        [
+          -0.01359241884,
+          23.90577896,
+          -0.01371627432,
+          -0.1992892636,
+        ],
+        [
+          -0.01361261692,
+          -0.01371627432,
+          23.9075214,
+          -0.1996334844,
+        ],
+        [
+          -0.1976943976,
+          -0.1992892636,
+          -0.1996334844,
+          320.2882088,
+        ],
+      ];
+
+      let agg = new ZegginiBurdenTest();
+      let [, , effect] = agg.run(u, cov, null);
+      let expectedEffect = -0.018529;
+      assert.closeTo(
+        effect,
+        expectedEffect,
+        0.001,
+        'burden test on known u/cov did not produce close enough effect size to expected',
       );
     });
   });

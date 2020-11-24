@@ -1,8 +1,6 @@
 # raremetal.js
 
-[![Build Status](https://travis-ci.com/statgen/raremetal.js.svg?branch=master)](https://travis-ci.com/statgen/raremetal.js)
-[![Dependency Status](https://david-dm.org/statgen/raremetal.js.svg)](https://david-dm.org/statgen/raremetal.js)
-[![devDependency Status](https://david-dm.org/statgen/raremetal.js/dev-status.svg)](https://david-dm.org/statgen/raremetal.js#info=devDependencies)
+![Build Status](https://github.com/statgen/raremetal.js/workflows/Unit%20tests/badge.svg?branch=master)
 
 A package for performing rare variant aggregation tests and meta-analysis using score covariance matrices.
 
@@ -139,7 +137,7 @@ Optional arguments:
   --silent SILENT       Silence console output.
 ```
 
-Possible tests for `-t` are `burden`, `skat-davies`, `skat-liu`, `vt`, and `skato`.
+Possible tests for `-t` are `burden`, `skat`, `skat-o`, and `vt`.
 
 
 #### Meta-analysis of multiple studies (not well tested)

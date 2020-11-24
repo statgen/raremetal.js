@@ -35,7 +35,7 @@ function getSettings() {
 
   single.addArgument(['-m', '--mask'], { help: 'Mask file defining variants assigned to each group' });
   single.addArgument(['-s', '--score'], { help: 'File containing score statistics per variant' });
-  single.addArgument(['-t', '--test'], { help: "Specify group-based test to run. Can be 'burden', 'skat', 'skato', 'vt', 'cond'." });
+  single.addArgument(['-t', '--test'], { help: "Specify group-based test to run. Can be 'burden', 'skat', 'skat-o', 'vt', 'cond'." });
   single.addArgument(['-c', '--cov'], { help: 'File containing covariance statistics across windows of variants' });
   single.addArgument(['-g', '--group'], { help: 'Only analyze 1 group/gene.' });
   single.addArgument(['--skato-rhos'], { help: 'Specify rho values for SKAT-O as comma separated string.' });
@@ -73,15 +73,12 @@ class Results {
     this.results = [];
   }
 
-  addResult(group, pvalue, time) {
-    if (!time) {
-      time = NaN;
-    }
-
+  addResult(group, pvalue, time = NaN, effect = NaN) {
     this.results.push({
       group: group,
       pvalue: pvalue,
       time: time,
+      effect: effect,
     });
   }
 
@@ -90,12 +87,13 @@ class Results {
   }
 
   toString() {
-    let s = 'group\tpvalue\ttime_ms\n';
+    let s = 'group\tpvalue\ttime_ms\teffect\n';
     //let s = Object.keys(this.results[0]).join("\t") + "\n";
     for (let obj of this.results) {
       s += `${obj['group']}\t`;
       s += `${obj['pvalue'].toExponential(2)}\t`;
-      s += `${obj['time'].toString()}\n`;
+      s += `${obj['time'].toString()}\t`;
+      s += `${obj['effect'].toPrecision(3)}\n`;
     }
     return s;
   }
@@ -151,15 +149,15 @@ async function single(args) {
 
     if (args.test === 'burden') {
       const timer = new Timer();
-      let [, p] = new ZegginiBurdenTest().run(scores.u, cov.matrix, null);
+      let [, p, effect] = new ZegginiBurdenTest().run(scores.u, cov.matrix, null);
       timer.stop();
-      results.addResult(group, p, timer);
+      results.addResult(group, p, timer, effect);
     } else if (args.test.startsWith('skat')) {
       // Use default weights for now
       let mafs = scores.altFreq.map((x) => Math.min(x, 1 - x));
 
       // Method
-      if (args.test === 'skato') {
+      if (args.test === 'skat-o') {
         let rhos;
         if (args.skato_rhos) {
           rhos = args.skato_rhos.split(',').map((x) => parseFloat(x.trim()));
@@ -172,6 +170,11 @@ async function single(args) {
       } else {
         let method = args.test.replace('skat-', '');
         let skat = new SkatTest();
+
+        if (method === 'skat') {
+          skat._method = 'auto';
+        }
+
         skat._method = method;
         const timer = new Timer();
         let [, p] = skat.run(scores.u, cov.matrix, null, mafs);
@@ -182,9 +185,9 @@ async function single(args) {
       let mafs = scores.altFreq.map((x) => Math.min(x, 1 - x));
       let vt = new VTTest();
       const timer = new Timer();
-      let [, p] = await vt.run(scores.u, cov.matrix, null, mafs);
+      let [, p, effect] = await vt.run(scores.u, cov.matrix, null, mafs);
       timer.stop();
-      results.addResult(group, p, timer);
+      results.addResult(group, p, timer, effect);
     } else if (args.test == 'cond' ) {
       // New conditional test requires a Score vector U = [X Z] y 
       // with dimensions (m + c) x 1 (where m = unconditional markers and c = conditional markers)

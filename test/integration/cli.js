@@ -54,7 +54,7 @@ describe('cli.js', function() {
       cov: 'test/integration/data/gene.DUXAP8.cov.assoc.gz',
       score: 'test/integration/data/gene.DUXAP8.scores.assoc.gz',
       mask: 'test/integration/data/gene.DUXAP8.mask.tab',
-      test: 'skato',
+      test: 'skat-o',
       group: null,
       silent: true,
     };
