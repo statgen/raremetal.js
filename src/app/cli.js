@@ -16,7 +16,7 @@ require('@babel/register')({
 const { ArgumentParser } = require('argparse');
 const { readMaskFileSync, extractScoreStats, extractCovariance } = require('./fio.js');
 const { REGEX_EPACTS } = require('./constants.js');
-const { ZegginiBurdenTest, SkatTest, SkatOptimalTest, VTTest } = require('./stats.js');
+const { ZegginiBurdenTest, SkatTest, SkatOptimalTest, VTTest, CondTest } = require('./stats.js');
 const fs = require('fs');
 const yaml = require('js-yaml');
 
@@ -188,14 +188,14 @@ async function single(args) {
       let [, p, effect] = await vt.run(scores.u, cov.matrix, null, mafs);
       timer.stop();
       results.addResult(group, p, timer, effect);
-    } else if (args.test == 'cond' ) {
-      // New conditional test requires a Score vector U = [X Z] y 
+    } else if (args.test === 'cond' ) {
+      // New conditional test requires a Score vector U = [X Z] y
       // with dimensions (m + c) x 1 (where m = unconditional markers and c = conditional markers)
-      // with X representing non-conditional genotypes, 
+      // with X representing non-conditional genotypes,
       // Z the conditional genotype(s), and y a vector of phenotypes;
       // and covariance matrix V with dimensions (m+c)x(m+c), where
-      // V = X'X X'Z 
-      //     Z'X Z'Z 
+      // V = X'X X'Z
+      //     Z'X Z'Z
       // where X'X is an (m x m) matrix, and Z'Z is a (c x c) matrix
       // such that the conditional score statistic and variance will be
       // U_cond = X'y - X'Z (Z'Z)^-1 Z'y
@@ -204,12 +204,12 @@ async function single(args) {
       // and Z is a (1 x n) genotype vector
       let cond = new CondTest();
       const timer = new Timer();
-      // process genotype vector Z contained in args.cond and phenotype vector y contained in y.pheno
-      // to generate u and v as necessary, then send them to the Conditional Test
-      // along with an indication of how many variants are unconditional vs conditional
-      let [, p] = await cond.run(scores.u, cov.matrix, null, z, args.pheno);
+      // We send along a list of variants for conditioning to CondTest
+      // which will perform the appropriate calculations and return a list of
+      // conditional p-values
+      let [, p] = await cond.run(scores.u, cov.matrix, null, args.cond, args.pheno);
       timer.stop();
-      results.addResult(group, p timer);
+      results.addResult(group, p, timer);
     }
 
     if (!args.silent) {

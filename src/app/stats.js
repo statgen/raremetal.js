@@ -1378,10 +1378,10 @@ class SkatOptimalTest extends AggregationTest {
  * Conditional analysis
  *
  * Based on derivations from the Conditional Analysis section
- * of the supplementary material from Dajiang Liu's paper: 
+ * of the supplementary material from Dajiang Liu's paper:
  * Meta-Analysis of Gene Level Tests for Rare Variant Association
  * https://doi.org/10.1038/ng.2852
- * 
+ *
  */
 
 /**
@@ -1403,22 +1403,23 @@ class ConditionalTest {
 // Condition on one or more genetic variants to adjust score statistic
 class CondTest extends ConditionalTest {
   constructor() {
-   super(...arguments);
-   this.key = 'cond';
-   this.label = 'Conditional';
+    super(...arguments);
+    this.key = 'cond';
+    this.label = 'Conditional';
 
   }
 
-/**
- * Calculate conditional score and variance from vectors of genotypes,
- * conditional genotypes, and phenotypes
- *
- * @param {Number[]} u Vector of score statistics (length m, number of unconditional variants)
- * @param {Number[]} v Covariance matrix of unconditional score statistics (m x m)
- * @param {number[][]} matrix
- * @return {Number[]} Conditional p-values.
- */
-
+  /**
+   * Calculate conditional score and variance from vectors of genotypes,
+   * conditional genotypes, and phenotypes
+   *
+   * @param {Number[]} u Vector of score statistics (length m, number of unconditional variants)
+   * @param {Number[]} v Covariance matrix of unconditional score statistics (m x m)
+   * @param {number[][]} matrix
+   * @return {Number[]} Conditional p-values.
+   */
+  // Conditional Score    Ucond = Ux - X'Za, where a = (Z'Z)^-1 Z'y
+  // Conditional Variance Vcond = (X'Z) (Z'Z)^-1 (Z'X)
 }
 
 export { // for unit testing only

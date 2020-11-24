@@ -385,154 +385,156 @@ class GenotypeCovarianceMatrix {
     }
   }
 
-//   /**
-//    * Subset the covariance matrix down to a subset of variants, in this exact ordering
-//    * @function
-//    * @param variantList List of variants
-//    * @return New GenotypeCovarianceMatrix after subsetting (not in-place)
-//    */
-//   subsetToVariants(variantList) {
-//    if (typeof variantList === 'undefined') {
-//       throw new Error('Must specify list of variants when subsetting');
-//     }
-//   // First, figure out which variants supplied are actually in our covariance matrix
-//   variantList = variantList.filter((x) => this.variantMap.has(x));
-//   if (typeof variantList === 'undefined') {
-//     throw new Error('Must specify list of variants when subsetting');
-//   }
-//   // Next, get the indices for values we need to extract from the big matrix
-//   let idx = variantList.map((x) => this.variantMap.get(x));
-//   let variants = idx.map((i) => this.variants[i]);
-//   // Preallocate a smaller blank matrix to hold the subsetted covariances
-//   let n_variants = length(variants);
-//   let outMatrix = new Array(n_variants);
-//   for (let i = 0; i < n_variants; i++) {
-//     outMatrix[i] = new Array(n_variants).fill(null);
-//   }
-//   /** 
-//    * Finally, read through the full covariance matrix line by line,
-//    * choosing only the rows which match the listed variants,
-//    * and copy only the corresponding columns
-//   */ 
-//   for (let i = 0; i < n_variants; i++) {
-//    let currentVector = this.matrix[idx[i]];
-//    for (let j = 0; j < n_variants; j++) {
-//      outMatrix[i][j] = currentVector[idx[i]];
-//    }
-//   }
-//   return outMatrix;
-//  }
+  //   /**
+  //    * Subset the covariance matrix down to a subset of variants, in this exact ordering
+  //    * @function
+  //    * @param variantList List of variants
+  //    * @return New GenotypeCovarianceMatrix after subsetting (not in-place)
+  //    */
+  //   subsetToVariants(variantList) {
+  //    if (typeof variantList === 'undefined') {
+  //       throw new Error('Must specify list of variants when subsetting');
+  //     }
+  //   // First, figure out which variants supplied are actually in our covariance matrix
+  //   variantList = variantList.filter((x) => this.variantMap.has(x));
+  //   if (typeof variantList === 'undefined') {
+  //     throw new Error('Must specify list of variants when subsetting');
+  //   }
+  //   // Next, get the indices for values we need to extract from the big matrix
+  //   let idx = variantList.map((x) => this.variantMap.get(x));
+  //   let variants = idx.map((i) => this.variants[i]);
+  //   // Preallocate a smaller blank matrix to hold the subsetted covariances
+  //   let n_variants = length(variants);
+  //   let outMatrix = new Array(n_variants);
+  //   for (let i = 0; i < n_variants; i++) {
+  //     outMatrix[i] = new Array(n_variants).fill(null);
+  //   }
+  //   /**
+  //    * Finally, read through the full covariance matrix line by line,
+  //    * choosing only the rows which match the listed variants,
+  //    * and copy only the corresponding columns
+  //   */
+  //   for (let i = 0; i < n_variants; i++) {
+  //    let currentVector = this.matrix[idx[i]];
+  //    for (let j = 0; j < n_variants; j++) {
+  //      outMatrix[i][j] = currentVector[idx[i]];
+  //    }
+  //   }
+  //   return outMatrix;
+  //  }
 
-/**
- * Regenerate XX, XZ, and ZZ based on the current conditional variant list
- * Replaces the XX, XZ, and ZZ matrices
- * ZZ is a square matrix with dimensions equal to the number of conditional variants
- * XX is a square matrix with dimensions equal to the number of variants not being conditioned on
- */
- updateMatrices() {
+  /**
+   * Regenerate XX, XZ, and ZZ based on the current conditional variant list
+   * Replaces the XX, XZ, and ZZ matrices
+   * ZZ is a square matrix with dimensions equal to the number of conditional variants
+   * XX is a square matrix with dimensions equal to the number of variants not being conditioned on
+   */
+  updateMatrices() {
   // Get the sorted indices for values we need to extract from the big matrix
-  var idx = this.conditionList.map((x) => this.variantMap.get(x)).sort();
-  // let variantIdx = idx.map((i) => this.variants[i]);
-  var fullLength = this.dim()[0]
-  var zLength = length(this.conditionList);
-  var xLength = fullLength - zLength;
-  // let xxMatrix = new Array(xLength);
-  // for (let i = 0; i < xLength; i++) {
-  //   xxMatrix[i] = new Array(xLength).fill(null);
-  // }
-  // X'X = xxMatrix is a square matrix, xLength by xLength
-  // Z'X = zxMatrix is a rectangular matrix, zLength by xLength
-  // Z'Z = zzMatrix is a square matrix, zLength by zLength
-  let zzMatrix = new Array(zLength);
-  let zxMatrix = new Array(zLength);
-  for (let i = 0; i < zLength; i++) {
-    zzMatrix[i] = new Array(zLength).fill(null);
-    zxMatrix[i] = new Array(xLength).fill(null);
-  }
-  let xxMatrix = new Array(xLength);
-  for (let i = 0; i < xLength; i++) {
-    xxMatrix[i] = new Array(xLength).fill(null);
-  }
-  /** 
-   * idx contains the indices of all the conditional variants
-   * We will extract the columns and rows corresponding to Z'X and Z'Z
-   * For the X'X matrix, read through the full covariance matrix line by line,
-   * choosing only the rows which don't match the conditional indices,
-   * and choose the columns which also don't match the conditional indices for X'X;
-   * for rows that match the conditional indices and therefore don't belong in X'X, 
-   * take those rows, and separate them into the Z'X and Z'Z matrix:
-   * all elements which don't match the known indices belong to Z'X, while
-   * all elements which match the known indices belong to Z'Z
-  */ 
-  for (let i = 0; i < fullLength; i++) {
-   let currentVector = this.matrix[i];
-   if (idx.includes(i)) {
-    for (let j = 0; j < fullLength; j++) {
-      zIdx = 0;
-      xIdx = 0;
-      if (idx.includes(j)) {
-        zzMatrix[i][zIdx] = currentVector[j];
-        zIdx++;
-       } else {
-        zxMatrix[i][xIdx] = currentVector[j];
-        xIdx++;
-      }
-     }
-    } else {
-    // If the current row does not correspond to a conditional variant
-    for (let j = 0; j < xLength; j++) {
-      xxMatrix[i][j] = currentVector[idx[j]];
+    var idx = this.conditionList.map((x) => this.variantMap.get(x)).sort();
+    // let variantIdx = idx.map((i) => this.variants[i]);
+    var fullLength = this.dim()[0];
+    var zLength = length(this.conditionList);
+    var xLength = fullLength - zLength;
+    // let xxMatrix = new Array(xLength);
+    // for (let i = 0; i < xLength; i++) {
+    //   xxMatrix[i] = new Array(xLength).fill(null);
+    // }
+    // X'X = xxMatrix is a square matrix, xLength by xLength
+    // Z'X = zxMatrix is a rectangular matrix, zLength by xLength
+    // Z'Z = zzMatrix is a square matrix, zLength by zLength
+    let zzMatrix = new Array(zLength);
+    let zxMatrix = new Array(zLength);
+    for (let i = 0; i < zLength; i++) {
+      zzMatrix[i] = new Array(zLength).fill(null);
+      zxMatrix[i] = new Array(xLength).fill(null);
     }
-   }
-  }
-  this.xxMatrix = xxMatrix;
-  this.zxMatrix = zxMatrix;
-  this.zzMatrix = zzMatrix;   
+    let xxMatrix = new Array(xLength);
+    for (let i = 0; i < xLength; i++) {
+      xxMatrix[i] = new Array(xLength).fill(null);
+    }
+    /**
+     * idx contains the indices of all the conditional variants
+     * We will extract the columns and rows corresponding to Z'X and Z'Z
+     * For the X'X matrix, read through the full covariance matrix line by line,
+     * choosing only the rows which don't match the conditional indices,
+     * and choose the columns which also don't match the conditional indices for X'X;
+     * for rows that match the conditional indices and therefore don't belong in X'X,
+     * take those rows, and separate them into the Z'X and Z'Z matrix:
+     * all elements which don't match the known indices belong to Z'X, while
+     * all elements which match the known indices belong to Z'Z
+     */
+    for (let i = 0; i < fullLength; i++) {
+      let currentVector = this.matrix[i];
+      if (idx.includes(i)) {
+        for (let j = 0; j < fullLength; j++) {
+          var zIdx = 0;
+          var xIdx = 0;
+          if (idx.includes(j)) {
+            zzMatrix[i][zIdx] = currentVector[j];
+            zIdx++;
+          } else {
+            zxMatrix[i][xIdx] = currentVector[j];
+            xIdx++;
+          }
+        }
+      } else {
+      // If the current row does not correspond to a conditional variant
+        for (let j = 0; j < xLength; j++) {
+          xxMatrix[i][j] = currentVector[idx[j]];
+        }
+      }
+    }
+    this.xxMatrix = xxMatrix;
+    this.zxMatrix = zxMatrix;
+    this.zzMatrix = zzMatrix;
   }
 
-/**
- * Change variant list for conditioning
- * @function
- * @param variantList List of variants
-*/
+  /**
+  * Change variant list for conditioning
+  * @function
+  * @param variantList List of variants
+  */
   changeConditionalVariants(variantList) {
   // First, figure out which variants supplied are actually in our covariance matrix
-  variantList = variantList.filter((x) => this.variantMap.has(x));
-  if (typeof variantList === 'undefined') {
-    throw new Error('Must specify list of variants when subsetting');
+    variantList = variantList.filter((x) => this.variantMap.has(x));
+    if (typeof variantList === 'undefined') {
+      throw new Error('Must specify list of variants when subsetting');
+    }
+    // Old: Next, concatenate the current list with the input variant list, and restrict to unique variants
+    // Code from https://stackoverflow.com/questions/1584370/how-to-merge-two-arrays-in-javascript-and-de-duplicate-items
+    // this.conditionList = this.conditionList.concat(variantList.filter((item) => this.conditionList.indexOf(item) < 0));
+    // New: Change the current conditional list to the input list every time this is called
+    // Use a different function to handle adding and removing variants from the conditional list
+    this.conditionalList = variantList;
+    this.updateMatrices();
   }
-  // Old: Next, concatenate the current list with the input variant list, and restrict to unique variants
-  // Code from https://stackoverflow.com/questions/1584370/how-to-merge-two-arrays-in-javascript-and-de-duplicate-items
-  // this.conditionList = this.conditionList.concat(variantList.filter((item) => this.conditionList.indexOf(item) < 0));
-  // New: Change the current conditional list to the input list every time this is called
-  // Use a different function to handle adding and removing variants from the conditional list
-  this.conditionalList = variantList;
-  this.updateMatrices();
- }
 
-/**
- * Remove a single conditional variant from the current conditional variant list,
- * then update all relevant matrices
- * If the variant is not in the current conditional list, then do nothing
- * @param {string} variant Variant to remove from conditional analysis
- */
+  /**
+   * Remove a single conditional variant from the current conditional variant list,
+   * then update all relevant matrices
+   * If the variant is not in the current conditional list, then do nothing
+   * @param {string} variant Variant to remove from conditional analysis
+   */
   removeConditionalVariant(variant) {
     if (this.variants.has(variant)) {
       if (this.conditionList.has(variant)) {
-        this.conditionList = this.conditionList.filter(function(value) {return value != variant});
+        this.conditionList = this.conditionList.filter(function(value) {
+          return value !== variant;
+        });
         this.updateMatrices();
       }
     } else {
-      throw new Error('Specified conditional variant not found in current variant set, unable to remove')
+      throw new Error('Specified conditional variant not found in current variant set, unable to remove');
     }
   }
 
-/**
-* Add a single conditional variant to the current conditional variant list,
-* then update all relevant matrices
-* If the variant is already part of the conditional variant list, then do nothing
-* @param {string} variant Variant to add to conditional analysis
-*/
+  /**
+  * Add a single conditional variant to the current conditional variant list,
+  * then update all relevant matrices
+  * If the variant is already part of the conditional variant list, then do nothing
+  * @param {string} variant Variant to add to conditional analysis
+  */
   addConditionalVariant(variant) {
     if (this.variants.has(variant)) {
       if (!this.conditionList.has(variant)) {
@@ -540,9 +542,9 @@ class GenotypeCovarianceMatrix {
         this.updateMatrices();
       }
     } else {
-      throw new Error('Specified conditional variant not found in current variant set, unable to add')
+      throw new Error('Specified conditional variant not found in current variant set, unable to add');
     }
-  } 
+  }
 }
 
 // async function readMaskFile(fpath) {
