@@ -124,7 +124,7 @@ describe('stats.js', function() {
       });
     });
 
-    it('test effect size', function() {
+    it('test effect size and stderr', function() {
       const u = [1.26175, 3.45806, -4.90216, -7.05748];
       const v = [
         [
@@ -154,8 +154,9 @@ describe('stats.js', function() {
       ];
       const mafs = [0.000281496, 0.000283886, 0.000284308, 0.00412922];
       const agg = new VTTest();
-      return agg.run(u, v, null, mafs).then(function ([tmax, pval, effect]) {
+      return agg.run(u, v, null, mafs).then(function ([tmax, pval, effect, se]) {
         assert.closeTo(effect, 0.0988, 0.0001);
+        assert.closeTo(se, 0.144667, 0.0001);
       });
     });
   });
@@ -179,7 +180,7 @@ describe('stats.js', function() {
       );
     });
 
-    it('should return correct effect size for known u/cov', function() {
+    it('should return correct effect size and stderr for known u/cov', function() {
       let u = [1.26175, 3.45806, -4.90216, -7.05748];
 
       let cov = [
@@ -210,13 +211,20 @@ describe('stats.js', function() {
       ];
 
       let agg = new ZegginiBurdenTest();
-      let [, , effect] = agg.run(u, cov, null);
+      let [, , effect, se] = agg.run(u, cov, null);
       let expectedEffect = -0.018529;
+      let expectedStdErr = 0.050589;
       assert.closeTo(
         effect,
         expectedEffect,
         0.001,
         'burden test on known u/cov did not produce close enough effect size to expected',
+      );
+      assert.closeTo(
+        se,
+        expectedStdErr,
+        0.001,
+        'burden test on known u/cov did not produce close enough stderr to expected',
       );
     });
   });
