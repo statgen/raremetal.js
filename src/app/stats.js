@@ -1387,7 +1387,7 @@ class SkatOptimalTest extends AggregationTest {
 /**
  * Base class for all conditional tests.
  */
-class ConditionalTest {
+class SingleVariantTest {
   constructor() {
     this.label = '';
     this.key = '';
@@ -1400,13 +1400,13 @@ class ConditionalTest {
   }
 }
 
-// Condition on one or more genetic variants to adjust score statistic
-class CondTest extends ConditionalTest {
+// Condition on one or more genetic variants to adjust score statistic for single-variant tests
+class ConditionalScoreTest extends SingleVariantTest {
   constructor() {
-    super(...arguments);
-    this.key = 'cond';
-    this.label = 'Conditional';
-
+   super(...arguments);
+   this.label = 'Conditional Score';
+   this.key = 'conditional-score';
+   
   }
 
   /**

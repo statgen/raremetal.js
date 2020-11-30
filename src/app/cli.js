@@ -202,7 +202,7 @@ async function single(args) {
       // V_cond = (X'Z) (Z'Z)^-1 (Z'X)
       // When we are conditioning on a single variant, c = 1
       // and Z is a (1 x n) genotype vector
-      let cond = new CondTest();
+      let cond = new ConditionalScoreTest();
       const timer = new Timer();
       // We send along a list of variants for conditioning to CondTest
       // which will perform the appropriate calculations and return a list of
