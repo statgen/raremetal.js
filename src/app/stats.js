@@ -111,7 +111,7 @@ const MVT_WASM_HELPERS = new Promise((resolve, reject) => {
           // Need to make correlation matrix positive definite
           let trial = 0;
           while (inform > 1 && trial < 100) {
-            let eig = numeric.eig(corr, 100000);
+            let eig = numeric.eigh(corr, 100000);
 
             let lambdas = eig.lambda.x;
             for (let i = 0; i < n; i++) {
