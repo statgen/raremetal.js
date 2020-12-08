@@ -16,7 +16,7 @@ require('@babel/register')({
 const { ArgumentParser } = require('argparse');
 const { readMaskFileSync, extractScoreStats, extractCovariance } = require('./fio.js');
 const { REGEX_EPACTS } = require('./constants.js');
-const { ZegginiBurdenTest, SkatTest, SkatOptimalTest, VTTest, CondTest } = require('./stats.js');
+const { ZegginiBurdenTest, SkatTest, SkatOptimalTest, VTTest, SVConditionalScoreTest } = require('./stats.js');
 const fs = require('fs');
 const yaml = require('js-yaml');
 
@@ -202,12 +202,18 @@ async function single(args) {
       // V_cond = (X'Z) (Z'Z)^-1 (Z'X)
       // When we are conditioning on a single variant, c = 1
       // and Z is a (1 x n) genotype vector
-      let cond = new ConditionalScoreTest();
+      let cond = new SVConditionalScoreTest();
       const timer = new Timer();
-      // We send along a list of variants for conditioning to CondTest
-      // which will perform the appropriate calculations and return a list of
-      // conditional p-values
-      let [, p] = await cond.run(scores.u, cov.matrix, null, args.cond, args.pheno);
+      // We send along a list of variants for conditioning to CondTest which will perform the
+      //  appropriate calculations and return a list of  conditional p-values
+      // We will pass the full scores and covariance objects, along with the conditioning variant(s),
+      //  onto SVConditionalTest
+      var condList = args.cond.split(',');
+      for (var i in condList) {
+        cond.addConditionalVariant(i);
+        }
+      cond.updateMatrices();
+      let [, p] = await cond.run(scores, cov);
       timer.stop();
       results.addResult(group, p, timer);
     }

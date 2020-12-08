@@ -431,7 +431,7 @@ class GenotypeCovarianceMatrix {
    */
   updateMatrices() {
   // Get the sorted indices for values we need to extract from the big matrix
-    var idx = this.conditionList.map((x) => this.variantMap.get(x)).sort();
+    var idx = this.conditionList.map((x) => this.variants.get(x)).sort();
     // let variantIdx = idx.map((i) => this.variants[i]);
     var fullLength = this.dim()[0];
     var zLength = length(this.conditionList);
@@ -497,7 +497,7 @@ class GenotypeCovarianceMatrix {
   */
   changeConditionalVariants(variantList) {
   // First, figure out which variants supplied are actually in our covariance matrix
-    variantList = variantList.filter((x) => this.variantMap.has(x));
+    variantList = variantList.filter((x) => this.variants.has(x));
     if (typeof variantList === 'undefined') {
       throw new Error('Must specify list of variants when subsetting');
     }
@@ -545,6 +545,16 @@ class GenotypeCovarianceMatrix {
       throw new Error('Specified conditional variant not found in current variant set, unable to add');
     }
   }
+
+  // /**
+  //  * Returns the current counts of non-conditional variants and conditional variants
+  //  */
+  // conditionalLength() {
+  //   let nrows = this.matrix.length;
+  //   let ncond = this.conditionList.length;
+  //   let nuncond = nrows - ncond;
+  //   return [nuncond, ncond];
+  // }
 }
 
 // async function readMaskFile(fpath) {
@@ -650,7 +660,7 @@ async function extractScoreStats(fpath, region, variants) {
     colEffectAllele = 3;
     colPvalue = 15;
   } else {
-    throw new Error('Unrecognized covariance matrix file format');
+    throw new Error('Unrecognized score statistics file format');
   }
 
   // Read in data in region from tabix

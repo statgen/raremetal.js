@@ -1395,38 +1395,72 @@ class SingleVariantTest {
     this.requiresMaf = false;
   }
 
-  run(u, vclass) { // todo update docstrings and call sigs
+  run(scores, cov) { // todo update docstrings and call sigs
     throw new Error('Method must be implemented in a subclass');
   }
 }
 
 // Condition on one or more genetic variants to adjust score statistic for single-variant tests
-class ConditionalScoreTest extends SingleVariantTest {
+class SVConditionalScoreTest extends SingleVariantTest {
   constructor() {
    super(...arguments);
-   this.label = 'Conditional Score';
-   this.key = 'conditional-score';
-   
+   this.label = 'Single Variant Conditional Score';
+   this.key = 'sv-conditional-score';
   }
 
   /**
    * Calculate conditional score and variance from vectors of genotypes,
    * conditional genotypes, and phenotypes
    *
-   * @param {Number[]} u Vector of score statistics (length m, number of unconditional variants)
-   * @param {Number[]} v Covariance matrix of unconditional score statistics (m x m)
-   * @param {number[][]} matrix
+   * @param {Number[]} scores Vector of score statistics
+   * @param {GenotypeCovarianceMatrix} cov Class object containing genotype covariances and methods for subsetting
    * @return {Number[]} Conditional p-values.
    */
   // Conditional Score    Ucond = Ux - X'Za, where a = (Z'Z)^-1 Z'y
+  //  Since U = [X, Z]' y = [X'y, Z'y] = [Ux, Uz], Ux = X'y, Uz = Z'y
+  //  so Ucond = Ux - (X'Z) (Z'Z)^-1 (Z'y) = Ux - (X'Z) (Z'Z)^-1 Uz
   // Conditional Variance Vcond = (X'Z) (Z'Z)^-1 (Z'X)
+  // We will pre-calculate M = (X'Z) (Z'Z)^-1
+  //  so: Ucond = Ux - M Uz
+  //  and Vcond = M (Z'X)
+  // We assume both the covariance matrix and the score statistics contain exactly the same variants
+  run(scores, cov) {
+    var conditionVariants = cov.conditionList;
+    // Need to divide scores into two: scores for non-conditional variants are Ux,
+    // and scores for conditional variants are Uz
+    // The other matrices are already defined in the GenotypeCovarianceMatrix class:
+    //  X'Z: cov.xzMatrix
+    //  Z'Z: cov.zzMatrix
+    //  Z'X: transpose(cov.xzMatrix)
+    var ux = [];
+    var uz = [];
+    fullidx = 0;
+    var scoreArray = scores.u;
+    for (i in cov.variants) {
+      if (conditionVariants.includes(i)) {
+        uz.push(scoreArray[fullidx]);
+      } else {
+        ux.push(scoreArray[fullidx]);
+      }
+      fullidx++;
+    }
+    // Now we do the calculations
+    var xzzzinv = numeric.dot(cov.xzMatrix, numeric.inv(cov.zzMatrix));
+    var ucond = ux - numeric.dot(xzzzinv, uz);
+    var vcond = numeric.dot(xzzzinv, cov.zxMatrix);
+    let under = Math.sqrt(vcond);
+    let z = ucond / under;
+    let p = pnorm(-Math.abs(z), 0, 1) * 2;
+    return p;
+  }
+
 }
 
 export { // for unit testing only
   AggregationTest as _AggregationTest,
   get_conditional_dist as _get_conditional_dist,
 };
-export { SkatTest, SkatOptimalTest, ZegginiBurdenTest, VTTest,
+export { SkatTest, SkatOptimalTest, ZegginiBurdenTest, VTTest, SVConditionalScoreTest,
   MVT_WASM_HELPERS, calculate_mvt_pvalue, _skatDavies, _skatLiu,
 
 };
