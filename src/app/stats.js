@@ -1403,9 +1403,9 @@ class SingleVariantTest {
 // Condition on one or more genetic variants to adjust score statistic for single-variant tests
 class SVConditionalScoreTest extends SingleVariantTest {
   constructor() {
-   super(...arguments);
-   this.label = 'Single Variant Conditional Score';
-   this.key = 'sv-conditional-score';
+    super(...arguments);
+    this.label = 'Single Variant Conditional Score';
+    this.key = 'sv-conditional-score';
   }
 
   /**
@@ -1434,9 +1434,9 @@ class SVConditionalScoreTest extends SingleVariantTest {
     //  Z'X: transpose(cov.xzMatrix)
     var ux = [];
     var uz = [];
-    fullidx = 0;
+    var fullidx = 0;
     var scoreArray = scores.u;
-    for (i in cov.variants) {
+    for (var i in cov.variants) {
       if (conditionVariants.includes(i)) {
         uz.push(scoreArray[fullidx]);
       } else {
