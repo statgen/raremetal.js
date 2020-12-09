@@ -213,7 +213,7 @@ async function single(args) {
       let condList = args.cond.split(',');
       for (let condVar in condList) {
         cond.addConditionalVariant(condVar);
-        }
+      }
       cond.updateMatrices();
       let [, p] = await cond.run(scores, cov);
       timer.stop();
