@@ -292,7 +292,7 @@ class PortalTestRunner {
     // Some test classes may return a raw value and others will return a promise. Wrap the result for consistency.
     let result = test.run(scores, cov, weights, mafs);
     return Promise.resolve(result)
-      .then(([stat, pvalue, effect]) => {
+      .then(([stat, pvalue, effect, se]) => {
         // The results describe the group + several new fields for calculation results.
         return {
           groupType: group.groupType,
@@ -304,6 +304,7 @@ class PortalTestRunner {
           stat,
           pvalue,
           effect,
+          se,
         };
       });
   }
