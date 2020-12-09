@@ -1447,11 +1447,11 @@ class SVConditionalScoreTest extends SingleVariantTest {
     // Now we do the calculations
     var xzzzinv = numeric.dot(cov.xzMatrix, numeric.inv(cov.zzMatrix));
     var ucond = ux - numeric.dot(xzzzinv, uz);
-    var vcond = numeric.dot(xzzzinv, cov.zxMatrix);
+    var vcond = numeric.dot(xzzzinv, numeric.transpose(cov.xzMatrix));
     let under = Math.sqrt(vcond);
     let z = ucond / under;
     let p = pnorm(-Math.abs(z), 0, 1) * 2;
-    return p;
+    return [z, p];
   }
 
 }
