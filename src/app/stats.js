@@ -1392,7 +1392,7 @@ class SkatOptimalTest extends AggregationTest {
  */
 
 /**
- * Base class for all conditional tests.
+ * Base class for all single variant tests
  */
 class SingleVariantTest {
   constructor() {
@@ -1432,18 +1432,18 @@ class SVConditionalScoreTest extends SingleVariantTest {
   //  and Vcond = M (Z'X)
   // We assume both the covariance matrix and the score statistics contain exactly the same variants
   run(scores, cov) {
-    var conditionVariants = cov.conditionList;
+    let conditionVariants = cov.conditionList;
     // Need to divide scores into two: scores for non-conditional variants are Ux,
     // and scores for conditional variants are Uz
     // The other matrices are already defined in the GenotypeCovarianceMatrix class:
     //  X'Z: cov.xzMatrix
     //  Z'Z: cov.zzMatrix
     //  Z'X: transpose(cov.xzMatrix)
-    var ux = [];
-    var uz = [];
-    var fullidx = 0;
-    var scoreArray = scores.u;
-    for (var i in cov.variants) {
+    let ux = [];
+    let uz = [];
+    let fullidx = 0;
+    let scoreArray = scores.u;
+    for (let i in cov.variants) {
       if (conditionVariants.includes(i)) {
         uz.push(scoreArray[fullidx]);
       } else {
@@ -1452,9 +1452,9 @@ class SVConditionalScoreTest extends SingleVariantTest {
       fullidx++;
     }
     // Now we do the calculations
-    var xzzzinv = numeric.dot(cov.xzMatrix, numeric.inv(cov.zzMatrix));
-    var ucond = ux - numeric.dot(xzzzinv, uz);
-    var vcond = numeric.dot(xzzzinv, numeric.transpose(cov.xzMatrix));
+    let xzzzinv = numeric.dot(cov.xzMatrix, numeric.inv(cov.zzMatrix));
+    let ucond = ux - numeric.dot(xzzzinv, uz);
+    let vcond = numeric.dot(xzzzinv, numeric.transpose(cov.xzMatrix));
     let under = Math.sqrt(vcond);
     let z = ucond / under;
     let p = pnorm(-Math.abs(z), 0, 1) * 2;

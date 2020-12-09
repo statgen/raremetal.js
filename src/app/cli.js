@@ -39,8 +39,8 @@ function getSettings() {
   single.addArgument(['-c', '--cov'], { help: 'File containing covariance statistics across windows of variants' });
   single.addArgument(['-g', '--group'], { help: 'Only analyze 1 group/gene.' });
   single.addArgument(['--skato-rhos'], { help: 'Specify rho values for SKAT-O as comma separated string.' });
-  // TODO: Allow multiple variants for conditional analysis
-  single.addArgument(['-d', '--cond'], { help: 'Specify variant to use for conditional analysis.' });
+  // Multiple variants for conditional analysis can be specified using a comma-separated list of variants
+  single.addArgument(['-d', '--cond'], { help: 'Specify variant(s) to use for conditional analysis.' });
   single.addArgument(['-o', '--out'], { help: 'File to write results to.' });
   single.addArgument(['--silent'], { help: 'Silence console output.', default: false });
 
@@ -210,9 +210,9 @@ async function single(args) {
       //  appropriate calculations and return a list of  conditional p-values
       // We will pass the full scores and covariance objects, along with the conditioning variant(s),
       //  onto SVConditionalTest
-      var condList = args.cond.split(',');
-      for (var i in condList) {
-        cond.addConditionalVariant(i);
+      let condList = args.cond.split(',');
+      for (let condVar in condList) {
+        cond.addConditionalVariant(condVar);
         }
       cond.updateMatrices();
       let [, p] = await cond.run(scores, cov);
