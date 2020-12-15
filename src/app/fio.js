@@ -309,7 +309,7 @@ class ScoreStatTable {
         ux.push(scoreArray[i]);
       }
     }
-    return([ux, uz]);
+    return [ux, uz];
   }
 }
 
