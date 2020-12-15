@@ -40,6 +40,7 @@ function getSettings() {
   single.addArgument(['-g', '--group'], { help: 'Only analyze 1 group/gene.' });
   single.addArgument(['--skato-rhos'], { help: 'Specify rho values for SKAT-O as comma separated string.' });
   // Multiple variants for conditional analysis can be specified using a comma-separated list of variants
+  single.addArgument(['-n', '--single'], {help: 'Perform a single variant test', default: false });
   single.addArgument(['-d', '--cond'], { help: 'Specify variant(s) to use for conditional analysis.' });
   single.addArgument(['-o', '--out'], { help: 'File to write results to.' });
   single.addArgument(['--silent'], { help: 'Silence console output.', default: false });
@@ -190,34 +191,36 @@ async function single(args) {
       let [, p, effect, se] = await vt.run(scores.u, cov.matrix, null, mafs);
       timer.stop();
       results.addResult(group, p, timer, effect, se);
-    } else if (args.test === 'cond' ) {
-      // New conditional test requires a Score vector U = [X Z] y
-      // with dimensions (m + c) x 1 (where m = unconditional markers and c = conditional markers)
-      // with X representing non-conditional genotypes,
-      // Z the conditional genotype(s), and y a vector of phenotypes;
-      // and covariance matrix V with dimensions (m+c)x(m+c), where
-      // V = X'X X'Z
-      //     Z'X Z'Z
-      // where X'X is an (m x m) matrix, and Z'Z is a (c x c) matrix
-      // such that the conditional score statistic and variance will be
-      // U_cond = X'y - X'Z (Z'Z)^-1 Z'y
-      // V_cond = (X'Z) (Z'Z)^-1 (Z'X)
-      // When we are conditioning on a single variant, c = 1
-      // and Z is a (1 x n) genotype vector
-      let cond = new SVConditionalScoreTest();
-      const timer = new Timer();
-      // We send along a list of variants for conditioning to CondTest which will perform the
-      //  appropriate calculations and return a list of  conditional p-values
-      // We will pass the full scores and covariance objects, along with the conditioning variant(s),
-      //  onto SVConditionalTest
-      let condList = args.cond.split(',');
-      for (let condVar in condList) {
-        cond.addConditionalVariant(condVar);
+    } else if (args.single) {
+      if (typeof(args.cond) !== 'undefined') {
+        // New conditional test requires a Score vector U = [X Z] y
+        // with dimensions (m + c) x 1 (where m = unconditional markers and c = conditional markers)
+        // with X representing non-conditional genotypes,
+        // Z the conditional genotype(s), and y a vector of phenotypes;
+        // and covariance matrix V with dimensions (m+c)x(m+c), where
+        // V = X'X X'Z
+        //     Z'X Z'Z
+        // where X'X is an (m x m) matrix, and Z'Z is a (c x c) matrix
+        // such that the conditional score statistic and variance will be
+        // U_cond = X'y - X'Z (Z'Z)^-1 Z'y
+        // V_cond = (X'Z) (Z'Z)^-1 (Z'X)
+        // When we are conditioning on a single variant, c = 1
+        // and Z is a (1 x n) genotype vector
+        let svTest = new SVConditionalScoreTest();
+        const timer = new Timer();
+        // We send along a list of variants for conditioning to CondTest which will perform the
+        //  appropriate calculations and return a list of  conditional p-values
+        // We will pass the full scores and covariance objects, along with the conditioning variant(s),
+        //  onto SVConditionalTest
+        let condList = args.cond.split(',');
+        for (let condVar in condList) {
+          svTest.addConditionalVariant(condVar);
+        }
+        svTest.updateMatrices();
+        let [, p] = await svTest.run(scores, cov);
+        timer.stop();
+        results.addResult(group, p, timer);
       }
-      cond.updateMatrices();
-      let [, p] = await cond.run(scores, cov);
-      timer.stop();
-      results.addResult(group, p, timer);
     }
 
     if (!args.silent) {
