@@ -1432,25 +1432,32 @@ class SVConditionalScoreTest extends SingleVariantTest {
   //  and Vcond = M (Z'X)
   // We assume both the covariance matrix and the score statistics contain exactly the same variants
   run(scores, cov) {
-    let conditionVariants = cov.conditionList;
+    // let conditionVariants = cov.conditionList;
     // Need to divide scores into two: scores for non-conditional variants are Ux,
     // and scores for conditional variants are Uz
     // The other matrices are already defined in the GenotypeCovarianceMatrix class:
     //  X'Z: cov.xzMatrix
     //  Z'Z: cov.zzMatrix
     //  Z'X: transpose(cov.xzMatrix)
+
     let ux = [];
     let uz = [];
-    let fullidx = 0;
-    let scoreArray = scores.u;
-    for (let i in cov.variants) {
-      if (conditionVariants.includes(i)) {
-        uz.push(scoreArray[fullidx]);
-      } else {
-        ux.push(scoreArray[fullidx]);
-      }
-      fullidx++;
-    }
+
+    // Old subsetting code -- this has been moved to a class function inside ScoreStatTable in fios.js
+    // let fullidx = 0;
+    // let scoreArray = scores.u;
+    // for (let i in cov.variants) {
+    //   if (conditionVariants.includes(i)) {
+    //     uz.push(scoreArray[fullidx]);
+    //   } else {
+    //     ux.push(scoreArray[fullidx]);
+    //   }
+    //   fullidx++;
+    // }
+
+    // Use the subsetScores function within the ScoreStatTable class to subset
+    [ux, uz] = scores.subsetScores(cov.conditionList);
+
     // Now we do the calculations
     let xzzzinv = numeric.dot(cov.xzMatrix, numeric.inv(cov.zzMatrix));
     let ucond = ux - numeric.dot(xzzzinv, uz);

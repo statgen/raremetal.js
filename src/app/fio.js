@@ -290,6 +290,27 @@ class ScoreStatTable {
 
     return newTable;
   }
+
+  subsetScores(variantList) {
+    if (typeof variantList === 'undefined') {
+      throw new Error('Must specify list of variants when subsetting');
+    }
+    // First figure out which variants supplied are actually in this set of score stats
+    variantList = variantList.filter((x) => this.variantMap.has(x));
+    // Get the list of vector indices corresponding to the input variantList, then sort
+    let idx = variantList.map((x) => this.variantMap.get(x)).sort();
+    let ux = [];
+    let uz = [];
+    let scoreArray = this.u;
+    for (let i = 0; i < this.dim(); i++) {
+      if (idx.includes(i)) {
+        uz.push(scoreArray[i]);
+      } else {
+        ux.push(scoreArray[i]);
+      }
+    }
+    return([ux, uz]);
+  }
 }
 
 /**
