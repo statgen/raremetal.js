@@ -311,6 +311,22 @@ class ScoreStatTable {
     }
     return [ux, uz];
   }
+
+  generateTemplateArray(variantList) {
+    if (typeof variantList === 'undefined') {
+      throw new Error('Must specify list of variants when subsetting');
+    }
+    variantList = variantList.filter((x) => this.variantMap.has(x));
+    let templateArray = [];
+    for (const i of this.variants) {
+      if (variantList.includes(i)) {
+        templateArray.push(0.0);
+      } else {
+        templateArray.push(NaN);
+      }
+    }
+    return templateArray;
+  }
 }
 
 /**

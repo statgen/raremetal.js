@@ -1431,6 +1431,7 @@ class SVConditionalScoreTest extends SingleVariantTest {
   //  so: Ucond = Ux - M Uz
   //  and Vcond = M (Z'X)
   // We assume both the covariance matrix and the score statistics contain exactly the same variants
+
   run(scores, cov) {
     // let conditionVariants = cov.conditionList;
     // Need to divide scores into two: scores for non-conditional variants are Ux,
@@ -1443,18 +1444,6 @@ class SVConditionalScoreTest extends SingleVariantTest {
     let ux = [];
     let uz = [];
 
-    // Old subsetting code -- this has been moved to a class function inside ScoreStatTable in fios.js
-    // let fullidx = 0;
-    // let scoreArray = scores.u;
-    // for (let i in cov.variants) {
-    //   if (conditionVariants.includes(i)) {
-    //     uz.push(scoreArray[fullidx]);
-    //   } else {
-    //     ux.push(scoreArray[fullidx]);
-    //   }
-    //   fullidx++;
-    // }
-
     // Use the subsetScores function within the ScoreStatTable class to subset
     [ux, uz] = scores.subsetScores(cov.conditionList);
 
@@ -1465,9 +1454,31 @@ class SVConditionalScoreTest extends SingleVariantTest {
     let under = Math.sqrt(vcond);
     let z = ucond / under;
     let p = pnorm(-Math.abs(z), 0, 1) * 2;
-    return [z, p];
-  }
 
+    // Old return code - only returns conditional variants
+    //return [z, p];
+
+    // New return code - returns full list of Z and P values including conditional variants
+    // Conditional variants will have Z and P values equal to NaN
+    // Get array with NaNs for conditional variants and 0.0 for non-conditional variants
+    let templateArray = scores.generateTemplateArray(cov.conditionList);
+
+    z.reverse();
+    p.reverse();
+    let outZ = [];
+    let outP = [];
+
+    for (const i of templateArray) {
+      if (i === 0.0) {
+        outZ.push(z.pop);
+        outP.push(p.pop);
+      } else {
+        outZ.push(NaN);
+        outP.push(NaN);
+      }
+    }
+    return [outZ, outP];
+  }
 }
 
 export { // for unit testing only
