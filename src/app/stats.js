@@ -1458,7 +1458,7 @@ class SVConditionalScoreTest extends SingleVariantTest {
     let z = numeric.div(ucond, under);
     let p = [];
     for (const zElement in z) {
-      p.push(pnorm(-Math.abs(zElement), 0, 1) * 2);
+      p.push(pnorm(-Math.abs(z[zElement]), 0, 1) * 2);
     }
     // Old return code - only returns conditional variants
     //return [z, p];
@@ -1468,18 +1468,16 @@ class SVConditionalScoreTest extends SingleVariantTest {
     // Get array with NaNs for conditional variants and 0.0 for non-conditional variants
     let templateArray = scores.generateTemplateArray(cov.conditionList);
 
-    let revZ = z;
-    let revP = p;
-    revZ.reverse();
-    revP.reverse();
+    z.reverse();
+    p.reverse();
 
     let outZ = [];
     let outP = [];
 
     for (const i of templateArray) {
       if (i === 0.0) {
-        outZ.push(revZ.pop());
-        outP.push(revP.pop());
+        outZ.push(z.pop());
+        outP.push(p.pop());
       } else {
         outZ.push(NaN);
         outP.push(NaN);
