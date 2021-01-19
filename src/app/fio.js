@@ -302,11 +302,12 @@ class ScoreStatTable {
     let ux = [];
     let uz = [];
     let scoreArray = this.u;
+    let varArray = this.v;
     for (let i = 0; i < this.dim(); i++) {
       if (idx.includes(i)) {
-        uz.push(scoreArray[i]);
+        uz.push(scoreArray[i] / varArray[i]);
       } else {
-        ux.push(scoreArray[i]);
+        ux.push(scoreArray[i] / varArray[i]);
       }
     }
     return [ux, uz];
@@ -320,9 +321,9 @@ class ScoreStatTable {
     let templateArray = [];
     for (const i of this.variants) {
       if (variantList.includes(i)) {
-        templateArray.push(0.0);
-      } else {
         templateArray.push(NaN);
+      } else {
+        templateArray.push(0.0);
       }
     }
     return templateArray;
@@ -355,7 +356,7 @@ class GenotypeCovarianceMatrix {
     // List of variants for conditional analysis, along with the necessary matrix subsets
     this.conditionList = [];
     this.xxMatrix = matrix;
-    this.xzMatrix = [];
+    this.zxMatrix = [];
     this.zzMatrix = [];
   }
 
@@ -468,11 +469,11 @@ class GenotypeCovarianceMatrix {
    */
   updateMatrices() {
   // Get the sorted indices for values we need to extract from the big matrix
-    var idx = this.conditionList.map((x) => this.variants.get(x)).sort();
+    let idx = this.conditionList.map((x) => this.variants.get(x)).map((y) => this.positions.get(y));
     // let variantIdx = idx.map((i) => this.variants[i]);
-    var fullLength = this.dim()[0];
-    var zLength = length(this.conditionList);
-    var xLength = fullLength - zLength;
+    let fullLength = this.dim()[0];
+    let zLength = this.conditionList.length;
+    let xLength = fullLength - zLength;
     // let xxMatrix = new Array(xLength);
     // for (let i = 0; i < xLength; i++) {
     //   xxMatrix[i] = new Array(xLength).fill(null);
@@ -501,24 +502,39 @@ class GenotypeCovarianceMatrix {
      * all elements which don't match the known indices belong to Z'X, while
      * all elements which match the known indices belong to Z'Z
      */
+    let rowIdx = -1;
     for (let i = 0; i < fullLength; i++) {
       let currentVector = this.matrix[i];
+      // If the current row is that of a conditional variant
+      // separate out the conditional and non-conditional values,
+      // save the conditional values to zzMatrix, and
+      // save the non-conditional values to zxMatrix,
+      // in the proper positions in those matrices
       if (idx.includes(i)) {
+        rowIdx++;
+        let zIdx = 0;
+        let xIdx = 0;
         for (let j = 0; j < fullLength; j++) {
-          var zIdx = 0;
-          var xIdx = 0;
           if (idx.includes(j)) {
-            zzMatrix[i][zIdx] = currentVector[j];
+            zzMatrix[rowIdx][zIdx] = currentVector[j];
             zIdx++;
           } else {
-            zxMatrix[i][xIdx] = currentVector[j];
+            zxMatrix[rowIdx][xIdx] = currentVector[j];
             xIdx++;
           }
         }
       } else {
       // If the current row does not correspond to a conditional variant
-        for (let j = 0; j < xLength; j++) {
-          xxMatrix[i][j] = currentVector[idx[j]];
+      // Copy the non-conditional values to the X'X matrix
+        // for (let j = 0; j < xLength; j++) {
+        //   xxMatrix[i][j] = currentVector[idx[j]];
+        // }
+        for (let j = 0; j < fullLength; j++) {
+          let newIdx = 0;
+          if (!idx.includes(j)) {
+            xxMatrix[i][newIdx] = currentVector[j];
+            newIdx++;
+          }
         }
       }
     }
@@ -574,7 +590,7 @@ class GenotypeCovarianceMatrix {
   */
   addConditionalVariant(variant) {
     if (this.variants.has(variant)) {
-      if (!this.conditionList.has(variant)) {
+      if (!this.conditionList.includes(variant)) {
         this.conditionList.push(variant);
         this.updateMatrices();
       }
@@ -1081,5 +1097,6 @@ async function extractCovariance(fpath, region, variants, scoreStats) {
 //   return new GenotypeCovarianceMatrix(covmat,variants,positions);
 // }
 
-export { readMaskFileSync, extractScoreStats, extractCovariance, detectFormat };
+export { readMaskFileSync, extractScoreStats, extractCovariance, detectFormat,
+  ScoreStatTable, GenotypeCovarianceMatrix };
 

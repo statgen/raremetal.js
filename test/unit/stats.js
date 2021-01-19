@@ -1,9 +1,13 @@
 import { assert } from 'chai';
 
 import {
-  ZegginiBurdenTest, SkatTest, SkatOptimalTest, VTTest,
+  ZegginiBurdenTest, SkatTest, SkatOptimalTest, VTTest, SVConditionalScoreTest,
   MVT_WASM_HELPERS, calculate_mvt_pvalue, _get_conditional_dist,
 } from '../../src/app/stats.js';
+
+import {
+  ScoreStatTable, GenotypeCovarianceMatrix,
+} from '../../src/app/fio.js';
 
 describe('stats.js', function() {
   describe('pmvnorm', function() {
@@ -557,6 +561,59 @@ describe('stats.js', function() {
       let agg = new SkatOptimalTest();
       let [, pval] = agg.run(u, cov, null, mafs);
       assert.isNaN(pval);
+    });
+  });
+
+  describe('SVConditionalScoreTest', function() {
+    it('simple test case', function() {
+      // Example data taken from gene.DUXAP8.scores.assoc.gz and gene.DUXAP8.cov.assoc.gz
+      // from test/integration/data
+
+      /* The ScoreStatTable class object contains the following:
+      * str variant: variant name in chr:pos_ref/alt format
+      * int position: variant position
+      * float u: score statistic
+      * float v: variance
+      * float altFreq: alt allele frequency
+      * str ea: effect allele
+      * float eaFreq: effect allele frequency
+      * float pvalue: p-value
+      */
+      let scores = new ScoreStatTable();
+      scores.appendScore('22:16150801_T/A', 16150801, 1.26175, 4.88902, 0.000281496, 'A', 0.000281496, 0.796347);
+      scores.appendScore('22:16150914_C/A', 16150914, 3.45806, 4.88935, 0.000283886, 'A', 0.000283886, 0.479403);
+      scores.appendScore('22:16150932_G/C', 16150932, -4.90216, 4.88953, 0.000284308, 'C', 0.000284308, 0.316062);
+      scores.appendScore('22:16150968_C/T', 16150968, -7.05748, 17.8966, 0.00412922, 'T', 0.00412922, 0.693324);
+
+      // The GenotypeCovarianceMatrix class object contains the following:
+      // matrix mat: a square matrix (array of arrays) of genotype covariances (elements are floats)
+      // Map variants: variant -> position (str chr:pos_ref/alt -> int pos)
+      // Map positions: position -> index (int pos -> int index)
+      let mat = [[0.00672175, -3.82239e-06, -3.82807e-06, -5.55946e-05],
+        [-3.82239e-06, 0.00672266, -3.85722e-06, -5.60431e-05],
+        [-3.82807e-06, -3.85722e-06, 0.00672315, -5.61399e-05],
+        [-5.55946e-05, -5.60431e-05, -5.61399e-05, 0.0900698]];
+      let variants = new Map();
+      variants.set('22:16150801_T/A', 16150801);
+      variants.set('22:16150914_C/A', 16150914);
+      variants.set('22:16150932_G/C', 16150932);
+      variants.set('22:16150968_C/T', 16150968);
+      let positions = new Map();
+      positions.set(16150801, 0);
+      positions.set(16150914, 1);
+      positions.set(16150932, 2);
+      positions.set(16150968, 3);
+      let covs = new GenotypeCovarianceMatrix(mat, variants, positions);
+      covs.addConditionalVariant('22:16150968_C/T');
+      let svTest = new SVConditionalScoreTest();
+      let [, pval] = svTest.run(scores, covs);
+      let expectedPval = [0.797034, 0.479960, 0.315627, NaN];
+      assert.closeTo(
+        pval,
+        expectedPval,
+        0.000001,
+        'SVConditionalScoreTest did not produce p-values close enough to expected',
+      );
     });
   });
 });

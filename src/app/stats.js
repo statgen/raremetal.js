@@ -1419,7 +1419,7 @@ class SVConditionalScoreTest extends SingleVariantTest {
    * Calculate conditional score and variance from vectors of genotypes,
    * conditional genotypes, and phenotypes
    *
-   * @param {Number[]} scores Vector of score statistics
+   * @param {ScoreStatTable} scores Class object containing score statistics
    * @param {GenotypeCovarianceMatrix} cov Class object containing genotype covariances and methods for subsetting
    * @return {Number[]} Conditional p-values.
    */
@@ -1437,9 +1437,9 @@ class SVConditionalScoreTest extends SingleVariantTest {
     // Need to divide scores into two: scores for non-conditional variants are Ux,
     // and scores for conditional variants are Uz
     // The other matrices are already defined in the GenotypeCovarianceMatrix class:
-    //  X'Z: cov.xzMatrix
+    //  X'Z: transpose(cov.zxMatrix)
     //  Z'Z: cov.zzMatrix
-    //  Z'X: transpose(cov.xzMatrix)
+    //  Z'X: cov.zxMatrix
 
     let ux = [];
     let uz = [];
@@ -1448,13 +1448,18 @@ class SVConditionalScoreTest extends SingleVariantTest {
     [ux, uz] = scores.subsetScores(cov.conditionList);
 
     // Now we do the calculations
-    let xzzzinv = numeric.dot(cov.xzMatrix, numeric.inv(cov.zzMatrix));
-    let ucond = ux - numeric.dot(xzzzinv, uz);
-    let vcond = numeric.dot(xzzzinv, numeric.transpose(cov.xzMatrix));
-    let under = Math.sqrt(vcond);
-    let z = ucond / under;
-    let p = pnorm(-Math.abs(z), 0, 1) * 2;
-
+    let xzzzinv = numeric.dot(numeric.transpose(cov.zxMatrix), numeric.inv(cov.zzMatrix));
+    let ucond = numeric.sub(ux, numeric.dot(xzzzinv, uz));
+    let vcond = numeric.dot(xzzzinv, cov.zxMatrix);
+    let under = [];
+    for (const i in numeric.diag(vcond)) {
+      under.push(Math.sqrt(vcond[i][i]));
+    }
+    let z = numeric.div(ucond, under);
+    let p = [];
+    for (const zElement in z) {
+      p.push(pnorm(-Math.abs(zElement), 0, 1) * 2);
+    }
     // Old return code - only returns conditional variants
     //return [z, p];
 
@@ -1463,15 +1468,18 @@ class SVConditionalScoreTest extends SingleVariantTest {
     // Get array with NaNs for conditional variants and 0.0 for non-conditional variants
     let templateArray = scores.generateTemplateArray(cov.conditionList);
 
-    z.reverse();
-    p.reverse();
+    let revZ = z;
+    let revP = p;
+    revZ.reverse();
+    revP.reverse();
+
     let outZ = [];
     let outP = [];
 
     for (const i of templateArray) {
       if (i === 0.0) {
-        outZ.push(z.pop);
-        outP.push(p.pop);
+        outZ.push(revZ.pop());
+        outP.push(revP.pop());
       } else {
         outZ.push(NaN);
         outP.push(NaN);
