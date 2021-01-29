@@ -1450,16 +1450,24 @@ class SVConditionalScoreTest extends SingleVariantTest {
     // Now we do the calculations
     let xzzzinv = numeric.dot(numeric.transpose(cov.zxMatrix), numeric.inv(cov.zzMatrix));
     let ucond = numeric.sub(ux, numeric.dot(xzzzinv, uz));
-    let vcond = numeric.dot(xzzzinv, cov.zxMatrix);
-    let under = [];
-    for (const i in numeric.diag(vcond)) {
-      under.push(Math.sqrt(vcond[i][i]));
-    }
-    let z = numeric.div(ucond, under);
+    let vcond = numeric.sub(cov.xxMatrix, numeric.dot(xzzzinv, cov.zxMatrix));
+    // let chisqStats = numeric.mul(numeric.dot(ucond, numeric.inv(vcond)), ucond);
+    let chisqStatArray = [];
     let p = [];
-    for (const zElement in z) {
-      p.push(pnorm(-Math.abs(z[zElement]), 0, 1) * 2);
+    for (const i in ucond) {
+      let chisqStat = ucond[i] * ucond[i] / vcond[i][i];
+      chisqStatArray.push(chisqStat);
+      p.push(pchisq(chisqStat, 1, 0, 0));
     }
+    // let under = [];
+    // for (const i in numeric.diag(vcond)) {
+    //   under.push(Math.sqrt(vcond[i][i]));
+    // }
+    // let z = numeric.div(ucond, under);
+    // let p = [];
+    // for (const zElement in z) {
+    //   p.push(pnorm(-Math.abs(z[zElement]), 0, 1) * 2);
+    // }
     // Old return code - only returns conditional variants
     //return [z, p];
 
@@ -1468,22 +1476,22 @@ class SVConditionalScoreTest extends SingleVariantTest {
     // Get array with NaNs for conditional variants and 0.0 for non-conditional variants
     let templateArray = scores.generateTemplateArray(cov.conditionList);
 
-    z.reverse();
+    chisqStatArray.reverse();
     p.reverse();
 
-    let outZ = [];
+    let outChisq = [];
     let outP = [];
 
     for (const i of templateArray) {
       if (i === 0.0) {
-        outZ.push(z.pop());
+        outChisq.push(chisqStatArray.pop());
         outP.push(p.pop());
       } else {
-        outZ.push(NaN);
+        outChisq.push(NaN);
         outP.push(NaN);
       }
     }
-    return [outZ, outP];
+    return [outChisq, outP];
   }
 }
 

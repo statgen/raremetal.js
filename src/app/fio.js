@@ -503,6 +503,7 @@ class GenotypeCovarianceMatrix {
      * all elements which match the known indices belong to Z'Z
      */
     let rowIdx = -1;
+    let xrow = -1;
     for (let i = 0; i < fullLength; i++) {
       let currentVector = this.matrix[i];
       // If the current row is that of a conditional variant
@@ -529,10 +530,11 @@ class GenotypeCovarianceMatrix {
         // for (let j = 0; j < xLength; j++) {
         //   xxMatrix[i][j] = currentVector[idx[j]];
         // }
+        xrow += 1;
+        let newIdx = 0;
         for (let j = 0; j < fullLength; j++) {
-          let newIdx = 0;
           if (!idx.includes(j)) {
-            xxMatrix[i][newIdx] = currentVector[j];
+            xxMatrix[xrow][newIdx] = currentVector[j];
             newIdx++;
           }
         }
