@@ -302,12 +302,11 @@ class ScoreStatTable {
     let ux = [];
     let uz = [];
     let scoreArray = this.u;
-    let varArray = this.v;
     for (let i = 0; i < this.dim(); i++) {
       if (idx.includes(i)) {
-        uz.push(scoreArray[i] / varArray[i]);
+        uz.push(scoreArray[i]);
       } else {
-        ux.push(scoreArray[i] / varArray[i]);
+        ux.push(scoreArray[i]);
       }
     }
     return [ux, uz];
