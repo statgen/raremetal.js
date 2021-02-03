@@ -16,7 +16,7 @@
     "lint": "eslint src/ test/",
     "build": "npm run test && webpack --config webpack.prod.cjs && npm run docs",
     "dev": "webpack --watch --config webpack.dev.cjs",
-    "docs": "jsdoc src/app -R README.md -d docs/",
+    "docs": "jsdoc src/app -R README.md -d docs/ -c jsdoc.conf.json",
     "coverage": "nyc npm test",
     "preversion": "[ `git rev-parse --abbrev-ref HEAD` == 'master' ] && npm run build",
     "version": "git add -A dist && git add -A docs"
