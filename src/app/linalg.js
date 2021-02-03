@@ -1,4 +1,4 @@
-import numeric from 'numeric';
+import numeric from '../lib/numeric-1.2.6';
 
 /**
  * Return the cholesky decomposition A = GG'. The matrix G is returned.

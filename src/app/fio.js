@@ -8,7 +8,7 @@ import fs from 'fs';
 import readline from 'readline';
 import { execSync, spawn } from 'child_process';
 import { REGEX_EPACTS } from './constants.js';
-import numeric from 'numeric';
+import numeric from '../lib/numeric-1.2.6';
 import zlib from 'zlib';
 
 /**
