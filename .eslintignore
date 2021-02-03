@@ -7,3 +7,6 @@ tmp
 src/app/qfc.js
 src/app/mvtdstpack.js
 src/app/integral.js
+
+# Libraries
+src/lib/numeric-1.2.6.js
