@@ -2047,24 +2047,6 @@ numeric.ccsbinop = function ccsbinop(body,setup) {
             );
 };
 
-(function() {
-    var k,A,B,C;
-    for(k in numeric.ops2) {
-        if(isFinite(eval('1'+numeric.ops2[k]+'0'))) A = '[Y[0],Y[1],numeric.'+k+'(X,Y[2])]';
-        else A = 'NaN';
-        if(isFinite(eval('0'+numeric.ops2[k]+'1'))) B = '[X[0],X[1],numeric.'+k+'(X[2],Y)]';
-        else B = 'NaN';
-        if(isFinite(eval('1'+numeric.ops2[k]+'0')) && isFinite(eval('0'+numeric.ops2[k]+'1'))) C = 'numeric.ccs'+k+'MM(X,Y)';
-        else C = 'NaN';
-        numeric['ccs'+k+'MM'] = numeric.ccsbinop('zk = xk '+numeric.ops2[k]+'yk;');
-        numeric['ccs'+k] = Function('X','Y',
-                'if(typeof X === "number") return '+A+';\n'+
-                'if(typeof Y === "number") return '+B+';\n'+
-                'return '+C+';\n'
-                );
-    }
-}());
-
 numeric.ccsScatter = function ccsScatter(A) {
     var Ai = A[0], Aj = A[1], Av = A[2];
     var n = numeric.sup(Aj)+1,m=Ai.length;

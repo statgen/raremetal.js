@@ -3,7 +3,7 @@
  *
  * This wraps internal functionality and provides utilities for reading and writing expected API formats
  */
-import numeric from 'numeric';
+import numeric from '../lib/numeric-1.2.6';
 import { REGEX_EPACTS } from './constants';
 import { _AggregationTest, SkatTest, ZegginiBurdenTest, VTTest, SkatOptimalTest } from './stats';
 
