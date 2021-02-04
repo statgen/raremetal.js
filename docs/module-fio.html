@@ -38,7 +38,7 @@
     <div class="container-overview">
     
         
-            <div class="description">Methods for loading score statistics and covariance matrices from local files. This is primarily used by the CLI.</div>
+            <div class="description"><p>Methods for loading score statistics and covariance matrices from local files. This is primarily used by the CLI.</p></div>
         
 
         
@@ -160,7 +160,7 @@
 
 
 <div class="description">
-    An enum denoting score/covariance statistics file format.
+    <p>An enum denoting score/covariance statistics file format.</p>
 </div>
 
 
@@ -244,7 +244,7 @@
 
 
 <div class="description">
-    Determine whether the file is in rvtest or raremetal format.
+    <p>Determine whether the file is in rvtest or raremetal format.</p>
 </div>
 
 
@@ -296,7 +296,7 @@
 
             
 
-            <td class="description last">Path to file (can be covariance or score stats).</td>
+            <td class="description last"><p>Path to file (can be covariance or score stats).</p></td>
         </tr>
 
     
@@ -366,7 +366,7 @@
 
         
 <div class="param-desc">
-    STATS_FORMAT.RAREMETAL or STATS_FORMAT.RVTEST.
+    <p>STATS_FORMAT.RAREMETAL or STATS_FORMAT.RVTEST.</p>
 </div>
 
 
@@ -403,24 +403,20 @@
 
 
 <div class="description">
-    Extract covariance matrix from a file.
+    <p>Extract covariance matrix from a file.
 If variants are provided, only extract a matrix for the given variants. This only requires a single pass of the file.
-If no variants are provided, a double pass is done - one to figure out the size of the matrix, the next to read it.
-
+If no variants are provided, a double pass is done - one to figure out the size of the matrix, the next to read it.</p>
 <p>
-
-This function assumes you have tabix installed, and it exists on your PATH.
-You can download tabix by visiting <a href="http://www.htslib.org/download/">htslib.org</a>.
-
+<p>This function assumes you have tabix installed, and it exists on your PATH.
+You can download tabix by visiting <a href="http://www.htslib.org/download/">htslib.org</a>.</p>
 <p>
-
-We assume that the file being loaded is a covariance matrix file produced by either
+<p>We assume that the file being loaded is a covariance matrix file produced by either
 <a href="https://genome.sph.umich.edu/wiki/RAREMETAL_Documentation">RAREMETAL</a> or
 <a href="https://github.com/zhanxw/rvtests">rvtests</a>. We specifically assume that, per these file formats, scores and
 covariances are oriented towards the alternate allele when reading. However, when storing, covariances are stored flipped
-towards the *minor allele*, as this is typically the convention used in aggregation tests. The covariance matrix is
+towards the <em>minor allele</em>, as this is typically the convention used in aggregation tests. The covariance matrix is
 also multiplied by the sample size, since per convention, RAREMETAL and rvtests both divide each element by the sample
-size before writing out.
+size before writing out.</p>
 </div>
 
 
@@ -472,7 +468,7 @@ size before writing out.
 
             
 
-            <td class="description last">Path to covariance matrix file.</td>
+            <td class="description last"><p>Path to covariance matrix file.</p></td>
         </tr>
 
     
@@ -495,7 +491,7 @@ size before writing out.
 
             
 
-            <td class="description last">Region string, e.g. 1:1-40000.</td>
+            <td class="description last"><p>Region string, e.g. 1:1-40000.</p></td>
         </tr>
 
     
@@ -518,7 +514,7 @@ size before writing out.
 
             
 
-            <td class="description last">Array of variants to extract in this order. Variants should be EPACTS format, e.g. 1:4_A/G.</td>
+            <td class="description last"><p>Array of variants to extract in this order. Variants should be EPACTS format, e.g. 1:4_A/G.</p></td>
         </tr>
 
     
@@ -541,8 +537,8 @@ size before writing out.
 
             
 
-            <td class="description last">Object containing score statistics and other required information.
-  This is needed because rvtest and raremetalworker both normalize the covariance matrix by the sample size.</td>
+            <td class="description last"><p>Object containing score statistics and other required information.
+This is needed because rvtest and raremetalworker both normalize the covariance matrix by the sample size.</p></td>
         </tr>
 
     
@@ -612,7 +608,7 @@ size before writing out.
 
         
 <div class="param-desc">
-    A genotype covariance matrix.
+    <p>A genotype covariance matrix.</p>
 </div>
 
 
@@ -649,7 +645,7 @@ size before writing out.
 
 
 <div class="description">
-    Extract score statistics from a file (either rvtest or raremetal format).
+    <p>Extract score statistics from a file (either rvtest or raremetal format).</p>
 </div>
 
 
@@ -701,7 +697,7 @@ size before writing out.
 
             
 
-            <td class="description last">The path to the bgzipped score statistics file (one variant per line).</td>
+            <td class="description last"><p>The path to the bgzipped score statistics file (one variant per line).</p></td>
         </tr>
 
     
@@ -724,7 +720,7 @@ size before writing out.
 
             
 
-            <td class="description last">Region containing the variants. Should be formatted in the typical "1:1-4000".</td>
+            <td class="description last"><p>Region containing the variants. Should be formatted in the typical &quot;1:1-4000&quot;.</p></td>
         </tr>
 
     
@@ -747,8 +743,8 @@ size before writing out.
 
             
 
-            <td class="description last">A list of variants to specifically extract, in this order. If a list of variants is not
- provided, all variants will be extracted in the region.</td>
+            <td class="description last"><p>A list of variants to specifically extract, in this order. If a list of variants is not
+provided, all variants will be extracted in the region.</p></td>
         </tr>
 
     
@@ -818,7 +814,7 @@ size before writing out.
 
         
 <div class="param-desc">
-    An object containing statistics per variant, including:
+    <p>An object containing statistics per variant, including:</p>
  <ul>
    <li> Chromosome and position
    <li> Score statistic
@@ -864,7 +860,7 @@ size before writing out.
 
 
 <div class="description">
-    Find the number of variants in a region of a covariance matrix file.
+    <p>Find the number of variants in a region of a covariance matrix file.</p>
 </div>
 
 
@@ -916,7 +912,7 @@ size before writing out.
 
             
 
-            <td class="description last">Path to covariance matrix file</td>
+            <td class="description last"><p>Path to covariance matrix file</p></td>
         </tr>
 
     
@@ -939,7 +935,7 @@ size before writing out.
 
             
 
-            <td class="description last">Region string, e.g. 1:1-4000</td>
+            <td class="description last"><p>Region string, e.g. 1:1-4000</p></td>
         </tr>
 
     
@@ -1009,7 +1005,7 @@ size before writing out.
 
         
 <div class="param-desc">
-    Number of variants in the region
+    <p>Number of variants in the region</p>
 </div>
 
 
@@ -1046,7 +1042,7 @@ size before writing out.
 
 
 <div class="description">
-    Read groups from a mask file.
+    <p>Read groups from a mask file.</p>
 </div>
 
 
@@ -1098,7 +1094,7 @@ size before writing out.
 
             
 
-            <td class="description last">Path to mask file.</td>
+            <td class="description last"><p>Path to mask file.</p></td>
         </tr>
 
     
@@ -1168,7 +1164,7 @@ size before writing out.
 
         
 <div class="param-desc">
-    A VariantMask object that stores a mapping of groups to lists of variants.
+    <p>A VariantMask object that stores a mapping of groups to lists of variants.</p>
 </div>
 
 
@@ -1213,7 +1209,7 @@ size before writing out.
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Wed Dec 02 2020 12:19:59 GMT-0500 (Eastern Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a>
 </footer>
 
 <script> prettyPrint(); </script>
