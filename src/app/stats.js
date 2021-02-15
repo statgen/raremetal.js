@@ -165,6 +165,504 @@ const MVT_WASM_HELPERS = new Promise((resolve, reject) => {
   }
 });
 
+function arraysEqual(a1, a2) {
+  for (let i = 0; i < a1.length; i++) {
+    if (a1[i] !== a2[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Class for storing score statistics. <p>
+ *
+ * Assumptions:
+ * <ul>
+ *   <li> This class assumes you are only storing statistics on a per-chromosome basis, and not genome wide.
+ *   <li> Score statistic direction is towards the minor allele.
+ * </ul>
+ */
+class ScoreStatTable {
+  /**
+   * @constructor
+   */
+  constructor() {
+    this.variants = [];
+    this.positions = [];
+    this.variantMap = new Map();
+    this.positionMap = new Map();
+    this.u = [];
+    this.v = [];
+    this.sampleSize = 0;
+    this.altFreq = [];
+    this.effectAllele = [];
+    this.effectAlleleFreq = [];
+    this.pvalue = [];
+  }
+
+  /**
+   * Add a variant and relevant data on it into the table.
+   *
+   * @param variant {string} Variant (chr:pos_ref/alt)
+   * @param position {number} Integer position of variant
+   * @param u {number} Score statistic
+   * @param v {number} Variance of score statistic
+   * @param altFreq {number} Alternate allele frequency
+   * @param ea {string} Effect allele
+   * @param eaFreq {number} Effect allele frequency
+   * @param pvalue {number} Single variant p-value
+   */
+  appendScore(variant, position, u, v, altFreq, ea, eaFreq, pvalue) {
+    this.variants.push(variant);
+    this.positions.push(position);
+
+    this.variantMap.set(variant, this.variants.length - 1);
+    this.positionMap.set(position, this.positions.length - 1);
+
+    this.u.push(u);
+    this.v.push(v);
+    this.altFreq.push(altFreq);
+    this.effectAllele.push(ea);
+    this.effectAlleleFreq.push(eaFreq);
+    this.pvalue.push(pvalue);
+  }
+
+  /**
+   * Return the alternate allele frequency for a variant
+   * @param variant
+   * @return {number} Alt allele frequency
+   */
+  getAltFreqForVariant(variant) {
+    let freq = this.altFreq[this.variantMap.get(variant)];
+    if (freq == null) {
+      throw new Error(`Variant did not exist when looking up alt allele freq: ${variant}`);
+    }
+
+    return freq;
+  }
+
+  /**
+   * Return the alternate allele frequency for a variant
+   * @param position Variant position
+   * @return {number} Alt allele frequency
+   */
+  getAltFreqForPosition(position) {
+    let freq = this.altFreq[this.positionMap.get(position)];
+    if (freq == null) {
+      throw new Error(`Position did not exist when looking up alt allele freq: ${position}`);
+    }
+
+    return freq;
+  }
+
+  /**
+   * Retrieve the variant at a given position.
+   * @param position Variant position
+   */
+  getVariantAtPosition(position) {
+    let variant = this.variants(this.positionMap.get(position));
+    if (variant == null) {
+      throw new Error(`Variant did not exist at position: ${position}`);
+    }
+
+    return variant;
+  }
+
+  /**
+   * Combine this set of score statistics with another. See also {@link https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#SINGLE_VARIANT_META_ANALYSIS}
+   * for information on how statistics are combined.
+   *
+   * @param other {ScoreStatTable} Another set of score statistics with which to combine this object for the purposes
+   *  of meta-analysis.
+   * @return {*} No object is returned; this method runs in-place.
+   */
+  add(other) {
+    // First confirm both matrices are the same shape
+    let dimThis = this.dim();
+    let dimOther = other.dim();
+    if (!arraysEqual(dimThis, dimOther)) {
+      throw 'Scores cannot be added, dimensions are unequal';
+    }
+
+    // To combine the score stats, we only need to add each element
+    // Same with sample sizes
+    // Frequencies need to be added taking into account the differing sample sizes
+    for (let i = 0; i < dimThis[0]; i++) {
+      this.u[i] = this.u[i] + other.u[i];
+      this.v[i] = this.v[i] + other.v[i];
+
+      let sampleSizeThis = this.sampleSize[i];
+      let sampleSizeOther = other.sampleSize[i];
+      let sampleSizeTotal = sampleSizeThis + sampleSizeOther;
+
+      this.sampleSize[i] = sampleSizeTotal;
+      this.altFreq[i] = ((this.altFreq[i] * sampleSizeThis) + (other.altFreq[i] * sampleSizeOther)) / sampleSizeTotal;
+    }
+  }
+
+  dim() {
+    return this.u.length;
+  }
+
+  /**
+   * Subset the score stats down to a subset of variants, in this exact ordering
+   * @param variantList List of variants
+   * @return {ScoreStatTable} Score statistics after subsetting (not in-place, returns a new copy)
+   */
+  subsetToVariants(variantList) {
+    if (typeof variantList === 'undefined') {
+      throw new Error('Must specify list of variants when subsetting');
+    }
+
+    // First figure out which variants supplied are actually in this set of score stats
+    variantList = variantList.filter((x) => this.variantMap.has(x));
+
+    // Subset each member to only those variants
+    let idx = variantList.map((x) => this.variantMap.get(x));
+    let variants = idx.map((i) => this.variants[i]);
+    let positions = idx.map((i) => this.positions[i]);
+    let u = idx.map((i) => this.u[i]);
+    let v = idx.map((i) => this.v[i]);
+    let altFreq = idx.map((i) => this.altFreq[i]);
+
+    let variantMap = new Map(variants.map((element, index) => [element, index]));
+    let positionMap = new Map(variants.map((element, index) => [element, index]));
+
+    // Assemble new score table object
+    let newTable = new ScoreStatTable();
+    newTable.variants = variants;
+    newTable.positions = positions;
+    newTable.variantMap = variantMap;
+    newTable.positionMap = positionMap;
+    newTable.u = u;
+    newTable.v = v;
+    newTable.altFreq = altFreq;
+
+    return newTable;
+  }
+
+  subsetScores(variantList) {
+    if (typeof variantList === 'undefined') {
+      throw new Error('Must specify list of variants when subsetting');
+    }
+    // First figure out which variants supplied are actually in this set of score stats
+    variantList = variantList.filter((x) => this.variantMap.has(x));
+    // Get the list of vector indices corresponding to the input variantList, then sort
+    let idx = variantList.map((x) => this.variantMap.get(x)).sort();
+    let ux = [];
+    let uz = [];
+    let scoreArray = this.u;
+    for (let i = 0; i < this.dim(); i++) {
+      if (idx.includes(i)) {
+        uz.push(scoreArray[i]);
+      } else {
+        ux.push(scoreArray[i]);
+      }
+    }
+    return [ux, uz];
+  }
+
+  generateTemplateArray(variantList) {
+    if (typeof variantList === 'undefined') {
+      throw new Error('Must specify list of variants when subsetting');
+    }
+    variantList = variantList.filter((x) => this.variantMap.has(x));
+    let templateArray = [];
+    for (const i of this.variants) {
+      if (variantList.includes(i)) {
+        templateArray.push(NaN);
+      } else {
+        templateArray.push(0.0);
+      }
+    }
+    return templateArray;
+  }
+}
+
+/**
+ * Class for storing genotype covariance matrices. <br/><br/>
+ *
+ * Assumptions:
+ * <ul>
+ *  <li> Covariances should be oriented towards the minor allele.
+ *  <li> Variances on the diagonal are absolute values (they are not directional.)
+ * </ul>
+ *
+ * @class
+ */
+class GenotypeCovarianceMatrix {
+  /**
+   * @constructor
+   * @param matrix {number[][]} Pre-constructed matrix. Usually generated by the
+   *  [extractCovariance]{@link module:fio~extractCovariance} function in fio.
+   * @param variants {Map} Map of variants -> matrix position. Variants should be chr:pos_ref/alt format.
+   * @param positions {Map} Map of variant position -> matrix position. Both positions should be integers.
+   */
+  constructor(matrix, variants, positions) {
+    this.matrix = matrix;
+    this.variants = variants;
+    this.positions = positions;
+    // List of variants for conditional analysis, along with the necessary matrix subsets
+    this.conditionList = [];
+    this.xxMatrix = matrix;
+    this.zxMatrix = [];
+    this.zzMatrix = [];
+  }
+
+  /**
+   * Determine whether matrix is complete.
+   * Can specify i, j which are actual indices, or positions pos_i, pos_j which represent the positions of the variants.
+   * @function
+   * @public
+   */
+  isComplete(i, j, pos_i, pos_j) {
+    if (typeof pos_i !== 'undefined') {
+      i = this.positions.get(pos_i);
+    }
+    if (typeof pos_j !== 'undefined') {
+      j = this.positions.get(pos_j);
+    }
+
+    let v;
+    for (let m = 0; m < i; m++) {
+      for (let n = 0; n < j; n++) {
+        v = this.matrix[m][n];
+        if (v == null || isNaN(v)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Return dimensions of matrix
+   * @function
+   * @public
+   */
+  dim() {
+    let nrows = this.matrix.length;
+    let ncols = this.matrix[0].length;
+    return [nrows, ncols];
+  }
+
+  /**
+   * Combine this covariance matrix with another.
+   * This operation happens in place; this matrix will be overwritten with the new one.
+   * Used in meta-analysis, see {@link https://genome.sph.umich.edu/wiki/RAREMETAL_METHOD#SINGLE_VARIANT_META_ANALYSIS|our wiki}
+   * for more information.
+   * @function
+   * @param other {GenotypeCovarianceMatrix} Another covariance matrix
+   * @public
+   */
+  add(other) {
+    // First confirm both matrices are the same shape
+    let dimThis = this.dim();
+    let dimOther = other.dim();
+    if (!arraysEqual(dimThis, dimOther)) {
+      throw 'Covariance matrices cannot be added, dimensions are unequal';
+    }
+
+    // To combine the covariance matrices, we only need to add each element
+    for (let i = 0; i < dimThis[0]; i++) {
+      for (let j = 0; j < dimThis[1]; j++) {
+        this.matrix[i][j] = this.matrix[i][j] + other.matrix[i][j];
+      }
+    }
+  }
+
+  //   /**
+  //    * Subset the covariance matrix down to a subset of variants, in this exact ordering
+  //    * @function
+  //    * @param variantList List of variants
+  //    * @return New GenotypeCovarianceMatrix after subsetting (not in-place)
+  //    */
+  //   subsetToVariants(variantList) {
+  //    if (typeof variantList === 'undefined') {
+  //       throw new Error('Must specify list of variants when subsetting');
+  //     }
+  //   // First, figure out which variants supplied are actually in our covariance matrix
+  //   variantList = variantList.filter((x) => this.variantMap.has(x));
+  //   if (typeof variantList === 'undefined') {
+  //     throw new Error('Must specify list of variants when subsetting');
+  //   }
+  //   // Next, get the indices for values we need to extract from the big matrix
+  //   let idx = variantList.map((x) => this.variantMap.get(x));
+  //   let variants = idx.map((i) => this.variants[i]);
+  //   // Preallocate a smaller blank matrix to hold the subsetted covariances
+  //   let n_variants = length(variants);
+  //   let outMatrix = new Array(n_variants);
+  //   for (let i = 0; i < n_variants; i++) {
+  //     outMatrix[i] = new Array(n_variants).fill(null);
+  //   }
+  //   /**
+  //    * Finally, read through the full covariance matrix line by line,
+  //    * choosing only the rows which match the listed variants,
+  //    * and copy only the corresponding columns
+  //   */
+  //   for (let i = 0; i < n_variants; i++) {
+  //    let currentVector = this.matrix[idx[i]];
+  //    for (let j = 0; j < n_variants; j++) {
+  //      outMatrix[i][j] = currentVector[idx[i]];
+  //    }
+  //   }
+  //   return outMatrix;
+  //  }
+
+  /**
+   * Regenerate XX, XZ, and ZZ based on the current conditional variant list
+   * Replaces the XX, XZ, and ZZ matrices
+   * ZZ is a square matrix with dimensions equal to the number of conditional variants
+   * XX is a square matrix with dimensions equal to the number of variants not being conditioned on
+   */
+  updateMatrices() {
+  // Get the sorted indices for values we need to extract from the big matrix
+    let idx = this.conditionList.map((x) => this.variants.get(x)).map((y) => this.positions.get(y));
+    // let variantIdx = idx.map((i) => this.variants[i]);
+    let fullLength = this.dim()[0];
+    let zLength = this.conditionList.length;
+    let xLength = fullLength - zLength;
+    // let xxMatrix = new Array(xLength);
+    // for (let i = 0; i < xLength; i++) {
+    //   xxMatrix[i] = new Array(xLength).fill(null);
+    // }
+    // X'X = xxMatrix is a square matrix, xLength by xLength
+    // Z'X = zxMatrix is a rectangular matrix, zLength by xLength
+    // Z'Z = zzMatrix is a square matrix, zLength by zLength
+    let zzMatrix = new Array(zLength);
+    let zxMatrix = new Array(zLength);
+    for (let i = 0; i < zLength; i++) {
+      zzMatrix[i] = new Array(zLength).fill(null);
+      zxMatrix[i] = new Array(xLength).fill(null);
+    }
+    let xxMatrix = new Array(xLength);
+    for (let i = 0; i < xLength; i++) {
+      xxMatrix[i] = new Array(xLength).fill(null);
+    }
+    /**
+     * idx contains the indices of all the conditional variants
+     * We will extract the columns and rows corresponding to Z'X and Z'Z
+     * For the X'X matrix, read through the full covariance matrix line by line,
+     * choosing only the rows which don't match the conditional indices,
+     * and choose the columns which also don't match the conditional indices for X'X;
+     * for rows that match the conditional indices and therefore don't belong in X'X,
+     * take those rows, and separate them into the Z'X and Z'Z matrix:
+     * all elements which don't match the known indices belong to Z'X, while
+     * all elements which match the known indices belong to Z'Z
+     */
+    let rowIdx = -1;
+    let xrow = -1;
+    for (let i = 0; i < fullLength; i++) {
+      let currentVector = this.matrix[i];
+      // If the current row is that of a conditional variant
+      // separate out the conditional and non-conditional values,
+      // save the conditional values to zzMatrix, and
+      // save the non-conditional values to zxMatrix,
+      // in the proper positions in those matrices
+      if (idx.includes(i)) {
+        rowIdx++;
+        let zIdx = 0;
+        let xIdx = 0;
+        for (let j = 0; j < fullLength; j++) {
+          if (idx.includes(j)) {
+            zzMatrix[rowIdx][zIdx] = currentVector[j];
+            zIdx++;
+          } else {
+            zxMatrix[rowIdx][xIdx] = currentVector[j];
+            xIdx++;
+          }
+        }
+      } else {
+      // If the current row does not correspond to a conditional variant
+      // Copy the non-conditional values to the X'X matrix
+        // for (let j = 0; j < xLength; j++) {
+        //   xxMatrix[i][j] = currentVector[idx[j]];
+        // }
+        xrow += 1;
+        let newIdx = 0;
+        for (let j = 0; j < fullLength; j++) {
+          if (!idx.includes(j)) {
+            xxMatrix[xrow][newIdx] = currentVector[j];
+            newIdx++;
+          }
+        }
+      }
+    }
+    this.xxMatrix = xxMatrix;
+    this.zxMatrix = zxMatrix;
+    this.zzMatrix = zzMatrix;
+  }
+
+  /**
+  * Change variant list for conditioning
+  * @function
+  * @param variantList List of variants
+  */
+  changeConditionalVariants(variantList) {
+  // First, figure out which variants supplied are actually in our covariance matrix
+    variantList = variantList.filter((x) => this.variants.has(x));
+    if (typeof variantList === 'undefined') {
+      throw new Error('Must specify list of variants when subsetting');
+    }
+    // Old: Next, concatenate the current list with the input variant list, and restrict to unique variants
+    // Code from https://stackoverflow.com/questions/1584370/how-to-merge-two-arrays-in-javascript-and-de-duplicate-items
+    // this.conditionList = this.conditionList.concat(variantList.filter((item) => this.conditionList.indexOf(item) < 0));
+    // New: Change the current conditional list to the input list every time this is called
+    // Use a different function to handle adding and removing variants from the conditional list
+    this.conditionalList = variantList;
+    this.updateMatrices();
+  }
+
+  /**
+   * Remove a single conditional variant from the current conditional variant list,
+   * then update all relevant matrices
+   * If the variant is not in the current conditional list, then do nothing
+   * @param {string} variant Variant to remove from conditional analysis
+   */
+  removeConditionalVariant(variant) {
+    if (this.variants.has(variant)) {
+      if (this.conditionList.has(variant)) {
+        this.conditionList = this.conditionList.filter(function(value) {
+          return value !== variant;
+        });
+        this.updateMatrices();
+      }
+    } else {
+      throw new Error('Specified conditional variant not found in current variant set, unable to remove');
+    }
+  }
+
+  /**
+  * Add a single conditional variant to the current conditional variant list,
+  * then update all relevant matrices
+  * If the variant is already part of the conditional variant list, then do nothing
+  * @param {string} variant Variant to add to conditional analysis
+  */
+  addConditionalVariant(variant) {
+    if (this.variants.has(variant)) {
+      if (!this.conditionList.includes(variant)) {
+        this.conditionList.push(variant);
+        this.updateMatrices();
+      }
+    } else {
+      throw new Error('Specified conditional variant not found in current variant set, unable to add');
+    }
+  }
+
+  // /**
+  //  * Returns the current counts of non-conditional variants and conditional variants
+  //  */
+  // conditionalLength() {
+  //   let nrows = this.matrix.length;
+  //   let ncond = this.conditionList.length;
+  //   let nuncond = nrows - ncond;
+  //   return [nuncond, ncond];
+  // }
+}
+
+
 function emptyRowMatrix(nrows, ncols) {
   let m = new Array(nrows);
   for (let i = 0; i < nrows; i++) {
@@ -1459,17 +1957,6 @@ class SVConditionalScoreTest extends SingleVariantTest {
       chisqStatArray.push(chisqStat);
       p.push(pchisq(chisqStat, 1, 0, 0));
     }
-    // let under = [];
-    // for (const i in numeric.diag(vcond)) {
-    //   under.push(Math.sqrt(vcond[i][i]));
-    // }
-    // let z = numeric.div(ucond, under);
-    // let p = [];
-    // for (const zElement in z) {
-    //   p.push(pnorm(-Math.abs(z[zElement]), 0, 1) * 2);
-    // }
-    // Old return code - only returns conditional variants
-    //return [z, p];
 
     // New return code - returns full list of Z and P values including conditional variants
     // Conditional variants will have Z and P values equal to NaN
@@ -1501,5 +1988,5 @@ export { // for unit testing only
 };
 export { SkatTest, SkatOptimalTest, ZegginiBurdenTest, VTTest, SVConditionalScoreTest,
   MVT_WASM_HELPERS, calculate_mvt_pvalue, _skatDavies, _skatLiu,
-
+  ScoreStatTable, GenotypeCovarianceMatrix,
 };

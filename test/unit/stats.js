@@ -3,11 +3,8 @@ import { assert } from 'chai';
 import {
   ZegginiBurdenTest, SkatTest, SkatOptimalTest, VTTest, SVConditionalScoreTest,
   MVT_WASM_HELPERS, calculate_mvt_pvalue, _get_conditional_dist,
-} from '../../src/app/stats.js';
-
-import {
   ScoreStatTable, GenotypeCovarianceMatrix,
-} from '../../src/app/fio.js';
+} from '../../src/app/stats.js';
 
 describe('stats.js', function() {
   describe('pmvnorm', function() {
