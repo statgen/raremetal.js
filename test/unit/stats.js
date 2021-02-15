@@ -615,6 +615,30 @@ describe('stats.js', function() {
           'SVConditionalScoreTest did not produce p-values close enough to expected',
         );
       }
+      let matCollinear = [[23.90254428, 0.9989999, -0.01361262, -0.1976944],
+        [ 0.9989999,  23.89227784, -0.01360479, -0.1974694],
+        [-0.01361262, -0.01360479, 23.90751988, -0.1996335],
+        [-0.19769441, -0.19746944, -0.19963348, 320.2882215]];
+      let scoreCollinear = new ScoreStatTable();
+      scoreCollinear.appendScore('22:16150801_T/A', 16150801, 1.26175, 4.88902, 0.00281496, 'A', 0.00281496, 0.796347);
+      scoreCollinear.appendScore('22:16150914_C/A', 16150914, 3.45806, 4.88935, 0.00283886, 'A', 0.00283886, 0.479403);
+      scoreCollinear.appendScore('22:16150932_G/C', 16150932, -4.90216, 4.88953, 0.00284308, 'C', 0.00284308, 0.316062);
+      scoreCollinear.appendScore('22:16150968_C/T', 16150968, -7.05748, 17.8966, 0.00412922, 'T', 0.00412922, 0.693324);
+      let covsCollinear = new GenotypeCovarianceMatrix(matCollinear, variants, positions);
+      covsCollinear.addConditionalVariant('22:16150801_T/A');
+      covsCollinear.addConditionalVariant('22:16150914_C/A');
+      let svTestCollinear = new SVConditionalScoreTest();
+      let [, pvalCollinear] = svTestCollinear.run(scoreCollinear, covsCollinear);
+      let expectedPvalCollinear = [0.316317, 0.694868];
+      let testPvalCollinear = pvalCollinear.slice(2, 3);
+      for (let i = 0; i < 1; i++) {
+        assert.closeTo(
+          testPvalCollinear[i],
+          expectedPvalCollinear[i],
+          0.000001,
+          'SVConditionalScoreTest collinear test did not produce p-values close enough to expected',
+        );
+      }
     });
   });
 });
