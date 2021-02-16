@@ -6,7 +6,7 @@
  */
 import { cholesky } from './linalg.js';
 import mvtdstpack from './mvtdstpack.js';
-import numeric from 'numeric';
+import numeric from '../lib/numeric-1.2.6';
 import * as qfc from './qfc.js';
 import { ExpSinh } from './quadrature.js';
 import { pchisq, dbeta, pnorm, qchisq, dchisq } from './rstats.js';

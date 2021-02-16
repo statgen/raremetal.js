@@ -1,7 +1,7 @@
 {
   "name": "raremetal.js",
   "sideEffects": false,
-  "version": "1.3.1",
+  "version": "1.3.2",
   "description": "Calculate aggregation tests and meta-analysis of aggregation test results using score statistics and covariance matrices",
   "engines": {
     "node": ">=10.13.0"
@@ -16,7 +16,7 @@
     "lint": "eslint src/ test/",
     "build": "npm run test && webpack --config webpack.prod.cjs && npm run docs",
     "dev": "webpack --watch --config webpack.dev.cjs",
-    "docs": "jsdoc src/app -R README.md -d docs/",
+    "docs": "jsdoc src/app -R README.md -d docs/ -c jsdoc.conf.json",
     "coverage": "nyc npm test",
     "preversion": "[ `git rev-parse --abbrev-ref HEAD` == 'master' ] && npm run build",
     "version": "git add -A dist && git add -A docs"
@@ -73,8 +73,5 @@
     "webpack-cli": "^3.3.12",
     "webpack-common-shake": "^2.1.0",
     "webpack-merge": "^5.1.2"
-  },
-  "dependencies": {
-    "numeric": "^1.2.6"
   }
 }

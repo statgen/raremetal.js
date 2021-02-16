@@ -1,6 +1,6 @@
 import { cholesky } from '../../src/app/linalg.js';
 import { assert } from 'chai';
-import * as numeric from 'numeric';
+import numeric from '../../src/lib/numeric-1.2.6';
 
 describe('linalg.js', function() {
   describe('cholesky', function() {
