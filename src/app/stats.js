@@ -1985,6 +1985,7 @@ class SVConditionalScoreTest extends SingleVariantTest {
 export { // for unit testing only
   AggregationTest as _AggregationTest,
   get_conditional_dist as _get_conditional_dist,
+  SingleVariantTest as _SingleVariantTest,
 };
 export { SkatTest, SkatOptimalTest, ZegginiBurdenTest, VTTest, SVConditionalScoreTest,
   MVT_WASM_HELPERS, calculate_mvt_pvalue, _skatDavies, _skatLiu,

@@ -5,9 +5,11 @@
  */
 import numeric from '../lib/numeric-1.2.6';
 import { REGEX_EPACTS } from './constants';
-import { _AggregationTest, SkatTest, ZegginiBurdenTest, VTTest, SkatOptimalTest } from './stats';
+import { _AggregationTest, SkatTest, ZegginiBurdenTest, VTTest, SkatOptimalTest,
+  _SingleVariantTest, SVConditionalScoreTest } from './stats';
 
 const _all_tests = [ZegginiBurdenTest, SkatTest, VTTest, SkatOptimalTest];
+const _sv_tests = [SVConditionalScoreTest];
 
 /**
  * Look up aggregation tests by unique name.
@@ -25,6 +27,11 @@ const AGGREGATION_TESTS = Object.freeze(_all_tests.reduce(function (acc, constru
   return acc;
 }, {}));
 
+const SV_TESTS = Object.freeze(_sv_tests.reduce(function (acc, constructor) {
+  const inst = new constructor();
+  acc[inst.key] = { label: inst.label, constructor: constructor };
+  return acc;
+}, {}));
 
 /**
  * Helper object for reading and interpreting variant data
@@ -335,6 +342,133 @@ class PortalTestRunner {
   }
 }
 
+/**
+ * Run one or more single-variant tests. This will operate in sequence: all specified tests on all specified masks
+ *
+ */
+class PortalSVTestRunner {
+  /**
+   * Create a test runner object, using group and variant data of the form provided by `parsePortalJSON`. Generally,
+   *  this helper is a convenience wrapper based on the raremetal.js API format spec, and hence it expects
+   *  variant and group definitions to follow that spec.
+   * @param groups PortalGroupHelper
+   * @param variants PortalVariantsHelper
+   * @param test_names {String[]|_SingleVariantTest[]}
+   * @param conditional_variants list
+   */
+  constructor(groups, variants, test_names = [], conditional_variants = []) {
+    this.groups = groups;
+    this.variants = variants;
+    this.conditional_variants = conditional_variants;
+    this._tests = [];
+
+    test_names.forEach((name) => this.addTest(name));
+  }
+
+  /**
+   *
+   * @param test {String|_SingleVariantTest}
+   * @return {_SingleVariantTest}
+   */
+  addTest(test) {
+    // Add a new test by name, or directly from an instance
+    if (typeof test === 'string') {
+      let type = SV_TESTS[test];
+      if (!type) {
+        throw new Error(`Cannot make unknown test type: ${test}`);
+      }
+      test = new type.constructor();
+    } else if (!(test instanceof _SingleVariantTest)) {
+      throw new Error('Must specify test as name or instance');
+    }
+    this._tests.push(test);
+    return test;
+  }
+
+  /**
+   * Run every test on every group in the container and return results
+   * @returns Promise A promise representing the fulfillment state of all tests being run
+   */
+  run() {
+    let partials = [];
+
+    this._tests.forEach((test) => {
+      this.groups.data.forEach((group) => {
+        partials.push(this._runOne.bind(this, test, group));
+      });
+    });
+    // Despite the async syntax, ensure that each tests is run in series, to mitigate memory allocation errors when
+    //  running many tests
+    return partials.reduce((results, one_test) => {
+      return results.then((all_prior) => {
+        return one_test().then((one_res) => {
+          return [...all_prior, one_res];
+        });
+      });
+    }, Promise.resolve([]));
+  }
+
+  /**
+   *
+   * @param {SVTest} test Instance for a single unit test
+   * @param variants {Object} Data corresponding to all variants
+   * @param {list} conditional_variants a list of variants for conditioning
+   * @returns {{groupType: *, stat: *, test: *, pvalue: *, variants: (*|Array|string[]|Map), group: *}}
+   * Single-variant tests will not return "mask: (*|string|SVGMaskElement|string)"
+   * @private
+   */
+  _runOne(test, variants, conditional_variants = []) {  // replacing "group" with "conditional_variants" since the test will run on all variants
+    // Helper method that translates portal data into the format expected by a test.
+    //const variants = group.variants;
+    const scores = this.variants.getScores(variants);
+
+    // Most calculations will require adjusting API data to ensure that minor allele is the effect allele
+    const isAltEffect = this.variants.isAltEffect(variants);
+
+    const cov = this.variants.makeCovarianceMatrix(variants, isAltEffect);
+    const mafs = this.variants.getEffectFreq(variants);
+
+    // Some test classes may return raw values and others will return promises. Wrap the result for consistency.
+    let result = test.run(scores, cov, mafs, conditional_variants);
+    return Promise.resolve(result)
+      .then(([stat, pvalue, effect, se]) => {
+        // The results describe the group + several new fields for calculation results.
+        return {
+          variants: variants.variants,
+          test: test.key,
+          stat,
+          pvalue,
+          effect,
+          se,
+        };
+      });
+  }
+
+  /**
+   * Generate a JSON representation of the results. Returns a Promise, because some methods may run asynchronously
+   *  (eg via web workers), or require loading external libraries (eg webassembly)
+   * @param results Array
+   * @returns {Promise<{data: {groups: Promise<any> | Array, variants: *}} | never>}
+   */
+  toJSON(results) {
+    // Output calculation results in a format that matches the "precomputed results" endpoint
+    // By passing in an argument, user can format any set of results (even combining multiple runs)
+    if (!results) {
+      results = this.run();
+    } else {
+      results = Promise.resolve(results);
+    }
+
+    return results.then((group_results) => {
+      return {
+        data: {
+          variants: this.variants.data,
+          groups: group_results,
+        },
+      };
+    });
+  }
+}
 
 function parsePortalJSON(json) {
   const data = json.data || json;
@@ -350,4 +484,4 @@ function parsePortalJSON(json) {
 
 export { PortalVariantsHelper as _PortalVariantsHelper, PortalGroupHelper as _PortalGroupHelper }; // testing only
 
-export { parsePortalJSON, PortalTestRunner, AGGREGATION_TESTS };
+export { parsePortalJSON, PortalTestRunner, AGGREGATION_TESTS, PortalSVTestRunner, SV_TESTS };
