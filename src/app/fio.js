@@ -500,7 +500,7 @@ async function extractCovariance(fpath, region, variants, scoreStats) {
       if (stored_value) {
         // We successfully read at least 1 value into the covariance matrix
         covmat = numeric.mul(scoreStats.sampleSize, covmat);
-        let covobj = new GenotypeCovarianceMatrix(covmat, variants, positions);
+        let covobj = new GenotypeCovarianceMatrix(covmat, vdict, positions);
         resolve(covobj);
       } else {
         reject(Error('No values read from covariance matrix'));

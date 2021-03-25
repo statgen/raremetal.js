@@ -519,7 +519,13 @@ class GenotypeCovarianceMatrix {
    */
   updateMatrices() {
   // Get the sorted indices for values we need to extract from the big matrix
-    let idx = this.conditionList.map((x) => this.variants.get(x)).map((y) => this.positions.get(y));
+    let idx;
+    if (this.conditionList === []) {
+      idx = new Map;
+    } else {
+      // idx = this.conditionList.map((x) => this.variants.get(x)).map((y) => this.positions.get(y));
+      idx = this.conditionList.map((x) => this.variants.get(x));
+    }
     // let variantIdx = idx.map((i) => this.variants[i]);
     let fullLength = this.dim()[0];
     let zLength = this.conditionList.length;

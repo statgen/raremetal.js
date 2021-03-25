@@ -592,10 +592,10 @@ describe('stats.js', function() {
         [-0.01361261692, -0.01371627432, 23.9075214, -0.1996334844],
         [-0.1976943976, -0.1992892636, -0.1996334844, 320.2882088]];
       let variants = new Map();
-      variants.set('22:16150801_T/A', 16150801);
-      variants.set('22:16150914_C/A', 16150914);
-      variants.set('22:16150932_G/C', 16150932);
-      variants.set('22:16150968_C/T', 16150968);
+      variants.set('22:16150801_T/A', 0);
+      variants.set('22:16150914_C/A', 1);
+      variants.set('22:16150932_G/C', 2);
+      variants.set('22:16150968_C/T', 3);
       let positions = new Map();
       positions.set(16150801, 0);
       positions.set(16150914, 1);
