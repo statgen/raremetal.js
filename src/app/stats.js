@@ -405,9 +405,10 @@ class GenotypeCovarianceMatrix {
     this.positions = positions;
     // List of variants for conditional analysis, along with the necessary matrix subsets
     this.conditionList = [];
-    this.xxMatrix = matrix;
+    // this.xxMatrix = matrix;
     this.zxMatrix = [];
     this.zzMatrix = [];
+    this.xxDiag = numeric.getDiag(this.matrix);
   }
 
   /**
@@ -517,23 +518,40 @@ class GenotypeCovarianceMatrix {
    * ZZ is a square matrix with dimensions equal to the number of conditional variants
    * XX is a square matrix with dimensions equal to the number of variants not being conditioned on
    */
+
+  getxxDiag() {
+    if (this.conditionList === []) {
+      return this.xxDiag;
+    } else {
+      // Get the sorted indices for values we need to extract from the big matrix
+      let idx = this.conditionList.map((x) => this.variants.get(x));
+      let fullLength = this.dim()[0];
+      let zLength = this.conditionList.length;
+      let xLength = fullLength - zLength;
+      let xxDiag = new Array(xLength).fill(null);
+      let xIdx = 0;
+      for (let i = 0; i < fullLength; i++) {
+        if (!idx.includes(i)) {
+          xxDiag[xIdx] = this.xxDiag[i];
+          xIdx += 1;
+        }
+      }
+      return xxDiag;
+    }
+  }
+
   updateMatrices() {
   // Get the sorted indices for values we need to extract from the big matrix
     let idx;
     if (this.conditionList === []) {
       idx = new Map;
     } else {
-      // idx = this.conditionList.map((x) => this.variants.get(x)).map((y) => this.positions.get(y));
       idx = this.conditionList.map((x) => this.variants.get(x));
     }
-    // let variantIdx = idx.map((i) => this.variants[i]);
     let fullLength = this.dim()[0];
     let zLength = this.conditionList.length;
     let xLength = fullLength - zLength;
-    // let xxMatrix = new Array(xLength);
-    // for (let i = 0; i < xLength; i++) {
-    //   xxMatrix[i] = new Array(xLength).fill(null);
-    // }
+
     // X'X = xxMatrix is a square matrix, xLength by xLength
     // Z'X = zxMatrix is a rectangular matrix, zLength by xLength
     // Z'Z = zzMatrix is a square matrix, zLength by zLength
@@ -543,10 +561,7 @@ class GenotypeCovarianceMatrix {
       zzMatrix[i] = new Array(zLength).fill(null);
       zxMatrix[i] = new Array(xLength).fill(null);
     }
-    let xxMatrix = new Array(xLength);
-    for (let i = 0; i < xLength; i++) {
-      xxMatrix[i] = new Array(xLength).fill(null);
-    }
+
     /**
      * idx contains the indices of all the conditional variants
      * We will extract the columns and rows corresponding to Z'X and Z'Z
@@ -559,7 +574,6 @@ class GenotypeCovarianceMatrix {
      * all elements which match the known indices belong to Z'Z
      */
     let rowIdx = -1;
-    let xrow = -1;
     for (let i = 0; i < fullLength; i++) {
       let currentVector = this.matrix[i];
       // If the current row is that of a conditional variant
@@ -580,23 +594,8 @@ class GenotypeCovarianceMatrix {
             xIdx++;
           }
         }
-      } else {
-      // If the current row does not correspond to a conditional variant
-      // Copy the non-conditional values to the X'X matrix
-        // for (let j = 0; j < xLength; j++) {
-        //   xxMatrix[i][j] = currentVector[idx[j]];
-        // }
-        xrow += 1;
-        let newIdx = 0;
-        for (let j = 0; j < fullLength; j++) {
-          if (!idx.includes(j)) {
-            xxMatrix[xrow][newIdx] = currentVector[j];
-            newIdx++;
-          }
-        }
       }
     }
-    this.xxMatrix = xxMatrix;
     this.zxMatrix = zxMatrix;
     this.zzMatrix = zzMatrix;
   }
@@ -656,16 +655,6 @@ class GenotypeCovarianceMatrix {
       throw new Error('Specified conditional variant not found in current variant set, unable to add');
     }
   }
-
-  // /**
-  //  * Returns the current counts of non-conditional variants and conditional variants
-  //  */
-  // conditionalLength() {
-  //   let nrows = this.matrix.length;
-  //   let ncond = this.conditionList.length;
-  //   let nuncond = nrows - ncond;
-  //   return [nuncond, ncond];
-  // }
 }
 
 
@@ -1954,12 +1943,13 @@ class SVConditionalScoreTest extends SingleVariantTest {
     // Now we do the calculations
     let xzzzinv = numeric.dot(numeric.transpose(cov.zxMatrix), numeric.inv(cov.zzMatrix));
     let ucond = numeric.sub(ux, numeric.dot(xzzzinv, uz));
-    let vcond = numeric.sub(cov.xxMatrix, numeric.dot(xzzzinv, cov.zxMatrix));
+    let xzzzzxDiag = numeric.getDiag(numeric.dot(xzzzinv, cov.zxMatrix));
+    let vcond = numeric.sub(cov.getxxDiag(), xzzzzxDiag);
     // let chisqStats = numeric.mul(numeric.dot(ucond, numeric.inv(vcond)), ucond);
     let chisqStatArray = [];
     let p = [];
     for (const i in ucond) {
-      let chisqStat = ucond[i] * ucond[i] / vcond[i][i];
+      let chisqStat = ucond[i] * ucond[i] / vcond[i];
       chisqStatArray.push(chisqStat);
       p.push(pchisq(chisqStat, 1, 0, 0));
     }
