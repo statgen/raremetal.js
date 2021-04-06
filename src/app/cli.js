@@ -255,9 +255,8 @@ async function single(args) {
         console.log(results.toString());
       }
     }
-    return results;
   } else {
-    if (args.out != null) {
+    if (args.out !== undefined) {
       fs.writeFileSync(args.out, results.toStringSV(), { encoding: 'utf8' });
     } else {
       if (!args.silent) {
@@ -265,6 +264,7 @@ async function single(args) {
       }
     }
   }
+  return results;
 }
 /**
  * Calculate aggregation tests and meta-analyze them across multiple studies

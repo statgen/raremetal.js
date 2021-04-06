@@ -64,19 +64,20 @@ describe('cli.js', function() {
     assert.closeTo(result.results[0].pvalue, 0.836389, 0.001);
   });
 
-  // it('cond', async function() {
-  //   const args = {
-  //     cov: 'test/integration/data/gene.DUXAP8.cov.assoc.gz',
-  //     score: 'test/integration/data/gene.DUXAP8.scores.assoc.gz',
-  //     mask: 'test/integration/data/gene.DUXAP8.mask.tab',
-  //     test: 'cond',
-  //     cond: '22:16150968_C/T',
-  //     group: null,
-  //     silent: true,
-  //   };
-
-  //   const result = await single(args);
-  //   console.log(result);
-  //   assert.closeTo(result.results[0].pvalue[0], 0.797034, 0.00001);
-  // });
+  it('cond', async function() {
+    const args = {
+      cov: 'test/integration/data/gene.DUXAP8.cov.assoc.gz',
+      score: 'test/integration/data/gene.DUXAP8.scores.assoc.gz',
+      mask: 'test/integration/data/gene.DUXAP8.mask.tab',
+      test: 'cond',
+      cond: '22:16150968_C/T',
+      group: null,
+      silent: true,
+    };
+    const result = await single(args);
+    let expectedResults = [0.797034, 0.479960, 0.315627];
+    for (let i = 0; i < 3; i++) {
+      assert.closeTo(result.results[0].pvalue[i], expectedResults[i], 0.00001);
+    }
+  });
 });
