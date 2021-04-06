@@ -63,4 +63,20 @@ describe('cli.js', function() {
     assert(result.results.length === 1);
     assert.closeTo(result.results[0].pvalue, 0.836389, 0.001);
   });
+
+  // it('cond', async function() {
+  //   const args = {
+  //     cov: 'test/integration/data/gene.DUXAP8.cov.assoc.gz',
+  //     score: 'test/integration/data/gene.DUXAP8.scores.assoc.gz',
+  //     mask: 'test/integration/data/gene.DUXAP8.mask.tab',
+  //     test: 'cond',
+  //     cond: '22:16150968_C/T',
+  //     group: null,
+  //     silent: true,
+  //   };
+
+  //   const result = await single(args);
+  //   console.log(result);
+  //   assert.closeTo(result.results[0].pvalue[0], 0.797034, 0.00001);
+  // });
 });
